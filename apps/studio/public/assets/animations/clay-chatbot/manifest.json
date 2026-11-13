@@ -1,0 +1,77 @@
+{
+  "format": "animated WebP RGBA",
+  "loop": "infinite",
+  "canvas_px": [
+    315,
+    311
+  ],
+  "states": {
+    "idle": {
+      "file": "idle.webp"
+    },
+    "rolling": {
+      "file": "rolling.webp"
+    },
+    "pop-shape": {
+      "file": "pop-shape.webp"
+    },
+    "blink": {
+      "file": "blink.webp"
+    },
+    "interested": {
+      "file": "interested.webp"
+    },
+    "judging": {
+      "file": "judging.webp"
+    },
+    "concerned": {
+      "file": "concerned.webp"
+    }
+  },
+  "slash_commands": {
+    "/help": {
+      "file": "commands/help.webp",
+      "intent": "display available commands"
+    },
+    "/new": {
+      "file": "commands/new.webp",
+      "intent": "start a new conversation"
+    },
+    "/clear": {
+      "file": "commands/clear.webp",
+      "intent": "clear or reset the current context"
+    },
+    "/search": {
+      "file": "commands/search.webp",
+      "intent": "search for information"
+    },
+    "/think": {
+      "file": "commands/think.webp",
+      "intent": "reason through a task"
+    },
+    "/summarize": {
+      "file": "commands/summarize.webp",
+      "intent": "summarize selected content"
+    },
+    "/write": {
+      "file": "commands/write.webp",
+      "intent": "draft or rewrite text"
+    },
+    "/code": {
+      "file": "commands/code.webp",
+      "intent": "generate or review code"
+    },
+    "/image": {
+      "file": "commands/image.webp",
+      "intent": "create or examine images"
+    },
+    "/settings": {
+      "file": "commands/settings.webp",
+      "intent": "open preferences"
+    }
+  },
+  "command_canvas_px": [
+    315,
+    311
+  ]
+}

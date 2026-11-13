@@ -1,0 +1,17 @@
+node_modules
+dist
+storybook-static
+coverage
+test-results
+playwright-report
+blob-report
+.env
+.env.*
+!.env.example
+.clay
+.DS_Store
+*.log
+.netlify
+.vite
+playwright/.cache
+.DS_Store

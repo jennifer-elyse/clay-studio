@@ -1,0 +1,25 @@
+{
+  "name": "clay-studio",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @cswg/clay-studio",
+    "build": "npm run build -w @cswg/clay-chat && npm run build -w @cswg/clay-studio",
+    "start": "npm run start -w @cswg/clay-studio",
+    "test": "npm run test -w @cswg/agent-host && npm run test -w @cswg/clay-chat && npm run test -w @cswg/clay-studio && NODE_OPTIONS=--experimental-vm-modules jest --config templates/web-app/jest.config.js --rootDir templates/web-app && node --test scripts/launch-plan.test.js",
+    "test:e2e": "playwright test",
+    "storybook": "npm run storybook -w @cswg/clay-chat",
+    "lint": "eslint apps packages --ext js,jsx"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@playwright/test": "^1.49.1",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react": "^7.37.2",
+    "globals": "^15.12.0"
+  }
+}
