@@ -2,11 +2,22 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { warnStack } from "../scripts/stack-versions.js";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+const appRoot = path.resolve(root, "..");
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: "clay-stack-versions",
+      configureServer() {
+        if (process.env.CLAY_STACK_CHECKED === "1") return;
+        void warnStack(appRoot);
+      },
+    },
+  ],
   root,
   build: { outDir: "dist", emptyOutDir: true },
   server: {

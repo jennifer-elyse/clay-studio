@@ -4,5 +4,8 @@ dist
 .clay
 .git
 coverage
+.env
+.env.*
 npm-debug.log
 *.log
+.vite

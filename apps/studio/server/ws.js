@@ -2,10 +2,23 @@ import { WebSocketServer } from "ws";
 import { z } from "zod";
 
 export const ClientMessage = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("send"), prompt: z.string(), thinkFirst: z.boolean().optional() }),
+  z.object({
+    type: z.literal("send"),
+    prompt: z.string(),
+    thinkFirst: z.boolean().optional(),
+    projectName: z.string().optional(),
+    projectFolder: z.string().optional(),
+  }),
   z.object({ type: z.literal("approve_plan"), path: z.string() }),
   z.object({ type: z.literal("steer"), text: z.string() }),
   z.object({ type: z.literal("set_seat"), seat: z.enum(["cursor", "codex", "copilot", "mock"]) }),
+  z.object({
+    type: z.literal("save_project"),
+    id: z.string().optional(),
+    name: z.string(),
+    folder: z.string().optional(),
+  }),
+  z.object({ type: z.literal("select_project"), id: z.string() }),
   z.object({ type: z.literal("cancel") }),
 ]);
 
@@ -29,8 +42,17 @@ export function attachSocket(server, host) {
       }
       try {
         if (parsed.type === "send") {
-          for await (const event of host.send({ prompt: parsed.prompt, thinkFirst: parsed.thinkFirst })) {
+          const before = JSON.stringify(host.snapshot().project);
+          for await (const event of host.send({
+            prompt: parsed.prompt,
+            thinkFirst: parsed.thinkFirst,
+            projectName: parsed.projectName,
+            projectFolder: parsed.projectFolder,
+          })) {
             socket.send(JSON.stringify(event));
+          }
+          if (JSON.stringify(host.snapshot().project) !== before) {
+            socket.send(JSON.stringify({ type: "snapshot", snapshot: host.snapshot() }));
           }
         } else if (parsed.type === "approve_plan") {
           const event = await host.approvePlan(parsed.path);
@@ -41,6 +63,12 @@ export function attachSocket(server, host) {
           for await (const event of host.setSeat(parsed.seat)) {
             socket.send(JSON.stringify(event));
           }
+        } else if (parsed.type === "save_project") {
+          await host.saveProject({ id: parsed.id, name: parsed.name, folder: parsed.folder });
+          socket.send(JSON.stringify({ type: "snapshot", snapshot: host.snapshot() }));
+        } else if (parsed.type === "select_project") {
+          await host.selectProject(parsed.id);
+          socket.send(JSON.stringify({ type: "snapshot", snapshot: host.snapshot() }));
         } else if (parsed.type === "cancel") {
           await host.cancel();
         }

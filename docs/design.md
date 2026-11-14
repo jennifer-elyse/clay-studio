@@ -30,7 +30,7 @@ Layout is intrinsic. A component sizes from its content and adapts with containe
 
 The sole media-query exception is `@media (prefers-reduced-motion: reduce)`, for accessibility. It may reduce or remove motion only. It must not be used for layout, color, or input-capacity.
 
-Chat column (min 320px) left. Live preview right. Header: **clay-bot stage** (96px), wordmark, seat badge. Empty state repeats a larger 148px stage. Clear and Reset sit above the chat, aligned to the right: Clear is the yellow button, Reset is the red button. Plan and Fix each include a brain. Choosing the brain runs `/think` with the same words, then that command. A ? button opens a popover with Help, Docs, and Settings. The other commands stay as color-coded pills. Restricted-data reminder under the composer. Commands that need extra words fill the composer; the others send immediately.
+Chat column (min 440px) left. Live preview right. Header: **clay-bot stage** (96px), wordmark, then the project name, Seats, and the seat badge. Hovering the project name shows its directory. A select’s down chevron is inset from the right edge, with a little padding so the label does not crowd it. A chevron-down at the header’s top-right collapses that image panel to a bar with the project name and a chevron-up. The chevron-up opens the panel again. Chat and preview stay in place. Empty state repeats a larger 148px stage. Clear and Reset sit above the chat, aligned to the right: Clear is the yellow button, Reset is the red button. Plan and Fix each include a brain. Clicking the brain runs `/think` with the same words before that command. Clicking the label, or typing the command, does not. A ? button opens a popover with Help, Docs, and Settings. `/code` opens the project in the Cursor IDE and leaves the prompt there to review. The other commands stay as color-coded pills. A down chevron at the end of that first row hides the slash commands; a chevron-up brings them back. Restricted-data reminder under the composer. Commands that need extra words fill the composer; the others send immediately.
 
 The bot stage plays looping WebP clips from `apps/studio/public/assets/animations`. Slash commands that have a matching filename (`help`, `clear`, `search`, `think`, `summarize`, `write`, `code`, `image`, `settings`, and `new` for `/reset`) use that clip. Every other moment picks at random from idle, blink, rolling, pop-shape, interested, judging, and concerned.
 
@@ -60,8 +60,8 @@ A disabled control shows why it cannot be used when the reason is not obvious. U
 - Streaming: a small “Working…” caption plus step chips, not raw tool JSON
 - Finished: the caption changes to “Done”. It stays quiet. The plan card still asks for approval.
 - Plan draft: PlanCard with Approve / Adjust
-- Preview ready: iframe; `/debug` reveals the process log
-- Seats: `/seats` (and the Seats pill) opens a modal. It asks which product — Cursor, Codex, or Copilot — then lists the connection that product needs. The badge shows the current one. Keys stay on the machine.
+- Preview ready: a sandboxed iframe on 127.0.0.1, with an open icon just to the left of the URL. That icon opens the app in the default browser. The frame cannot navigate Clay or load the studio origin. A crash, a security block, or a process log stays in the preview pane. `/debug` reveals the process log
+- Seats: the header Seats button, the seat badge, and `/seats` open a modal. It asks which product — Cursor, Codex, or Copilot — then lists the connection that product needs. The badge shows the current one. Keys stay on the machine.
 
 ## Accessibility
 

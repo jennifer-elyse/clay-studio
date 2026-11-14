@@ -20,7 +20,7 @@ The committee adopts this as Clay 1.0:
 1. Cursor for developers, GitHub Copilot for the rest of IT. One platform per role, seats sized to the work, Claude spend under a team cap.
 2. AI security and data rules. Approved models only. No restricted data or secrets in prompts. Least-privilege agents. People merge.
 3. Spec-driven development. `/plan` is required before implementation. Claude plans. Grok 4.7 High codes.
-4. One architecture for every web application. React client, Express API on Cloud Run behind APIM, PostgreSQL, Google Cloud. JavaScript with JSDoc or TypeScript. Functional, idempotent code.
+4. One architecture for every web application. React 19 client, Express API on Cloud Run behind APIM, PostgreSQL, Google Cloud. JavaScript with JSDoc or TypeScript. Functional, idempotent code.
 5. Contract-first APIs and events. Zod, TypeSpec, or protobuf first for every API and event. Validated at the boundary. Backward compatible.
 6. Design system and proof. Imported tokens and Code Connect. Storybook, JSDoc, Jest, and Playwright prove each change.
 7. Services built to operate. An owner and tier, SLOs and tracing, resilience defaults, canary releases, and a tested recovery plan.
@@ -60,6 +60,16 @@ The bill follows the work. Grok and Composer draw from the weekly pool first. Cl
 
 Grok 4.7 and Composer 2.5 draw from the weekly pool first. Ordinary coding does not create a second invoice, and the pool refreshes every week. Claude planning has no included allowance. It is paid from prepaid credit at list price plus the $0.25 Teams rate, under a team spending cap.
 
+Clay spends the attached seat on the cheapest model that can do the step. `/plan` and `/spec` write the spec of record. `/build` implements it. Every other turn, including `/think`, `/fix`, and chat, uses the seat's cheap model. A prompt does not paste this file. The product already loaded `AGENTS.md`. The prompt names only the docs that step needs.
+
+| Seat | Plan and spec | Build | Every other turn |
+| --- | --- | --- | --- |
+| Cursor | Claude, billed per token. No extra reasoning effort. | Grok 4.7 High, from the weekly pool | Composer 2.5, from the weekly pool |
+| Copilot | GPT-5.4 at medium effort | GPT-5.4 at medium effort | GPT-5 mini at low effort. Included on a paid plan |
+| Codex | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 mini at low effort. The chat thread is reused |
+
+One agent stays with the project and is disposed when the project or the seat changes. Cursor resumes that agent, summarizes before a plan or a build when the thread already has turns, and summarizes again after, so the next turn sees the summary. Preview tools are sent only for build, fix, and code. Copilot starts a new session instead of reloading the saved transcript. Codex and Copilot drop the thread after a plan or a build, and after four short turns. The brain's reasoning is the opening of that same turn, not a second copy of the context. Cursor loads project rules only.
+
 ### What AI may see and do
 
 - Approved models only. Claude and Grok through Cursor Teams. Copilot Business for the rest of IT. Privacy mode enforced. No personal accounts or web chatbots with company code.
@@ -89,13 +99,31 @@ Write the spec first. Use the spec to direct the task. Exploration can discover 
 
 ## Stack
 
-- Browser: React. One design system. Brand differences are token overrides in `client/src/tokens.css`. The design system feeds those tokens from one design file.
+- Browser: React 19.3.1 (`react` and `react-dom` `^19.3.1`). One design system. Brand differences are token overrides in `client/src/tokens.css`. The design system feeds those tokens from one design file.
 - API: Express. The client asks for what a screen needs. Independent reads run together with `Promise.all`. Writes are deliberate and idempotent.
 - Data: PostgreSQL, PGlite on localhost, Cloud SQL or AlloyDB when promoted. `server/schema.sql` can run again safely. Status changes are transitions.
 - Platform, when promoted: Google Cloud. Every Express API runs on Cloud Run behind APIM. Cloud SQL, private networking.
 - Language: JavaScript with JSDoc in this starter.
 - Agents read the same pages the developer reads. `AGENTS.md` is the short entry point. This file is the constitution.
 - This capability is Tier 3 (internal) until `README.md` says otherwise.
+
+## React
+
+React 19 is the supported release. React 18 left active support when 19 shipped. Clay Studio and this starter depend on `react` and `react-dom` at `^19.3.1`. The production release of React, Express, and every other direct dependency is the npm `latest` tag. `next`, `canary`, `beta`, and `rc` are not production. `node scripts/stack-versions.js` warns when the installed package, the declared range, or the Vite prebundle is behind that tag. Canary and experimental builds stay out.
+
+The automatic JSX runtime is on. JSX does not import React. The entry calls `createRoot` from `react-dom/client` and renders inside `StrictMode`.
+
+| Out of the standard | Required |
+| --- | --- |
+| `forwardRef` | `ref` as a prop on the function component |
+| `defaultProps`, `propTypes` | Default parameters and JSDoc |
+| `<Context.Provider>` | `<Context value={...}>` |
+| `useFormState` | `useActionState` from `react` |
+| `ReactDOM.render`, string refs, `findDOMNode`, legacy context | `createRoot` inside `StrictMode` |
+| Copying props into state inside an effect | Compute that value while rendering |
+| Reading or writing `ref.current` during render | Read a ref in an effect or an event handler |
+
+A form submits through its `action`. When that submit has a result to render, or a pending state, `useActionState` holds them. A ref holds a value that is not rendered, such as a socket or a focus target. Hooks follow the Rules of Hooks. `eslint-plugin-react-hooks` recommended config is on in this starter and in Clay Studio, including the compiler rules. A component stays pure: same props, same output, props and state are not mutated, and a component is not created inside another component.
 
 ## Rules that lead
 
@@ -278,7 +306,7 @@ A change is ready when a reviewer can check every line below. A line that names 
 - A changed component has a Storybook story for its states. Jest covers the unit behavior. Playwright covers the user flow.
 - Docs changed in the same change: vision, design, plan, agent instructions, and a regenerated ERD when data moved. Shared functions have JSDoc.
 - A changed screen still works from the keyboard, uses semantic HTML, and shows a visible focus treatment. Status is a text label, not color alone.
-- Components stay under 50 lines. Functions are pure. Shared data is not mutated.
+- Components stay under 50 lines. Functions are pure. Shared data is not mutated. React follows the React section: function components, `ref` as a prop, form `action`, `useActionState` when a submit has a result or pending state, and the `eslint-plugin-react-hooks` recommended rules pass.
 - New endpoints are traced and have SLO alerts once the service is promoted.
 - No secrets or restricted data in code, prompts, logs, or seed data. New packages pass the dependency and license check: the package is real, established, and approved.
 - Open npm security issues are fixed before the change is done. `npm audit fix` runs, and a direct dependency moves to a newer patched release when one exists. A package is not downgraded to clear an advisory. High and critical advisories that still have a newer fix block the build.
@@ -288,7 +316,7 @@ A change is ready when a reviewer can check every line below. A line that names 
 No gate, no merge. These are the checks CI turns the definition of done into. A prototype adopts them as the suite comes up. It does not skip the ones it can already run (plan, ESLint, Prettier, Jest, secret scan).
 
 - **Plan gate.** The PR names an approved plan in `docs/plans/`, approved by someone other than the author. No plan, no merge.
-- **Code standard gate.** ESLint with zero warnings: components under 50 lines, no mutation, `===` only, legal status transitions, pure domain layer. Prettier, and `tsc --checkJs` for JavaScript.
+- **Code standard gate.** ESLint with zero warnings: components under 50 lines, no mutation, `===` only, legal status transitions, pure domain layer, and `eslint-plugin-react-hooks` recommended (Rules of Hooks and the compiler rules). Prettier, and `tsc --checkJs` for JavaScript.
 - **Proof gate.** Jest with coverage thresholds, Playwright user flows, a Storybook story for every changed component.
 - **Contracts and data gate.** `oasdiff` and `buf` block breaking contract changes. Migrations run twice. A stale ERD fails the build.
 - **Security gate.** gitleaks, CodeQL, Trivy, `npm audit`, a license allowlist, and a check that every new package is real, established, and approved. Every project Clay builds runs that npm check before the change is called done: safe fixes are applied, a direct dependency is upgraded when the patched release is newer, and a downgrade is refused.

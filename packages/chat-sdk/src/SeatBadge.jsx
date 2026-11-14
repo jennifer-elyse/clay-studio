@@ -5,7 +5,7 @@ function seatLabel(provider) {
   if (provider === "copilot") return "Copilot";
   if (provider === "cursor") return "Cursor";
   if (provider === "codex") return "Codex";
-  return "Mock";
+  return "DEMO MODE";
 }
 
 /**

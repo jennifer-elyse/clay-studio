@@ -4,7 +4,7 @@ Studio is a Clay app. It applies every section of `templates/web-app/docs/code.m
 
 ## Stack
 
-- React client, Express API, PostgreSQL (PGlite locally; Cloud SQL on promotion)
+- React 19.3.1 client (`react` and `react-dom` `^19.3.1`), Express API, PostgreSQL (PGlite locally; Cloud SQL on promotion). The production release is the npm `latest` tag. `node scripts/stack-versions.js` warns when React, Express, or another direct dependency is behind it. The React section of `templates/web-app/docs/code.md` is the practice: function components, `ref` as a prop, form `action`, `useActionState` when a submit has a result or pending state.
 - JavaScript + JSDoc. Zod at HTTP, WebSocket, and adapter boundaries
 - Pure domain functions. Side effects at the edge (DB, child processes, agent SDKs)
 - Status changes are state-machine transitions
@@ -18,7 +18,7 @@ Studio UI follows `docs/design.md` with the same constraints a generated app fol
 ## Studio-specific
 
 - `@cswg/clay-chat` is presentational. It does not import Cursor or Copilot SDKs
-- `@cswg/agent-host` owns `AgentPort`. Cursor and Copilot adapters map into `UiEvent`
+- `@cswg/agent-host` owns `AgentPort`. One agent per project, disposed on a project or seat change. Cursor resumes it and summarizes around a plan or a build. Copilot and Codex drop a heavy thread instead of resending it. Preview tools go only on build and fix. `/code` opens the project in the Cursor IDE and leaves the prompt there to review. The brain reasons inside that same turn.
 - Preview binds `127.0.0.1` only
 - Promotion to APIM / Cloud Run / canary is out of v1; keep the file layout so it can be added
 

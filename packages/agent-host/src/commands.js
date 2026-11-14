@@ -1,4 +1,5 @@
 export const COMMANDS = [
+  { id: "spec", slash: "/spec", label: "Spec", summary: "Write what the change must do before a plan", needsInput: true },
   { id: "plan", slash: "/plan", label: "Plan", summary: "Write a spec before anything is built", needsInput: true },
   { id: "build", slash: "/build", label: "Build", summary: "Implement the approved plan", needsInput: false },
   { id: "run", slash: "/run", label: "Run", summary: "Start the local preview", needsInput: false },
@@ -10,7 +11,7 @@ export const COMMANDS = [
   { id: "think", slash: "/think", label: "Think", summary: "Reason first, then answer", needsInput: true },
   { id: "summarize", slash: "/summarize", label: "Summarize", summary: "Compress this thread to free context", needsInput: false },
   { id: "write", slash: "/write", label: "Write", summary: "Draft docs or copy, not application code", needsInput: true },
-  { id: "code", slash: "/code", label: "Code", summary: "Edit code in the workspace", needsInput: true },
+  { id: "code", slash: "/code", label: "Code", summary: "Open this project in the IDE with the change ready to review", needsInput: true },
   { id: "image", slash: "/image", label: "Image", summary: "Sketch a screen or illustration in words", needsInput: true },
   { id: "settings", slash: "/settings", label: "Settings", summary: "Show seat, model, and workspace", needsInput: false },
   { id: "reset", slash: "/reset", label: "Reset", summary: "Start a fresh agent", needsInput: false },

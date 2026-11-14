@@ -15,6 +15,7 @@ export {
   writePlan,
 } from "./plan-gate.js";
 export {
+  containPreview,
   copyTemplate,
   defaultAppsDir,
   defaultTemplateDir,
@@ -25,4 +26,5 @@ export {
   startPreview,
   stopPreview,
 } from "./preview.js";
-export { loadSession, saveSession, SessionSchema } from "./session-store.js";
+export { browseDirectories, DirectoryQuery, displayPath, projectsHome } from "./directories.js";
+export { installationProfileDir, loadSession, saveSession, SessionSchema } from "./session-store.js";

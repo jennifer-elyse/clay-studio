@@ -2,7 +2,17 @@ import fs from "node:fs/promises";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
-import { copyTemplate, defaultAppsDir, isInsideRepo, pickPort, startPreview, stopPreview, studioRoot } from "../src/preview.js";
+import {
+  containPreview,
+  copyTemplate,
+  defaultAppsDir,
+  isInsideRepo,
+  pickPort,
+  PREVIEW_STOPPED,
+  startPreview,
+  stopPreview,
+  studioRoot,
+} from "../src/preview.js";
 
 describe("preview supervisor", () => {
   test("puts a new project outside Clay and keeps directory permissions", async () => {
@@ -37,6 +47,20 @@ describe("preview supervisor", () => {
     const dest = await copyTemplate({ slug: "copied", appsDir, templateDir });
     const vision = await fs.readFile(path.join(dest, "docs", "vision.md"), "utf8");
     expect(vision.length).toBeGreaterThan(10);
+    for (const name of ["docs/design.md", "docs/code.md", "docs/erd.md", "AGENTS.md", "README.md"]) {
+      const text = await fs.readFile(path.join(dest, name), "utf8");
+      expect(text.length).toBeGreaterThan(10);
+    }
+    const server = await fs.readFile(path.join(dest, "server", "index.js"), "utf8");
+    expect(server).toContain("express");
+    const vite = await fs.readFile(path.join(dest, "client", "vite.config.js"), "utf8");
+    expect(vite).toContain("defineConfig");
+    const ignore = await fs.readFile(path.join(dest, ".gitignore"), "utf8");
+    expect(ignore).toContain("node_modules/");
+    expect(ignore).toContain(".env");
+    expect(ignore).toContain("dist");
+    const dockerignore = await fs.readFile(path.join(dest, ".dockerignore"), "utf8");
+    expect(dockerignore).toContain("node_modules");
     const dockerfile = await fs.readFile(path.join(dest, "Dockerfile"), "utf8");
     expect(dockerfile).toContain("syntax=docker/dockerfile:1.6");
     expect(dockerfile).toContain("node:22-alpine3.23");
@@ -47,6 +71,18 @@ describe("preview supervisor", () => {
     expect(dockerfile).toContain("ENV PORT=8080");
     expect(dockerfile).toContain('CMD ["node", "server/index.js"]');
     expect(dockerfile).toContain("client/dist");
+    const pkg = JSON.parse(await fs.readFile(path.join(dest, "package.json"), "utf8"));
+    expect(pkg.dependencies.react).toBe("^19.3.1");
+    expect(pkg.dependencies["react-dom"]).toBe("^19.3.1");
+    const lint = await fs.readFile(path.join(dest, "eslint.config.js"), "utf8");
+    expect(lint).toContain("eslint-plugin-react-hooks");
+    expect(lint).toContain("recommended");
+    const rule = await fs.readFile(path.join(dest, ".cursor", "rules", "clay-code.mdc"), "utf8");
+    expect(rule).toContain("React 19");
+    expect(rule).toContain("useActionState");
+    const constitution = await fs.readFile(path.join(dest, "docs", "code.md"), "utf8");
+    expect(constitution).toContain("## React");
+    expect(constitution).toContain("^19.3.1");
     expect(dockerfile).not.toContain("SITE_TEMPLATE");
     await fs.rm(path.join(dest, "Dockerfile"));
     const again = await copyTemplate({ slug: "copied", appsDir, templateDir });
@@ -76,5 +112,18 @@ http.createServer((req, res) => { res.end("ok"); }).listen(port, "127.0.0.1");
     });
     expect(body).toBe("ok");
     await stopPreview(appDir);
+  });
+
+  test("a crashed app stays a short preview message", async () => {
+    const appDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-prev-"));
+    await fs.mkdir(path.join(appDir, "server"), { recursive: true });
+    await fs.writeFile(
+      path.join(appDir, "server", "index.js"),
+      "process.stderr.write('Open npm advisories:\\nprototype poisoning\\n'); process.exit(1);\n",
+      "utf8",
+    );
+    const opened = await containPreview({ appDir, install: false });
+    expect(opened).toEqual({ ok: false, message: PREVIEW_STOPPED });
+    expect(opened.ok ? "" : opened.message).not.toMatch(/advisories|poisoning/);
   });
 });

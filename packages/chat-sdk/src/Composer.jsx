@@ -15,18 +15,13 @@ export function Composer({ onSend, busy = false, value, onChange }) {
   function submit() {
     const next = text.trim();
     if (!next || busy) return;
-    onSend(next);
-    setText("");
+    const sent = onSend(next);
+    if (sent !== false) setText("");
   }
 
   return (
     <div className="clay-composer">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
+      <form action={() => submit()}>
         <textarea
           aria-label="Message"
           value={text}

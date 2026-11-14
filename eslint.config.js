@@ -1,9 +1,18 @@
 import js from "@eslint/js";
 import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 
 export default [
   js.configs.recommended,
+  {
+    files: [
+      "apps/studio/src/**/*.{js,jsx}",
+      "packages/chat-sdk/src/**/*.{js,jsx}",
+      "packages/chat-sdk/stories/**/*.{js,jsx}",
+    ],
+    ...reactHooks.configs.flat.recommended,
+  },
   {
     files: ["apps/**/*.{js,jsx}", "packages/**/*.{js,jsx}"],
     plugins: { react },
@@ -28,6 +37,6 @@ export default [
     },
   },
   {
-    ignores: ["**/dist/**", "**/storybook-static/**", "templates/**", "coverage/**"],
+    ignores: ["**/dist/**", "**/storybook-static/**", "templates/**", "coverage/**", "**/.clay/**", "**/node_modules/**"],
   },
 ];

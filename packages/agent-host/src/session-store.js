@@ -18,10 +18,20 @@ export const SessionSchema = z.object({
  */
 
 /**
+ * Directory for this Clay Studio installation. Project names live here and
+ * stay put when a session file is pointed somewhere else.
+ * @returns {string}
+ */
+export function installationProfileDir() {
+  const override = process.env.CLAY_PROFILE_DIR?.trim();
+  return path.resolve(override || path.join(os.homedir(), ".clay", "studio"));
+}
+
+/**
  * @returns {string}
  */
 export function sessionPath() {
-  return path.resolve(process.env.CLAY_SESSION_PATH || path.join(os.homedir(), ".clay", "studio", "session.json"));
+  return path.resolve(process.env.CLAY_SESSION_PATH || path.join(installationProfileDir(), "session.json"));
 }
 
 /**

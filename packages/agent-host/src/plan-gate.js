@@ -154,7 +154,32 @@ export function slugify(name) {
  * @param {string} title
  */
 export async function nextPlanSlug(appDir, title) {
-  const existing = await listPlans(appDir);
-  const n = String(existing.length + 1).padStart(3, "0");
+  const dir = plansDir(appDir);
+  let directories = 0;
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    directories = entries.filter((entry) => entry.isDirectory()).length;
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") throw error;
+  }
+  const listed = (await listPlans(appDir)).length;
+  const n = String(Math.max(directories, listed) + 1).padStart(3, "0");
   return `${n}-${slugify(title)}`;
+}
+
+/**
+ * @param {object} input
+ * @param {string} input.appDir
+ * @param {string} input.slug
+ * @param {string} input.title
+ * @param {string} input.body
+ * @param {string} [input.status]
+ */
+export async function writeSpec({ appDir, slug, title, body, status = "draft" }) {
+  const dir = path.join(plansDir(appDir), slug);
+  await fs.mkdir(dir, { recursive: true });
+  const filePath = path.join(dir, "spec.md");
+  const raw = `---\nstatus: ${status}\ntitle: ${title}\nslug: ${slug}\n---\n\n${body.trim()}\n`;
+  await fs.writeFile(filePath, raw, "utf8");
+  return { id: slug, path: filePath, title, body: body.trim(), status };
 }

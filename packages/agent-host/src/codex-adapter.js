@@ -1,11 +1,10 @@
+import { FAST_TURN_LIMIT } from "./context.js";
 import { makeEvent } from "./events.js";
-import { CODEX_MODEL } from "./models.js";
+import { codexEffort, modelFor, phaseFor, seatCaption } from "./models.js";
 import { assertBuildAllowed, nextPlanSlug, setPlanStatus } from "./plan-gate.js";
-import { copyTemplate, getPreview, startPreview, stopPreview } from "./preview.js";
+import { containPreview, copyTemplate, getPreview, stopPreview } from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
 import { promptFor } from "./prompts.js";
-
-const CAPTION = "Codex seat — plans are still required. The thread runs locally in the app folder.";
 
 /**
  * @param {object} ctx
@@ -18,6 +17,8 @@ export function createCodexAdapter(ctx) {
   let codex = null;
   /** @type {any} */
   let thread = null;
+  let threadKey = "";
+  let fastTurns = 0;
   let agentId = `codex-${ctx.slug}`;
   let cancelled = false;
 
@@ -29,20 +30,38 @@ export function createCodexAdapter(ctx) {
     }
   }
 
-  async function ensureThread() {
-    if (thread) return thread;
+  /**
+   * Fast turns reuse one thread so the cached instructions stay warm.
+   * Plan and build start a fresh thread so they do not carry the chat.
+   *
+   * @param {"plan" | "build" | "fast"} phase
+   */
+  function releaseThread() {
+    thread = null;
+    threadKey = "";
+  }
+
+  async function ensureThread(phase) {
+    const model = modelFor(phase, "codex");
+    const effort = codexEffort(phase);
+    if (phase !== "fast" || fastTurns >= FAST_TURN_LIMIT) {
+      releaseThread();
+      if (phase === "fast") fastTurns = 0;
+    }
+    const key = phase === "fast" ? `fast:${model}:${effort}` : "";
+    if (thread && key && threadKey === key) return thread;
     const mod = await sdk();
     const Codex = mod.Codex ?? mod.default?.Codex ?? mod.default;
     if (!Codex) throw new Error("Codex export missing from @openai/codex-sdk");
-    codex = new Codex();
-    /** @type {Record<string, string | boolean>} */
-    const options = {
+    if (!codex) codex = new Codex();
+    thread = codex.startThread({
       workingDirectory: ctx.appDir,
       sandboxMode: "workspace-write",
       skipGitRepoCheck: true,
-    };
-    if (CODEX_MODEL) options.model = CODEX_MODEL;
-    thread = codex.startThread(options);
+      model,
+      modelReasoningEffort: effort,
+    });
+    threadKey = key;
     agentId = thread?.id ?? agentId;
     return thread;
   }
@@ -62,25 +81,36 @@ export function createCodexAdapter(ctx) {
       cancelled = false;
       const command = options.command ?? "chat";
       const rest = options.rest ?? prompt;
+      const phase = phaseFor(command);
+      const modelId = modelFor(phase, "codex");
       const runId = `run-${Date.now()}`;
       yield makeEvent("run_started", { runId, agentId });
       yield makeEvent("seat", {
-        seat: { provider: "codex", model: CODEX_MODEL || undefined, caption: CAPTION },
+        seat: { provider: "codex", model: modelId, caption: seatCaption("codex", phase, modelId) },
       });
 
       if (command === "run") {
         yield makeEvent("preview", { preview: { status: "starting" } });
-        const handle = await startPreview({ appDir: ctx.appDir });
-        yield makeEvent("preview", { preview: { status: "ready", url: handle.url } });
+        const opened = await containPreview({ appDir: ctx.appDir });
+        if (!opened.ok) {
+          yield makeEvent("preview", { preview: { status: "error", message: opened.message } });
+          yield makeEvent("run_finished", { runId, agentId, status: "error" });
+          return;
+        }
+        yield makeEvent("preview", { preview: { status: "ready", url: opened.url } });
         yield makeEvent("run_finished", { runId, agentId, status: "finished" });
         return;
       }
 
       let planMeta = null;
-      if (command === "plan") {
+      let specPath = null;
+      if (command === "plan" || command === "spec") {
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
-        planMeta = { slug, path: `docs/plans/${slug}/plan.md`, title };
+        const file = command === "spec" ? "spec.md" : "plan.md";
+        const target = { slug, path: `docs/plans/${slug}/${file}`, title };
+        if (command === "spec") specPath = target.path;
+        else planMeta = target;
       }
       if (command === "build") {
         planMeta = await assertBuildAllowed(ctx.appDir);
@@ -90,9 +120,12 @@ export function createCodexAdapter(ctx) {
         appDir: ctx.appDir,
         rest,
         planPath: planMeta?.path,
+        specPath,
         plan: planMeta,
+        seat: "codex",
+        thinkFirst: options.thinkFirst === true,
       });
-      const handle = await ensureThread();
+      const handle = await ensureThread(phase);
       if (typeof handle.run !== "function") throw new Error("Codex thread has no run method.");
       const result = await handle.run(fullPrompt);
       if (cancelled) return;
@@ -109,7 +142,16 @@ export function createCodexAdapter(ctx) {
             if (followText) yield makeEvent("assistant_text", { text: String(followText), runId, agentId });
           },
         });
-        return;
+      }
+      if (phase === "fast") {
+        fastTurns += 1;
+        if (fastTurns >= FAST_TURN_LIMIT) {
+          releaseThread();
+          fastTurns = 0;
+        }
+      } else {
+        releaseThread();
+        fastTurns = 0;
       }
       yield makeEvent("run_finished", { runId, agentId, status: "finished" });
     },
@@ -118,6 +160,8 @@ export function createCodexAdapter(ctx) {
     },
     async reset() {
       thread = null;
+      threadKey = "";
+      fastTurns = 0;
       codex = null;
       agentId = `codex-${ctx.slug}-${Date.now()}`;
     },
@@ -140,7 +184,7 @@ export function createCodexAdapter(ctx) {
       return makeEvent("summary", { text: "Codex keeps the thread. Ask it to summarize the work so far.", status: "completed" });
     },
     async getUsage() {
-      return { seat: "codex", model: CODEX_MODEL || "account default" };
+      return { seat: "codex", model: modelFor("fast", "codex") };
     },
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),

@@ -148,13 +148,13 @@ export async function copyTemplate({ slug, templateDir = defaultTemplateDir(), a
 }
 
 /**
- * Add the deployment files when a project does not have them yet.
+ * Add the starter files when a project does not have them yet.
  * The template Dockerfile is the basis: multi-stage Node 22, production deps, port 8080.
  * @param {string} dest
  * @param {string} templateDir
  */
 async function ensureDeployment(dest, templateDir) {
-  for (const name of ["Dockerfile", ".dockerignore"]) {
+  for (const name of ["Dockerfile", ".dockerignore", ".gitignore"]) {
     const target = path.join(dest, name);
     const present = await fs
       .access(target)
@@ -197,7 +197,27 @@ function spawnLogged(command, args, { cwd, env, logs }) {
   });
   child.stdout?.on("data", (chunk) => logs.push(String(chunk)));
   child.stderr?.on("data", (chunk) => logs.push(String(chunk)));
+  child.on("error", (error) => {
+    logs.push(error instanceof Error ? error.message : "The process could not start.");
+  });
   return child;
+}
+
+/** Shown in the preview pane. The process log stays out of this message. */
+export const PREVIEW_CLOSED = "This app has a security issue, so Clay left it closed.";
+export const PREVIEW_STOPPED = "The app stopped before it could open.";
+export const PREVIEW_QUIET = "The app didn't start.";
+
+export class PreviewStartError extends Error {
+  /**
+   * @param {string} message
+   * @param {string[]} [logs]
+   */
+  constructor(message, logs = []) {
+    super(message);
+    this.name = "PreviewStartError";
+    this.logs = logs;
+  }
 }
 
 /**
@@ -269,9 +289,7 @@ export async function startPreview({ appDir, port, install = true }) {
     }
     const report = await settleNpmSecurity(appDir);
     logs.push(`${securitySummary(report)}\n`);
-    if (report.blocking.length) {
-      throw new Error(securitySummary(report));
-    }
+    if (report.blocking.length) throw new PreviewStartError(PREVIEW_CLOSED, logs);
   }
 
   const child = spawnLogged("node", ["server/index.js"], {
@@ -284,14 +302,12 @@ export async function startPreview({ appDir, port, install = true }) {
   const deadline = Date.now() + 20000;
   while (Date.now() < deadline) {
     if (await isPortOpen(boundPort)) break;
-    if (child.exitCode !== null) {
-      throw new Error(`Preview exited before listen: ${logs.slice(-12).join("")}`);
-    }
+    if (child.exitCode !== null) throw new PreviewStartError(PREVIEW_STOPPED, logs);
     await new Promise((r) => setTimeout(r, 150));
   }
   if (!(await isPortOpen(boundPort))) {
     children.forEach((c) => c.kill("SIGTERM"));
-    throw new Error(`Preview did not bind 127.0.0.1:${boundPort}`);
+    throw new PreviewStartError(PREVIEW_QUIET, logs);
   }
 
   const handle = {
@@ -323,6 +339,27 @@ export async function stopPreview(appDir) {
  */
 export function getPreview(appDir) {
   return running.get(appDir) ?? null;
+}
+
+/**
+ * Start a preview. A crash or a security block stays a short message.
+ * The process log is not part of that message.
+ * @param {object} input
+ * @param {string} input.appDir
+ * @param {number} [input.port]
+ * @param {boolean} [input.install]
+ * @param {boolean} [input.fixture]
+ * @returns {Promise<{ ok: true, url: string } | { ok: false, message: string }>}
+ */
+export async function containPreview(input) {
+  try {
+    const handle = input.fixture
+      ? await startFixturePreview(input.port, input.appDir)
+      : await startPreview(input);
+    return { ok: true, url: handle.url };
+  } catch (error) {
+    return { ok: false, message: error instanceof PreviewStartError ? error.message : PREVIEW_QUIET };
+  }
 }
 
 /**

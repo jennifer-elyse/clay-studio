@@ -1,6 +1,6 @@
 # Clay web app
 
-Internal request tracker. Clay 1.0 starter: React, Express, Postgres.
+Minimal Vite and Express starter. The product, the design, and the code rules live in `docs/`.
 
 - Owner: the team that adopts this app. Name them before the app leaves localhost.
 - Tier: 3 — internal

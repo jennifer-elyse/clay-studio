@@ -1,0 +1,16 @@
+---
+description: Clay code rules for this app, including React 19
+alwaysApply: true
+---
+
+# Clay code
+
+This app follows `docs/code.md`.
+
+- JavaScript with JSDoc. No in-code TypeScript syntax. Zod at every boundary. Change the contract before the handler.
+- Noun paths. Verbs are HTTP methods. Writes send `Idempotency-Key`. Errors are `{ code, message, requestId }`. Status changes are declared transitions.
+- React 19 (`react` and `react-dom` ^19.3.1). Function components. `ref` is a prop. A form submits through its `action`. `useActionState` from `react` holds a submit result and pending state. The automatic JSX runtime stays on. `eslint-plugin-react-hooks` recommended rules stay on.
+- `node scripts/stack-versions.js` warns when a direct production dependency is behind the npm `latest` tag. Repeat that warning.
+- Pure functions. Do not mutate shared data. Compare with `===`. A component stays at or under 50 lines.
+- No customer, payment, HR, or secret data in prompts, logs, or seed data.
+- `/plan` before implementation. Docs change in the same change as the behavior.

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { browserOpen, launchSteps, npmBin, STUDIO_URL } from "./launch-plan.js";
+import { warnStack } from "./stack-versions.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const studioDir = path.join(root, "apps", "studio");
@@ -96,12 +97,14 @@ async function main() {
     return;
   }
 
+  if (fs.existsSync(path.join(root, "node_modules"))) await warnStack(root);
   const server = spawn(process.execPath, ["server/index.js"], {
     cwd: studioDir,
     stdio: "inherit",
     env: {
       ...process.env,
       CLAY_SERVE_UI: "1",
+      CLAY_STACK_CHECKED: "1",
       PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ""}`,
     },
   });

@@ -6,8 +6,9 @@ import {
   nextPlanSlug,
   setPlanStatus,
   writePlan,
+  writeSpec,
 } from "./plan-gate.js";
-import { copyTemplate, getPreview, startFixturePreview, startPreview, stopPreview } from "./preview.js";
+import { containPreview, copyTemplate, getPreview, stopPreview } from "./preview.js";
 
 /**
  * @param {number} ms
@@ -47,12 +48,51 @@ export function createMockAdapter(ctx) {
       yield makeEvent("seat", {
         seat: {
           provider: "mock",
-          model: modelFor(command === "plan" ? "plan" : "build", "mock"),
+          model: modelFor(command === "plan" || command === "spec" ? "plan" : "build", "mock"),
           caption: "Mock seat — sign in with Cursor or Copilot to use your account.",
         },
       });
 
-      if (command === "plan") {
+      if (options.thinkFirst && (command === "plan" || command === "fix")) {
+        const text =
+          command === "plan"
+            ? `If I were planning “${rest}”, I'd keep the Clay starter and write a /plan first.`
+            : `If I were fixing “${rest}”, I'd change only the broken control.`;
+        yield makeEvent("assistant_text", { text });
+      }
+
+      if (command === "spec") {
+        const title = rest || "First slice of the app";
+        const slug = await nextPlanSlug(ctx.appDir, title);
+        const body = [
+          "## Outcome",
+          "",
+          title,
+          "",
+          "## Scope",
+          "",
+          "In:",
+          "",
+          "- The behavior the person asked for.",
+          "",
+          "Out:",
+          "",
+          "- Production credentials, APIM, and real customer data.",
+          "",
+          "## Behavior",
+          "",
+          "A person can see the result of this slice in the running app.",
+          "",
+          "## Acceptance criteria",
+          "",
+          "- [ ] AC-1: The slice does what was asked, with no extra behavior.",
+        ].join("\n");
+        const spec = await writeSpec({ appDir: ctx.appDir, slug, title, body });
+        const relative = spec.path.replace(`${ctx.appDir}/`, "");
+        yield makeEvent("assistant_text", {
+          text: `Draft spec is ready at ${relative}. /plan can turn it into an approach.`,
+        });
+      } else if (command === "plan") {
         yield makeEvent("step", { step: { label: "Reading your vision", status: "running" } });
         await delay(40);
         if (cancelled) return;
@@ -90,15 +130,18 @@ export function createMockAdapter(ctx) {
         });
       } else if (command === "run") {
         yield makeEvent("preview", { preview: { status: "starting" } });
-        const handle =
-          process.env.CLAY_PREVIEW_FIXTURE === "1"
-            ? await startFixturePreview(undefined, ctx.appDir)
-            : await startPreview({
-                appDir: ctx.appDir,
-                install: process.env.CLAY_SKIP_INSTALL !== "1",
-              });
-        yield makeEvent("preview", { preview: { status: "ready", url: handle.url } });
-        yield makeEvent("assistant_text", { text: `It's running at ${handle.url}` });
+        const opened = await containPreview({
+          appDir: ctx.appDir,
+          install: process.env.CLAY_SKIP_INSTALL !== "1",
+          fixture: process.env.CLAY_PREVIEW_FIXTURE === "1",
+        });
+        if (!opened.ok) {
+          yield makeEvent("preview", { preview: { status: "error", message: opened.message } });
+          yield makeEvent("run_finished", { runId, agentId, status: "error" });
+          return;
+        }
+        yield makeEvent("preview", { preview: { status: "ready", url: opened.url } });
+        yield makeEvent("assistant_text", { text: `It's running at ${opened.url}` });
       } else if (command === "docs") {
         const plans = await listPlans(ctx.appDir);
         const lines = plans.map((plan) => `- ${plan.status}: ${plan.title}`).join("\n") || "- No plans yet.";
@@ -117,7 +160,7 @@ export function createMockAdapter(ctx) {
       } else if (command === "search") {
         yield makeEvent("assistant_text", {
           text: rest
-            ? `Mock search for “${rest}”: docs/vision.md, docs/erd.md, server/requests.js.`
+            ? `Mock search for “${rest}”: docs/vision.md, docs/erd.md, server/index.js.`
             : "What should I search for?",
         });
       } else if (command === "think") {
@@ -138,7 +181,7 @@ export function createMockAdapter(ctx) {
       } else if (command === "code") {
         yield makeEvent("assistant_text", {
           text: rest
-            ? `Mock seat would edit JS for: ${rest}. New features still need an approved /plan.`
+            ? `Use the IDE for: ${rest}. New features still need an approved /plan.`
             : "What should we change in the code?",
         });
       } else if (command === "image") {

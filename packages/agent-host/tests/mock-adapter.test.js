@@ -17,6 +17,7 @@ describe("mock host", () => {
     const appsDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-apps-"));
     process.env.CLAY_STUDIO_SEAT = "mock";
     process.env.CLAY_SESSION_PATH = path.join(appsDir, "session.json");
+    process.env.CLAY_PROFILE_DIR = path.join(appsDir, "profile");
     await copyTemplate({ slug: "demo", appsDir, templateDir });
     const host = await createHost({ slug: "demo", seat: "mock", appsDir, templateDir });
 
@@ -36,9 +37,18 @@ describe("mock host", () => {
   test("help, settings, and clear", async () => {
     const appsDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-apps-"));
     process.env.CLAY_SESSION_PATH = path.join(appsDir, "session.json");
+    process.env.CLAY_PROFILE_DIR = path.join(appsDir, "profile");
     const host = await createHost({ slug: "cmds", seat: "mock", appsDir, templateDir });
     const help = await collect(host.send("/help"));
+    expect(help.some((e) => e.text?.includes("/spec"))).toBe(true);
     expect(help.some((e) => e.text?.includes("/plan"))).toBe(true);
+    const spec = await collect(host.send("/spec intake form"));
+    const said = spec.find((event) => event.text?.includes("spec.md"));
+    const match = said?.text?.match(/docs\/plans\/\S+?spec\.md/);
+    expect(match?.[0]).toMatch(/spec\.md$/);
+    const raw = await fs.readFile(path.join(host.appDir, match[0]), "utf8");
+    expect(raw).toContain("status: draft");
+    expect(raw).toContain("AC-1");
     const settings = await collect(host.send("/settings"));
     expect(settings.some((e) => e.text?.includes("Seat: mock"))).toBe(true);
     const cleared = await collect(host.send("/clear"));
@@ -51,12 +61,21 @@ describe("mock host", () => {
   test("a brain runs think before plan or fix", async () => {
     const appsDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-apps-"));
     process.env.CLAY_SESSION_PATH = path.join(appsDir, "session.json");
+    process.env.CLAY_PROFILE_DIR = path.join(appsDir, "profile");
     const host = await createHost({ slug: "think-first", seat: "mock", appsDir, templateDir });
+    const plain = await collect(host.send("/plan intake form"));
+    const plainSaid = plain.filter((event) => event.type === "user_text").map((event) => event.text);
+    expect(plainSaid).toEqual(["/plan intake form"]);
+
     const planned = await collect(host.send({ prompt: "/plan intake form", thinkFirst: true }));
     const said = planned.filter((event) => event.type === "user_text").map((event) => event.text);
     expect(said).toEqual(["/think intake form", "/plan intake form"]);
     expect(planned.some((event) => event.text?.includes("If I were planning"))).toBe(true);
     expect(planned.some((event) => event.type === "plan")).toBe(true);
+
+    const fixedPlain = await collect(host.send("/fix the button"));
+    const fixedPlainSaid = fixedPlain.filter((event) => event.type === "user_text").map((event) => event.text);
+    expect(fixedPlainSaid).toEqual(["/fix the button"]);
 
     const fixed = await collect(host.send({ prompt: "/fix the button", thinkFirst: true }));
     const fixedSaid = fixed.filter((event) => event.type === "user_text").map((event) => event.text);

@@ -1,0 +1,12 @@
+---
+description: Warn when React, Express, or another production dependency is behind the latest npm release
+alwaysApply: true
+---
+
+# Production versions
+
+The production release of a dependency is its npm `latest` tag. `next`, `canary`, `beta`, and `rc` are not production.
+
+Before you finish work in this repo, run `node scripts/stack-versions.js`. If it prints a warning, repeat that warning in the reply. Do not call a version in the docs current when the script disagrees.
+
+A warning means the installed package, the declared range, or the Vite prebundle is behind `latest`. Restart Vite with `--force` when the warning says Vite is serving an older React.

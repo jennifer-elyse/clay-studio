@@ -18,10 +18,10 @@ describe("slash commands", () => {
   });
 
   test("parses the extra Clay commands", () => {
-    const ids = ["/help", "/clear", "/search", "/think", "/summarize", "/write", "/code", "/image", "/settings", "/debug", "/reset"].map(
+    const ids = ["/spec", "/help", "/clear", "/search", "/think", "/summarize", "/write", "/code", "/image", "/settings", "/debug", "/reset"].map(
       (slash) => parseSlash(slash).command?.id,
     );
-    expect(ids).toEqual(["help", "clear", "search", "think", "summarize", "write", "code", "image", "settings", "debug", "reset"]);
+    expect(ids).toEqual(["spec", "help", "clear", "search", "think", "summarize", "write", "code", "image", "settings", "debug", "reset"]);
   });
 
   test("parses /seats and /seat as the same command", () => {

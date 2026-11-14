@@ -18,7 +18,7 @@ export const PRODUCT_SEATS = [
   {
     id: "cursor",
     label: "Cursor",
-    summary: "Local Cursor agent on this computer. Claude plans. Grok 4.7 High writes the code.",
+    summary: "Local Cursor agent. Claude plans. Grok 4.7 High builds. Other turns use Composer from the weekly pool.",
     details: [
       {
         name: "CURSOR_API_KEY",
@@ -40,7 +40,7 @@ export const PRODUCT_SEATS = [
   {
     id: "codex",
     label: "Codex",
-    summary: "Local Codex thread. Plans stay required before implementation.",
+    summary: "Local Codex thread. Plan and build use GPT-5.4 at medium effort. Other turns use GPT-5.4 mini at low effort.",
     details: [
       {
         name: "CODEX_API_KEY",
@@ -60,7 +60,7 @@ export const PRODUCT_SEATS = [
   {
     id: "copilot",
     label: "Copilot",
-    summary: "GitHub Copilot on this computer. Plans stay required. Coding uses Copilot models.",
+    summary: "GitHub Copilot. Plan and build use GPT-5.4. Other turns use GPT-5 mini, which is included.",
     details: [
       {
         name: "GH_TOKEN",

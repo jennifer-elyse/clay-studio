@@ -42,7 +42,7 @@ import { makeEvent } from "./events.js";
  * @property {string} stderr
  */
 
-const SECURITY_COMMANDS = new Set(["build", "code", "fix"]);
+const SECURITY_COMMANDS = new Set(["build", "fix"]);
 
 /**
  * @param {string} command
