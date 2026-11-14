@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const SessionSchema = z.object({
   agentId: z.string().optional(),
-  seat: z.enum(["cursor", "copilot", "mock"]),
+  seat: z.enum(["cursor", "codex", "copilot", "mock"]),
   model: z.string().optional(),
   appDir: z.string(),
   slug: z.string(),

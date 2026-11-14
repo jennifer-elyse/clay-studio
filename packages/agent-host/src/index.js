@@ -1,6 +1,8 @@
 export { COMMANDS, filterCommands, formatHelp, parseSlash } from "./commands.js";
 export { createHost, detectSeat, SendInputSchema } from "./host.js";
+export { createCodexAdapter } from "./codex-adapter.js";
 export { createCursorAdapter } from "./cursor-adapter.js";
+export { isProductSeat, PRODUCT_SEATS, productSeat } from "./seats.js";
 export { createCopilotAdapter } from "./copilot-adapter.js";
 export { createMockAdapter } from "./mock-adapter.js";
 export { makeEvent, parseUiEvent, UiEventSchema, PlanSchema, SeatSchema } from "./events.js";

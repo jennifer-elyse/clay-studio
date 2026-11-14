@@ -1,0 +1,14 @@
+---
+description: Clay code rules, the same ones a generated app enforces
+alwaysApply: true
+---
+
+# Clay code
+
+Studio and a generated app follow one standard. The full text is `templates/web-app/docs/code.md`.
+
+- JavaScript with JSDoc. No in-code TypeScript syntax. Zod at every boundary. Change the contract before the handler.
+- Noun paths. Verbs are HTTP methods. Writes send `Idempotency-Key`. Errors are `{ code, message, requestId }`. Status changes are declared transitions.
+- Pure functions. Do not mutate shared data. Compare with `===`. A component stays at or under 50 lines.
+- No customer, payment, HR, or secret data in prompts, logs, or seed data.
+- `/plan` before implementation. Docs change in the same change as the behavior.

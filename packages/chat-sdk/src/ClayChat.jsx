@@ -1,109 +1,50 @@
-import { useMemo, useState } from "react";
-import { clipForCommand } from "./animations.js";
-import { ClayBot } from "./ClayBot.jsx";
-import { parseSlash } from "./commands.js";
-import { CommandPills } from "./CommandPills.jsx";
-import { Composer } from "./Composer.jsx";
-import { applyEvent, runStateFrom, stepsForRun } from "./map-events.js";
+import { ChatPane } from "./ChatPane.jsx";
+import { ClayHeader } from "./ClayHeader.jsx";
 import { PreviewPane } from "./PreviewPane.jsx";
-import { SeatBadge } from "./SeatBadge.jsx";
-import { Transcript } from "./Transcript.jsx";
+import { SeatModal } from "./SeatModal.jsx";
+import { useClaySession } from "./use-clay-session.js";
 import "./tokens.css";
 import "./ClayChat.css";
 
-/**
- * @param {object} props
- * @param {import("@cswg/agent-host").UiEvent[]} [props.events]
- * @param {import("./map-events.js").TranscriptItem[]} [props.items]
- * @param {(prompt: string) => void} props.onSend
- * @param {(path: string) => void} [props.onApprovePlan]
- * @param {() => void} [props.onAdjustPlan]
- * @param {{ provider?: string, model?: string, caption?: string } | null} [props.seat]
- * @param {string} [props.previewUrl]
- * @param {string} [props.previewStatus]
- * @param {boolean} [props.busy]
- * @param {string} [props.log]
- */
+/** @param {import("./use-clay-session.js").ClayChatProps} props */
 export function ClayChat(props) {
-  const [draft, setDraft] = useState("");
-  const [debug, setDebug] = useState(false);
-  const [clip, setClip] = useState("idle.webp");
-  const [minimized, setMinimized] = useState(false);
-  const items = props.items ?? (props.events ?? []).reduce(applyEvent, []);
-  const events = props.events ?? [];
-  const run = useMemo(() => runStateFrom(events), [events]);
-  const steps = useMemo(() => stepsForRun(events), [events]);
-  const working = props.busy || run.phase === "working";
-
-  /**
-   * @param {string} text
-   */
-  function playClip(text) {
-    const { command } = parseSlash(text);
-    setClip((previous) => clipForCommand(command?.id, { previous }));
-  }
-
-  function send(text) {
-    if (parseSlash(text).command?.id === "debug") {
-      setDebug((value) => !value);
-      playClip(text);
-      return;
-    }
-    playClip(text);
-    props.onSend(text);
-  }
-
+  const session = useClaySession(props);
   return (
-    <div className={`clay-root clay-shell${minimized ? " is-minimized" : ""}`}>
-      <header className="clay-header">
-        <ClayBot clip={clip} />
-        <div className="clay-wordmark">
-          <strong>Clay</strong>
-          <span>Mold freely. Ship safely.</span>
-        </div>
-        <div className="clay-header-actions">
-          <button
-            type="button"
-            className="clay-minimize"
-            aria-expanded={!minimized}
-            aria-controls="clay-chat"
-            onClick={() => setMinimized((value) => !value)}
-          >
-            {minimized ? "Show Clay" : "Minimize"}
-          </button>
-          <SeatBadge seat={props.seat} />
-        </div>
-      </header>
-      <section className="clay-chat" id="clay-chat" hidden={minimized}>
-        <Transcript
-          items={items}
-          steps={steps}
-          busy={working}
-          clip={clip}
-          onStarter={send}
+    <div className="clay-root">
+      <div className={`clay-shell${session.minimized ? " is-minimized" : ""}`}>
+        <ClayHeader
+          clip={session.clip}
+          minimized={session.minimized}
+          seat={props.seat}
+          onToggle={() => session.setMinimized((value) => !value)}
+          onOpenSeats={() => session.openSeats(props.seat?.provider)}
+        />
+        <ChatPane
+          hidden={session.minimized}
+          items={session.items}
+          steps={session.steps}
+          working={session.working}
+          clip={session.clip}
+          run={session.run}
+          draft={session.draft}
+          onDraft={session.setDraft}
+          onSend={session.send}
+          onPick={session.pick}
+          onSeats={() => session.openSeats()}
+          thinkFirst={session.thinkFirst}
           onApprove={props.onApprovePlan}
-          onAdjust={() => {
-            setDraft("/plan ");
-            playClip("/plan");
-            props.onAdjustPlan?.();
-          }}
+          onAdjust={() => session.adjust()}
         />
-        {run.label ? (
-          <p className={`clay-task is-${run.phase}`} role="status">
-            {run.label}
-          </p>
-        ) : null}
-        <CommandPills
-          onPick={(slash) => {
-            setDraft(slash);
-            playClip(slash);
-          }}
-          onSend={send}
-          busy={working}
+        <PreviewPane url={props.previewUrl} status={props.previewStatus} debug={session.debug} log={props.log} />
+        <SeatModal
+          open={session.seatsOpen}
+          product={session.seatProduct}
+          current={props.seat?.provider}
+          onProduct={session.setSeatProduct}
+          onUse={session.useSeat}
+          onClose={() => session.setSeatsOpen(false)}
         />
-        <Composer onSend={send} busy={working} value={draft} onChange={setDraft} />
-      </section>
-      <PreviewPane url={props.previewUrl} status={props.previewStatus} debug={debug} log={props.log} />
+      </div>
     </div>
   );
 }

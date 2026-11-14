@@ -31,7 +31,7 @@ export function Composer({ onSend, busy = false, value, onChange }) {
           aria-label="Message"
           value={text}
           disabled={busy}
-          placeholder={busy ? "Working…" : "Ask Clay, or type /plan"}
+          placeholder={busy ? "Working…" : "Ask Clay"}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {

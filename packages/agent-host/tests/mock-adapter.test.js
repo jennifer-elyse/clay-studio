@@ -47,4 +47,19 @@ describe("mock host", () => {
     expect(reset.some((e) => e.type === "user_text" && e.text === "/reset")).toBe(true);
     expect(reset.some((e) => e.type === "assistant_text" && e.text?.includes("Fresh agent"))).toBe(true);
   });
+
+  test("a brain runs think before plan or fix", async () => {
+    const appsDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-apps-"));
+    process.env.CLAY_SESSION_PATH = path.join(appsDir, "session.json");
+    const host = await createHost({ slug: "think-first", seat: "mock", appsDir, templateDir });
+    const planned = await collect(host.send({ prompt: "/plan intake form", thinkFirst: true }));
+    const said = planned.filter((event) => event.type === "user_text").map((event) => event.text);
+    expect(said).toEqual(["/think intake form", "/plan intake form"]);
+    expect(planned.some((event) => event.text?.includes("If I were planning"))).toBe(true);
+    expect(planned.some((event) => event.type === "plan")).toBe(true);
+
+    const fixed = await collect(host.send({ prompt: "/fix the button", thinkFirst: true }));
+    const fixedSaid = fixed.filter((event) => event.type === "user_text").map((event) => event.text);
+    expect(fixedSaid).toEqual(["/think the button", "/fix the button"]);
+  });
 });

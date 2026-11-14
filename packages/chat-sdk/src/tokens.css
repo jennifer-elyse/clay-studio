@@ -22,6 +22,7 @@
   --clay-radius: 16px;
   --clay-pill: 999px;
   --clay-focus: #3b7cc0;
+  --focus-ring: 0 0 0 3px rgb(0 102 204 / 28%);
   --clay-shadow: 0 10px 28px color-mix(in srgb, var(--clay-ink) 8%, transparent);
   --clay-shadow-sm: 0 2px 8px color-mix(in srgb, var(--clay-ink) 7%, transparent);
   --clay-font: "Nunito", "Helvetica Neue", Calibri, sans-serif;
@@ -32,8 +33,11 @@
 }
 
 .clay-root {
+  container-type: inline-size;
+  container-name: clay;
   font-family: var(--clay-font);
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--clay-ink);
   background: var(--clay-sand);
   min-height: 100%;
@@ -41,8 +45,9 @@
 }
 
 .clay-root :focus-visible {
-  outline: 3px solid var(--clay-focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--clay-ink);
+  outline-offset: 3px;
+  box-shadow: var(--focus-ring);
 }
 
 @media (prefers-reduced-motion: reduce) {

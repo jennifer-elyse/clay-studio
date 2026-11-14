@@ -22,6 +22,12 @@ export default [
     },
   },
   {
+    files: ["apps/**/*.jsx", "packages/**/*.jsx"],
+    rules: {
+      "max-lines": ["error", { max: 50, skipBlankLines: false, skipComments: false }],
+    },
+  },
+  {
     ignores: ["**/dist/**", "**/storybook-static/**", "templates/**", "coverage/**"],
   },
 ];

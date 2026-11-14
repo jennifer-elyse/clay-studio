@@ -8,8 +8,11 @@ export const CLAY_STANDARDS = [
   "Noun paths under /v1. Verbs are HTTP methods. Errors are { code, message, requestId } and code comes from the catalog in server/contracts.js.",
   "Every write sends Idempotency-Key and a retry returns the first result. Status changes are declared transitions. schema.sql can run again safely.",
   "Pure functions. Do not mutate shared data. Compare with ===. Screens stay under 50 lines and use tokens from client/src/tokens.css.",
+  "Numbers use tabular figures. Layout is intrinsic, with container queries. Do not use a viewport breakpoint media query for layout. The only media query is prefers-reduced-motion, and it may only reduce or remove motion.",
+  "Hover is a warm-gray surface change and slight elevation, only on an actionable element. Focus uses --focus-ring and is not color-only. A disabled control says why when the reason is not obvious.",
   "Semantic HTML, keyboard use, a visible focus ring, and a text label for every status.",
   "Update the docs in the same change, including docs/erd.md when data moves.",
+  "Before a change is done, fix open npm security issues. Upgrade a direct dependency when the patched release is newer. Do not downgrade a package to clear an advisory.",
 ].join(" ");
 
 /**
@@ -48,6 +51,7 @@ export function buildPrompt({ appDir, plan, rest }) {
     "Implement ONLY the approved plan. Do not expand scope.",
     `Approved plan: ${plan.path} (${plan.title}).`,
     "Follow docs/code.md and the definition of done at the end of that file.",
+    "Before you finish, fix open npm security issues. Upgrade to a newer patched release. Do not downgrade a package to clear an advisory.",
     "Use the add-endpoint skill for a new route, ui-tokens for a screen, and migrate-erd when the schema changes.",
     "Update docs in the same change. Keep components under 50 lines.",
     rest ? `Extra direction: ${rest}` : "",

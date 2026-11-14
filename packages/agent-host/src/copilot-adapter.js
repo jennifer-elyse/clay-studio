@@ -2,6 +2,7 @@ import { makeEvent } from "./events.js";
 import { COPILOT_MODEL } from "./models.js";
 import { assertBuildAllowed, nextPlanSlug, setPlanStatus } from "./plan-gate.js";
 import { copyTemplate, getPreview, previewTools, startPreview, stopPreview } from "./preview.js";
+import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
 import { promptFor } from "./prompts.js";
 
 const CAPTION =
@@ -12,6 +13,7 @@ const CAPTION =
  * @param {string} ctx.appDir
  * @param {string} ctx.slug
  * @param {string} [ctx.templateDir]
+ * @param {string} [ctx.appsDir]
  * @param {string} [ctx.gitHubToken]
  */
 export function createCopilotAdapter(ctx) {
@@ -149,7 +151,30 @@ export function createCopilotAdapter(ctx) {
       } else {
         throw new Error("Copilot session has no send method");
       }
-      if (!cancelled) yield makeEvent("run_finished", { runId, agentId, status: "finished" });
+      if (cancelled) return;
+      if (needsSecurityPass(command)) {
+        yield* secureAfterRun({
+          appDir: ctx.appDir,
+          runId,
+          agentId,
+          repair: async function* repair(prompt) {
+            const sessionHandle = await ensureSession();
+            const payload = { prompt };
+            if (typeof sessionHandle.sendAndWait === "function") {
+              yield* fromResponse(await sessionHandle.sendAndWait(payload));
+              return;
+            }
+            const response = await sessionHandle.send(payload);
+            if (response?.[Symbol.asyncIterator]) {
+              for await (const event of response) yield* fromResponse(event);
+              return;
+            }
+            yield* fromResponse(response);
+          },
+        });
+        return;
+      }
+      yield makeEvent("run_finished", { runId, agentId, status: "finished" });
     },
     async cancel() {
       cancelled = true;
@@ -182,7 +207,7 @@ export function createCopilotAdapter(ctx) {
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),
     ensureWorkspace: async () => {
-      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir });
+      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir, appsDir: ctx.appsDir });
       return ctx.appDir;
     },
   };

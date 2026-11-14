@@ -12,6 +12,9 @@ describe("Clay 1.0 prompts", () => {
       expect(prompt).toContain("Clay 1.0");
       expect(prompt).toContain("Idempotency-Key");
       expect(prompt).toContain("docs/code.md");
+      expect(prompt).toContain("container queries");
+      expect(prompt).toContain("tabular figures");
+      expect(prompt).toContain("Do not downgrade a package");
       expect(prompt).toContain(CLAY_STANDARDS);
     }
     expect(plan).toContain("Do not implement code yet");

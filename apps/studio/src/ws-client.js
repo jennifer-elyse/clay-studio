@@ -1,6 +1,6 @@
 /**
  * @typedef {object} StudioClient
- * @property {(prompt: string) => void} send
+ * @property {(input: string | { prompt: string, thinkFirst?: boolean }) => void} send
  * @property {(path: string) => void} approve
  * @property {(text: string) => void} steer
  * @property {(seat: string) => void} setSeat
@@ -31,7 +31,11 @@ export function connectStudio(handlers) {
   }
 
   return {
-    send: (prompt) => ready({ type: "send", prompt }),
+    send: (input) => {
+      const prompt = typeof input === "string" ? input : input.prompt;
+      const thinkFirst = typeof input === "string" ? undefined : input.thinkFirst;
+      ready(thinkFirst ? { type: "send", prompt, thinkFirst: true } : { type: "send", prompt });
+    },
     approve: (path) => ready({ type: "approve_plan", path }),
     steer: (text) => ready({ type: "steer", text }),
     setSeat: (seat) => ready({ type: "set_seat", seat }),

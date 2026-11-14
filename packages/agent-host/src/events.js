@@ -20,7 +20,7 @@ export const PreviewSchema = z.object({
 });
 
 export const SeatSchema = z.object({
-  provider: z.enum(["cursor", "copilot", "mock"]),
+  provider: z.enum(["cursor", "codex", "copilot", "mock"]),
   model: z.string().optional(),
   caption: z.string().optional(),
 });

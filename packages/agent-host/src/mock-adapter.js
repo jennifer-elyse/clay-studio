@@ -190,7 +190,7 @@ export function createMockAdapter(ctx) {
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),
     ensureWorkspace: async () => {
-      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir });
+      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir, appsDir: ctx.appsDir });
       return ctx.appDir;
     },
   };

@@ -2,7 +2,8 @@ import { makeEvent } from "./events.js";
 import { friendlyTool, textFromCursorEvent } from "./friendly.js";
 import { BUILD_MODEL, PLAN_MODEL, cursorModelOptions, modelFor } from "./models.js";
 import { assertBuildAllowed, nextPlanSlug, setPlanStatus } from "./plan-gate.js";
-import { copyTemplate, getPreview, previewTools, startPreview, stopPreview } from "./preview.js";
+import { copyTemplate, getPreview, isInsideRepo, previewTools, startPreview, stopPreview } from "./preview.js";
+import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
 import { promptFor } from "./prompts.js";
 
 /**
@@ -10,6 +11,7 @@ import { promptFor } from "./prompts.js";
  * @param {string} ctx.appDir
  * @param {string} ctx.slug
  * @param {string} [ctx.templateDir]
+ * @param {string} [ctx.appsDir]
  */
 export function createCursorAdapter(ctx) {
   /** @type {any} */
@@ -27,6 +29,9 @@ export function createCursorAdapter(ctx) {
   }
 
   async function ensureAgent(phase) {
+    if (isInsideRepo(ctx.appDir)) {
+      throw new Error(`The Cursor project must stay outside Clay. Refusing ${ctx.appDir}.`);
+    }
     const { Agent, Cursor } = await sdk();
     const cwd = ctx.appDir;
     const model = cursorModelOptions(modelFor(phase, "cursor"), phase);
@@ -150,9 +155,30 @@ export function createCursorAdapter(ctx) {
       activeRun = null;
       if (result?.status === "error") {
         yield makeEvent("error", { text: "The Cursor run failed. Check the transcript.", runId, agentId });
-      } else {
-        yield makeEvent("run_finished", { runId, agentId, status: result?.status ?? "finished" });
+        return;
       }
+      if (needsSecurityPass(command)) {
+        yield* secureAfterRun({
+          appDir: ctx.appDir,
+          runId,
+          agentId,
+          repair: async function* repair(prompt) {
+            const follow = await handle.send(prompt, {
+              model: cursorModelOptions(modelId, phase),
+              local: { customTools: previewTools(() => ctx.appDir) },
+            });
+            activeRun = follow;
+            yield* streamRun(follow, runId);
+            const followResult = await follow.wait();
+            activeRun = null;
+            if (followResult?.status === "error") {
+              throw new Error("The security fix run failed.");
+            }
+          },
+        });
+        return;
+      }
+      yield makeEvent("run_finished", { runId, agentId, status: result?.status ?? "finished" });
     },
     async cancel() {
       if (activeRun?.supports?.("cancel")) await activeRun.cancel();
@@ -196,7 +222,7 @@ export function createCursorAdapter(ctx) {
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),
     ensureWorkspace: async () => {
-      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir });
+      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir, appsDir: ctx.appsDir });
       return ctx.appDir;
     },
   };

@@ -78,6 +78,11 @@ async function main() {
   }
 
   const npm = npmBin(process.execPath, process.platform);
+  if ((steps.includes("install") || steps.includes("build")) && !fs.existsSync(npm)) {
+    throw new Error(
+      "npm is not next to Node.js. Close this window and open Clay Studio again. It will install Node.js 26, which includes npm.",
+    );
+  }
   if (steps.includes("install")) {
     process.stdout.write("Installing…\n");
     await run(npm, ["install"], root);

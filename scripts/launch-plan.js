@@ -28,6 +28,19 @@ export function isNodeNewEnough(raw) {
 }
 
 /**
+ * Clay Studio runs on the pinned Node.js major. The official archive includes npm.
+ * The private runtime must match the pinned patch. Another install of that major is fine when npm sits beside node.
+ * @param {{ nodeVersion: string, npmOk: boolean, pinned: string, privateRuntime?: boolean }} input
+ */
+export function needsRuntimeInstall(input) {
+  if (!input.npmOk) return true;
+  const node = parseNodeVersion(input.nodeVersion);
+  const pinned = parseNodeVersion(input.pinned);
+  if (input.privateRuntime) return node[0] !== pinned[0] || node[1] !== pinned[1] || node[2] !== pinned[2];
+  return node[0] !== pinned[0];
+}
+
+/**
  * Official Node.js binary for a private runtime folder.
  * @param {string} version
  * @param {string} platform

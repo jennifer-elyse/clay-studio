@@ -2,9 +2,9 @@ import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import http from "node:http";
 import net from "node:net";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { securitySummary, settleNpmSecurity } from "./npm-security.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,10 +16,38 @@ export function defaultTemplateDir() {
 }
 
 /**
+ * Clay Studio repository root. Generated apps must not be created under it.
  * @returns {string}
  */
-export function defaultAppsDir() {
-  return path.resolve(process.env.CLAY_APPS_DIR || path.join(os.homedir(), "Clay", "apps"));
+export function studioRoot() {
+  return path.resolve(here, "../../..");
+}
+
+/**
+ * @param {string} candidate
+ * @param {string} [root]
+ * @returns {boolean}
+ */
+export function isInsideRepo(candidate, root = studioRoot()) {
+  const base = path.resolve(root);
+  const target = path.resolve(candidate);
+  const relative = path.relative(base, target);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+/**
+ * Folder that holds new projects. The default is the parent of this repository:
+ * a sibling of Clay, outside the repo, in a directory this process can already write.
+ * @param {string} [root]
+ * @returns {string}
+ */
+export function defaultAppsDir(root = studioRoot()) {
+  const override = process.env.CLAY_APPS_DIR;
+  const chosen = path.resolve(override || path.join(root, ".."));
+  if (isInsideRepo(chosen, root)) {
+    throw new Error(`Clay creates a new project outside itself. Refusing ${chosen}.`);
+  }
+  return chosen;
 }
 
 /**
@@ -57,11 +85,14 @@ export async function pickPort() {
 }
 
 /**
+ * Copy a tree and keep each file and directory mode.
  * @param {string} from
  * @param {string} to
  */
 async function copyDir(from, to) {
+  const info = await fs.stat(from);
   await fs.mkdir(to, { recursive: true });
+  await fs.chmod(to, info.mode & 0o777);
   const entries = await fs.readdir(from, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.name === "node_modules" || entry.name === "dist") continue;
@@ -71,6 +102,8 @@ async function copyDir(from, to) {
       await copyDir(src, dest);
     } else {
       await fs.copyFile(src, dest);
+      const fileInfo = await fs.stat(src);
+      await fs.chmod(dest, fileInfo.mode & 0o777);
     }
   }
 }
@@ -82,16 +115,57 @@ async function copyDir(from, to) {
  * @param {string} [input.appsDir]
  */
 export async function copyTemplate({ slug, templateDir = defaultTemplateDir(), appsDir = defaultAppsDir() }) {
+  if (slug.includes("/") || slug.includes("\\") || slug.includes("..")) {
+    throw new Error("App name must be a single folder name.");
+  }
+  const root = studioRoot();
+  if (isInsideRepo(appsDir, root)) {
+    throw new Error(`Clay creates a new project outside itself. Refusing ${appsDir}.`);
+  }
   const dest = path.join(appsDir, slug);
+  if (isInsideRepo(dest, root)) {
+    throw new Error(`Clay creates a new project outside itself. Refusing ${dest}.`);
+  }
   await fs.mkdir(appsDir, { recursive: true });
   const exists = await fs
     .access(dest)
     .then(() => true)
     .catch(() => false);
-  if (!exists) {
-    await copyDir(templateDir, dest);
+  if (exists) {
+    const clayApp = await fs
+      .access(path.join(dest, "AGENTS.md"))
+      .then(() => true)
+      .catch(() => false);
+    if (!clayApp) {
+      throw new Error(`${dest} already exists. Clay will not reuse a folder that is not a Clay project.`);
+    }
+    await ensureDeployment(dest, templateDir);
+    return dest;
   }
+  await copyDir(templateDir, dest);
+  await ensureDeployment(dest, templateDir);
   return dest;
+}
+
+/**
+ * Add the deployment files when a project does not have them yet.
+ * The template Dockerfile is the basis: multi-stage Node 22, production deps, port 8080.
+ * @param {string} dest
+ * @param {string} templateDir
+ */
+async function ensureDeployment(dest, templateDir) {
+  for (const name of ["Dockerfile", ".dockerignore"]) {
+    const target = path.join(dest, name);
+    const present = await fs
+      .access(target)
+      .then(() => true)
+      .catch(() => false);
+    if (present) continue;
+    const source = path.join(templateDir, name);
+    await fs.copyFile(source, target);
+    const info = await fs.stat(source);
+    await fs.chmod(target, info.mode & 0o777);
+  }
 }
 
 /**
@@ -192,6 +266,11 @@ export async function startPreview({ appDir, port, install = true }) {
         });
         child.on("error", reject);
       });
+    }
+    const report = await settleNpmSecurity(appDir);
+    logs.push(`${securitySummary(report)}\n`);
+    if (report.blocking.length) {
+      throw new Error(securitySummary(report));
     }
   }
 

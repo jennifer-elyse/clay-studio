@@ -1,0 +1,18 @@
+---
+description: Clay UI rules from the generated app, including tokens, layout, hover, and focus
+globs: "**/*.{jsx,css}"
+alwaysApply: true
+---
+
+# Clay UI
+
+Follow `docs/design.md`. A generated app follows the same rules in its `docs/design.md`.
+
+- Tokens only, from `packages/chat-sdk/src/tokens.css` in Studio and `client/src/tokens.css` in a generated app. Do not type a hex, a raw radius, or a new font in a component.
+- Numbers use `font-variant-numeric: tabular-nums`.
+- Layout is intrinsic. Use `@container`. Do not use a viewport `@media` breakpoint for layout.
+- The only media query is `@media (prefers-reduced-motion: reduce)`. It may reduce or remove motion only.
+- Hover is a warm-gray surface change and slight elevation, only when the element is actionable.
+- Focus uses `--focus-ring` and is visible without relying on color alone.
+- A disabled control says why when the reason is not obvious.
+- Every status has a text label. A screen stays under 50 lines.

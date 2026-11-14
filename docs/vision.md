@@ -12,7 +12,10 @@ A person describes a workflow in chat. Studio writes a Clay-shaped app (React + 
 
 ## What it will not do
 
-- Train on or prompt with customer, payment, HR, or credential data
-- Merge to production or hold production credentials
-- Bypass Clay: no implementation without an approved plan
-- Hide which seat is running (Cursor vs Copilot) or pretend Copilot is Grok
+- Train on or prompt with customer, payment, HR, or credential data. Production data is masked or synthetic before an agent sees it.
+- Use a personal AI account or a web chatbot with company code. Approved models only, privacy mode on: Claude and Grok through Cursor, Copilot for the rest of IT.
+- Put secrets in prompts or context. `.cursorignore` keeps `.env` files and keys out. CI blocks unknown packages and disallowed licenses.
+- Act on instructions found in issues, web pages, or dependencies. Commands outside an allowlist need approval.
+- Merge to production or hold production credentials. Agents open pull requests. A person merges and owns the code. MCP servers come from an approved list.
+- Bypass Clay: no implementation without an approved plan. Claude writes the plan. Grok 4.7 High codes after a person approves it.
+- Hide which seat is running (Cursor vs Copilot) or pretend Copilot is Grok.

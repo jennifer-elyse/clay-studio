@@ -80,11 +80,11 @@
   color: var(--clay-ink);
   padding: 6px 12px;
   box-shadow: var(--clay-shadow-sm);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .clay-minimize:hover {
-  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
   box-shadow: var(--clay-shadow);
 }
 
@@ -111,6 +111,48 @@
   box-shadow: var(--clay-shadow);
   min-height: 0;
   overflow: hidden;
+}
+
+.clay-chat-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 14px 0;
+}
+
+.clay-tool {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--clay-pill);
+  border: 1.5px solid transparent;
+  padding: 6px 12px;
+  box-shadow: var(--clay-shadow-sm);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clay-tool.is-clear {
+  background: var(--clay-sun);
+  color: var(--clay-ink);
+  border-color: var(--clay-sun);
+}
+
+.clay-tool.is-reset {
+  background: var(--clay-danger);
+  color: var(--clay-paper);
+  border-color: var(--clay-danger);
+}
+
+.clay-tool:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  color: var(--clay-ink);
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-tool:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .clay-transcript {
@@ -214,13 +256,6 @@
   margin: 0 0 16px;
 }
 
-.clay-starters {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.clay-starters button,
 .clay-pill,
 .clay-send,
 .clay-plan button {
@@ -228,39 +263,60 @@
   cursor: pointer;
 }
 
-.clay-starters button {
-  background: var(--clay-paper);
-  border: 1px solid var(--clay-stroke);
-  border-radius: 14px;
-  padding: 12px 14px 12px 16px;
-  text-align: left;
-  font-weight: 700;
-  box-shadow: var(--clay-shadow-sm);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+.clay-pills {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 8px;
 }
 
-.clay-starters button:hover {
-  transform: translateY(-1px);
+.clay-help {
+  margin-left: auto;
+}
+
+.clay-help-button {
+  min-width: 36px;
+  padding-inline: 0;
+}
+
+.clay-help-menu {
+  position: absolute;
+  right: 16px;
+  bottom: calc(100% + 8px);
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  min-width: 148px;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--clay-stroke);
+  border-radius: var(--clay-radius);
+  background: var(--clay-paper);
   box-shadow: var(--clay-shadow);
 }
 
-.clay-starters button:nth-child(1) {
-  border-left: 4px solid var(--clay-blob);
+.clay-help-item {
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  border: 0;
+  border-radius: var(--clay-pill);
+  padding: 8px 12px;
+  background: var(--clay-surface);
+  color: var(--clay-ink);
 }
 
-.clay-starters button:nth-child(2) {
-  border-left: 4px solid var(--clay-plan);
+.clay-help-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  box-shadow: var(--clay-shadow-sm);
 }
 
-.clay-starters button:nth-child(3) {
-  border-left: 4px solid var(--clay-run);
-}
-
-.clay-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 16px 8px;
+.clay-help-item:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .clay-pill {
@@ -272,12 +328,45 @@
   font-size: 13px;
   font-weight: 700;
   box-shadow: var(--clay-shadow-sm);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.clay-pill:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--clay-shadow);
+.clay-pill.has-brain {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px 12px;
+}
+
+.clay-pill-main,
+.clay-brain {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.clay-brain {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--clay-pill);
+  padding: 0;
+}
+
+.clay-brain.is-armed {
+  background: color-mix(in srgb, currentColor 16%, var(--clay-paper));
+}
+
+.clay-brain-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 .clay-pill.is-plan {
@@ -375,6 +464,12 @@
   background: var(--clay-log);
 }
 
+.clay-pill:hover {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  color: var(--clay-ink);
+  box-shadow: var(--clay-shadow);
+}
+
 .clay-composer {
   padding: 12px 16px 16px;
   background: color-mix(in srgb, var(--clay-paper) 70%, var(--clay-surface));
@@ -410,12 +505,13 @@
   font-weight: 700;
   letter-spacing: 0.01em;
   box-shadow: 0 8px 16px color-mix(in srgb, var(--clay-blob) 32%, transparent);
-  transition: transform 0.15s ease, filter 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .clay-send:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  color: var(--clay-ink);
+  box-shadow: var(--clay-shadow);
 }
 
 .clay-send:disabled {
@@ -506,8 +602,11 @@
 }
 
 .clay-badge {
+  font: inherit;
   font-size: 12px;
   font-weight: 700;
+  color: inherit;
+  cursor: pointer;
   border-radius: var(--clay-pill);
   padding: 5px 12px;
   border: 1.5px solid var(--clay-sun);
@@ -517,6 +616,128 @@
 .clay-badge.is-copilot {
   border-color: var(--clay-plan);
   background: color-mix(in srgb, var(--clay-sky) 30%, var(--clay-paper));
+}
+
+.clay-badge.is-codex {
+  border-color: var(--clay-ink);
+  background: color-mix(in srgb, var(--clay-sand) 70%, var(--clay-paper));
+}
+
+.clay-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--clay-ink) 28%, transparent);
+}
+
+.clay-modal {
+  width: min(520px, 100%);
+  max-height: min(80vh, 720px);
+  overflow: auto;
+  padding: 20px 20px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--clay-stroke);
+  background: var(--clay-paper);
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-modal h2 {
+  font-family: var(--clay-display);
+  font-size: 28px;
+  font-weight: 560;
+  margin: 0 0 6px;
+}
+
+.clay-modal-lead,
+.clay-seat-choice span,
+.clay-seat-details span {
+  color: var(--clay-muted);
+}
+
+.clay-modal-lead {
+  margin: 0 0 14px;
+}
+
+.clay-seat-choices {
+  display: grid;
+  gap: 8px;
+}
+
+.clay-seat-choice {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--clay-stroke);
+  background: var(--clay-surface);
+  cursor: pointer;
+}
+
+.clay-seat-choice.is-selected {
+  border-color: var(--clay-plan);
+  background: color-mix(in srgb, var(--clay-sky) 18%, var(--clay-paper));
+}
+
+.clay-seat-details {
+  margin-top: 14px;
+}
+
+.clay-seat-details h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.clay-seat-details ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.clay-seat-details li {
+  display: grid;
+  gap: 2px;
+}
+
+.clay-seat-details strong {
+  font-family: var(--clay-mono);
+  font-size: 12px;
+}
+
+.clay-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.clay-seat-use,
+.clay-modal-close {
+  font: inherit;
+  cursor: pointer;
+}
+
+.clay-seat-use {
+  border: 0;
+  border-radius: var(--clay-pill);
+  padding: 8px 14px;
+  background: var(--clay-blob);
+  color: white;
+  font-weight: 700;
+}
+
+.clay-modal-close {
+  border: 0;
+  background: transparent;
+  color: var(--clay-muted);
+  padding: 4px 0;
 }
 
 .clay-debug {
@@ -529,8 +750,8 @@
   color: var(--clay-log-ink);
 }
 
-@media (max-width: 860px) {
-  .clay-shell {
+@container clay (max-width: 860px) {
+  .clay-shell:not(.is-minimized) {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(280px, 1fr) minmax(220px, 1fr);
   }
@@ -565,9 +786,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .clay-pill,
-  .clay-starters button,
   .clay-send,
-  .clay-minimize {
+  .clay-minimize,
+  .clay-tool,
+  .clay-help-item {
     transition: none;
   }
 }

@@ -14,12 +14,16 @@ export const COMMANDS = [
   { id: "image", slash: "/image", label: "Image", summary: "Sketch a screen or illustration in words", needsInput: true },
   { id: "settings", slash: "/settings", label: "Settings", summary: "Show seat, model, and workspace", needsInput: false },
   { id: "reset", slash: "/reset", label: "Reset", summary: "Start a fresh agent", needsInput: false },
-  { id: "seat", slash: "/seat", label: "Seat", summary: "Switch Cursor or Copilot", needsInput: true },
+  { id: "seat", slash: "/seats", aliases: ["/seat"], label: "Seats", summary: "Choose Cursor, Codex, or Copilot", needsInput: false },
   { id: "stop", slash: "/stop", label: "Stop", summary: "Cancel the run in flight", needsInput: false },
   { id: "debug", slash: "/debug", label: "Debug", summary: "Show the process log", needsInput: false },
 ];
 
-const bySlash = new Map(COMMANDS.map((command) => [command.slash, command]));
+const bySlash = new Map();
+for (const command of COMMANDS) {
+  bySlash.set(command.slash, command);
+  for (const alias of command.aliases ?? []) bySlash.set(alias, command);
+}
 
 /**
  * @param {string} input

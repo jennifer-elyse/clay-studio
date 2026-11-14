@@ -1,4 +1,9 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const appsDir = path.resolve(root, "..", ".clay-preview-apps");
 
 export default defineConfig({
   testDir: "./e2e",
@@ -11,7 +16,7 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: "CLAY_STUDIO_SEAT=mock CLAY_PREVIEW_FIXTURE=1 CLAY_APPS_DIR=./.clay/apps CLAY_SESSION_PATH=./.clay/session.json npm run dev -w @cswg/clay-studio",
+    command: `CLAY_STUDIO_SEAT=mock CLAY_PREVIEW_FIXTURE=1 CLAY_APPS_DIR="${appsDir}" CLAY_SESSION_PATH=./.clay/session.json npm run dev -w @cswg/clay-studio`,
     url: "http://127.0.0.1:5173",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

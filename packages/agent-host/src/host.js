@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { formatHelp, parseSlash } from "./commands.js";
+import { createCodexAdapter } from "./codex-adapter.js";
 import { createCopilotAdapter } from "./copilot-adapter.js";
 import { createCursorAdapter } from "./cursor-adapter.js";
+import { isProductSeat, productSeat } from "./seats.js";
 import { makeEvent } from "./events.js";
 import { createMockAdapter } from "./mock-adapter.js";
 import { PlanGateError } from "./plan-gate.js";
@@ -12,6 +14,7 @@ export const SendInputSchema = z.object({
   prompt: z.string(),
   command: z.string().optional(),
   rest: z.string().optional(),
+  thinkFirst: z.boolean().optional(),
 });
 
 /**
@@ -29,11 +32,11 @@ export const SendInputSchema = z.object({
  */
 
 /**
- * @returns {"cursor" | "copilot" | "mock"}
+ * @returns {"cursor" | "codex" | "copilot" | "mock"}
  */
 export function detectSeat() {
   const forced = process.env.CLAY_STUDIO_SEAT;
-  if (forced === "cursor" || forced === "copilot" || forced === "mock") return forced;
+  if (forced === "cursor" || forced === "codex" || forced === "copilot" || forced === "mock") return forced;
   if (process.env.CURSOR_API_KEY) return "cursor";
   if (process.env.COPILOT_GITHUB_TOKEN || process.env.GH_TOKEN) return "copilot";
   return "mock";
@@ -49,10 +52,10 @@ export function detectSeat() {
  */
 export async function createHost(input = {}) {
   const slug = input.slug || "studio-app";
-  let seat = /** @type {"cursor" | "copilot" | "mock"} */ (input.seat || detectSeat());
+  let seat = /** @type {"cursor" | "codex" | "copilot" | "mock"} */ (input.seat || detectSeat());
   const appsDir = input.appsDir || defaultAppsDir();
   const appDir = await copyTemplate({ slug, appsDir, templateDir: input.templateDir });
-  const ctx = { appDir, slug, templateDir: input.templateDir, gitHubToken: input.gitHubToken };
+  const ctx = { appDir, slug, appsDir, templateDir: input.templateDir, gitHubToken: input.gitHubToken };
 
   /** @type {AgentPort} */
   let adapter = makeAdapter(seat, ctx);
@@ -102,8 +105,16 @@ export async function createHost(input = {}) {
         return;
       }
       if (command === "seat") {
-        const next = rest === "cursor" || rest === "copilot" || rest === "mock" ? rest : seat;
-        yield* this.setSeat(next);
+        yield makeEvent("user_text", { text: parsed.prompt });
+        if (!rest) {
+          yield makeEvent("assistant_text", { text: "Choose Cursor, Codex, or Copilot." });
+          return;
+        }
+        if (rest !== "mock" && !isProductSeat(rest)) {
+          yield makeEvent("error", { text: "Use Cursor, Codex, or Copilot." });
+          return;
+        }
+        yield* this.setSeat(/** @type {"cursor" | "codex" | "copilot" | "mock"} */ (rest));
         return;
       }
       if (command === "help") {
@@ -141,9 +152,19 @@ export async function createHost(input = {}) {
       }
       busy = true;
       try {
-        yield makeEvent("user_text", { text: parsed.prompt });
-        for await (const event of adapter.send(parsed.prompt, { command, rest })) {
-          yield event;
+        const steps = [];
+        if (parsed.thinkFirst && (command === "plan" || command === "fix")) {
+          steps.push({ prompt: rest ? `/think ${rest}` : "/think", command: "think", rest });
+        }
+        steps.push({ prompt: parsed.prompt, command, rest });
+        for (const step of steps) {
+          yield makeEvent("user_text", { text: step.prompt });
+          let failed = false;
+          for await (const event of adapter.send(step.prompt, { command: step.command, rest: step.rest })) {
+            yield event;
+            if (event.type === "error") failed = true;
+          }
+          if (failed) break;
         }
       } catch (error) {
         const message =
@@ -159,16 +180,13 @@ export async function createHost(input = {}) {
       }
     },
     /**
-     * @param {"cursor" | "copilot" | "mock"} next
+     * @param {"cursor" | "codex" | "copilot" | "mock"} next
      */
     async *setSeat(next) {
+      const chosen = productSeat(next);
+      const caption = chosen?.summary ?? "Mock seat for local demos.";
       if (next === seat) {
-        yield makeEvent("seat", {
-          seat: {
-            provider: seat,
-            caption: seat === "copilot" ? "Already on Copilot." : `Already on ${seat}.`,
-          },
-        });
+        yield makeEvent("seat", { seat: { provider: seat, caption: `Already on ${caption}` } });
         return;
       }
       await adapter.reset?.();
@@ -176,17 +194,7 @@ export async function createHost(input = {}) {
       adapter = makeAdapter(seat, ctx);
       process.env.CLAY_STUDIO_SEAT = seat;
       await persist();
-      yield makeEvent("seat", {
-        seat: {
-          provider: seat,
-          caption:
-            seat === "copilot"
-              ? "Copilot seat — plans are still required; coding uses Copilot models, not Grok."
-              : seat === "cursor"
-                ? "Cursor seat — Claude plans, Grok 4.7 High codes."
-                : "Mock seat for local demos.",
-        },
-      });
+      yield makeEvent("seat", { seat: { provider: seat, caption } });
     },
     cancel: () => adapter.cancel(),
     reset: () => adapter.reset(),
@@ -208,11 +216,12 @@ export async function createHost(input = {}) {
 }
 
 /**
- * @param {"cursor" | "copilot" | "mock"} seat
+ * @param {"cursor" | "codex" | "copilot" | "mock"} seat
  * @param {object} ctx
  */
 function makeAdapter(seat, ctx) {
   if (seat === "cursor") return createCursorAdapter(ctx);
+  if (seat === "codex") return createCodexAdapter(ctx);
   if (seat === "copilot") return createCopilotAdapter(ctx);
   return createMockAdapter(ctx);
 }

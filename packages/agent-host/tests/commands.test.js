@@ -23,4 +23,10 @@ describe("slash commands", () => {
     );
     expect(ids).toEqual(["help", "clear", "search", "think", "summarize", "write", "code", "image", "settings", "debug", "reset"]);
   });
+
+  test("parses /seats and /seat as the same command", () => {
+    expect(parseSlash("/seats").command?.id).toBe("seat");
+    expect(parseSlash("/seat cursor").command?.id).toBe("seat");
+    expect(parseSlash("/seats codex").rest).toBe("codex");
+  });
 });

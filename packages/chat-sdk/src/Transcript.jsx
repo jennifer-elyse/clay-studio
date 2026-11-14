@@ -1,5 +1,4 @@
 import { ClayBot } from "./ClayBot.jsx";
-import { STARTERS } from "./commands.js";
 import { PlanCard } from "./PlanCard.jsx";
 
 /**
@@ -8,11 +7,10 @@ import { PlanCard } from "./PlanCard.jsx";
  * @param {{ label: string, status: string }[]} [props.steps]
  * @param {boolean} [props.busy]
  * @param {string} [props.clip]
- * @param {(prompt: string) => void} [props.onStarter]
  * @param {(path: string) => void} [props.onApprove]
  * @param {(path: string) => void} [props.onAdjust]
  */
-export function Transcript({ items, steps = [], clip = "idle.webp", onStarter, onApprove, onAdjust }) {
+export function Transcript({ items, steps = [], clip = "idle.webp", onApprove, onAdjust }) {
   if (items.length === 0) {
     return (
       <div className="clay-transcript">
@@ -20,13 +18,6 @@ export function Transcript({ items, steps = [], clip = "idle.webp", onStarter, o
           <ClayBot clip={clip} size="lg" />
           <h1>What should we mold?</h1>
           <p>Describe an internal app. We will write a plan first.</p>
-          <div className="clay-starters">
-            {STARTERS.map((starter) => (
-              <button key={starter.id} type="button" onClick={() => onStarter?.(starter.prompt)}>
-                {starter.label}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     );
