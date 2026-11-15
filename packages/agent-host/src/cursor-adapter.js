@@ -28,7 +28,7 @@ export function createCursorAdapter(ctx) {
     try {
       return await import("@cursor/sdk");
     } catch {
-      throw new Error("Cursor SDK is not installed. Run npm install in clay-studio.");
+      throw new Error("Cursor is not installed with Clay Studio. Close the window and open Clay Studio again.");
     }
   }
 

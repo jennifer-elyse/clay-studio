@@ -65,7 +65,7 @@ Clay spends the attached seat on the cheapest model that can do the step. `/plan
 | Seat | Plan and spec | Build | Every other turn |
 | --- | --- | --- | --- |
 | Cursor | Claude, billed per token. No extra reasoning effort. | Grok 4.7 High, from the weekly pool | Composer 2.5, from the weekly pool |
-| Copilot | GPT-5.4 at medium effort | GPT-5.4 at medium effort | GPT-5 mini at low effort. Included on a paid plan |
+| Copilot | GPT-6.1 Sol at medium effort | GPT-6.1 Sol at medium effort | GPT-6 Luna at low effort |
 | Codex | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 mini at low effort. The chat thread is reused |
 
 One agent stays with the project and is disposed when the project or the seat changes. Cursor resumes that agent, summarizes before a plan or a build when the thread already has turns, and summarizes again after, so the next turn sees the summary. Preview tools are sent only for build, fix, and code. Copilot starts a new session instead of reloading the saved transcript. Codex and Copilot drop the thread after a plan or a build, and after four short turns. The brain's reasoning is the opening of that same turn, not a second copy of the context. Cursor loads project rules only.

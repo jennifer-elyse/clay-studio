@@ -60,7 +60,7 @@ export const PRODUCT_SEATS = [
   {
     id: "copilot",
     label: "Copilot",
-    summary: "GitHub Copilot. Plan and build use GPT-5.4. Other turns use GPT-5 mini, which is included.",
+    summary: "GitHub Copilot. Plan and build use GPT-6.1 Sol. Other turns use GPT-6 Luna.",
     details: [
       {
         name: "GH_TOKEN",

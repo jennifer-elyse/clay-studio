@@ -1,7 +1,10 @@
 import { applyEvent } from "@cswg/clay-chat";
+import { makeEvent } from "@cswg/agent-host/events";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { applyStudioEvent } from "./studio-events.js";
 import { connectStudio } from "./ws-client.js";
+
+const DOWNLOAD_TEXT = "Download Clay Studio to use Cursor, Codex, or Copilot on your computer. This page is read-only.";
 
 /** Live socket, transcript, and preview for the studio shell. */
 export function useStudioClient() {
@@ -16,6 +19,11 @@ export function useStudioClient() {
   const clientRef = useRef(/** @type {import("./ws-client.js").StudioClient | null} */ (null));
 
   useEffect(() => {
+    if (document.documentElement.dataset.clay === "download") {
+      setSeat({ provider: "mock", caption: "Download Clay Studio to use a seat." });
+      setEvents([makeEvent("assistant_text", { text: DOWNLOAD_TEXT })]);
+      return undefined;
+    }
     const sink = { setSeat, setPreviewStatus, setPreviewUrl, setPreviewMessage, setEvents, setBusy };
     const next = connectStudio({
       onSnapshot: (snap) => {

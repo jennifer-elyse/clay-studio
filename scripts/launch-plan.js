@@ -98,3 +98,21 @@ export function browserOpen(url, platform) {
 }
 
 export const STUDIO_URL = "http://127.0.0.1:8787";
+
+/** Seat clients. npm install must fetch these or /plan cannot start a real agent. */
+export const SEAT_PACKAGES = ["@cursor/sdk", "@github/copilot-sdk", "@openai/codex-sdk"];
+
+/**
+ * @param {string} root
+ * @param {string} name
+ */
+export function packageInstalled(root, name) {
+  return fs.existsSync(path.join(root, "node_modules", ...name.split("/"), "package.json"));
+}
+
+/**
+ * @param {string} root
+ */
+export function seatPackagesInstalled(root) {
+  return SEAT_PACKAGES.every((name) => packageInstalled(root, name));
+}

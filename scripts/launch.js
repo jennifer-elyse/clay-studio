@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { browserOpen, launchSteps, npmBin, STUDIO_URL } from "./launch-plan.js";
+import { browserOpen, launchSteps, npmBin, packageInstalled, seatPackagesInstalled, STUDIO_URL } from "./launch-plan.js";
 import { warnStack } from "./stack-versions.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -69,7 +69,8 @@ export function describeSteps(steps) {
 async function main() {
   const dryRun = process.argv.includes("--dry-run");
   const healthy = await isHealthy(STUDIO_URL);
-  const installed = fs.existsSync(path.join(root, "node_modules", "@cswg", "clay-studio"));
+  const installed =
+    packageInstalled(root, "@cswg/clay-studio") && seatPackagesInstalled(root);
   const built = fs.existsSync(path.join(studioDir, "dist", "index.html"));
   const steps = launchSteps({ healthy, installed, built });
   process.stdout.write(`${describeSteps(steps)}\n\n`);

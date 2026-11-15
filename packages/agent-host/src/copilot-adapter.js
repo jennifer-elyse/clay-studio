@@ -1,6 +1,6 @@
 import { commandNeedsTools, FAST_TURN_LIMIT } from "./context.js";
 import { makeEvent } from "./events.js";
-import { copilotEffort, modelFor, phaseFor, seatCaption } from "./models.js";
+import { copilotEffort, modelFor, phaseFor, resolveCopilotModel, seatCaption } from "./models.js";
 import { assertBuildAllowed, nextPlanSlug, setPlanStatus } from "./plan-gate.js";
 import { containPreview, copyTemplate, getPreview, previewTools, stopPreview } from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
@@ -25,12 +25,13 @@ export function createCopilotAdapter(ctx) {
   let fastTurns = 0;
   let sessionGeneration = 0;
   let sessionHasTools = false;
+  let chosenModel = "";
 
   async function sdk() {
     try {
       return await import("@github/copilot-sdk");
     } catch {
-      throw new Error("GitHub Copilot SDK is not installed. Run npm install in clay-studio.");
+      throw new Error("GitHub Copilot is not installed with Clay Studio. Close the window and open Clay Studio again.");
     }
   }
 
@@ -58,34 +59,69 @@ export function createCopilotAdapter(ctx) {
     sessionGeneration += 1;
   }
 
+  async function copilotClient() {
+    if (client) return client;
+    const mod = await sdk();
+    const CopilotClient = mod.CopilotClient ?? mod.default?.CopilotClient ?? mod.default;
+    if (!CopilotClient) throw new Error("CopilotClient export missing from @github/copilot-sdk");
+    const gitHubToken = token();
+    client = new CopilotClient({
+      gitHubToken: gitHubToken || undefined,
+      useLoggedInUser: !gitHubToken,
+    });
+    return client;
+  }
+
+  /**
+   * @param {"plan" | "build" | "fast"} phase
+   */
+  async function modelForAccount(phase) {
+    const handle = await copilotClient();
+    try {
+      await handle.start();
+      const listed = await handle.listModels();
+      return resolveCopilotModel(phase, Array.isArray(listed) ? listed : []);
+    } catch {
+      return modelFor(phase, "copilot");
+    }
+  }
+
+  /**
+   * @param {Record<string, unknown>} config
+   */
+  async function openSession(config) {
+    const handle = await copilotClient();
+    try {
+      chosenModel = String(config.model ?? "");
+      return await handle.createSession(config);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!/not available|unsupported/i.test(message) || config.model === "auto") throw error;
+      chosenModel = "auto";
+      return handle.createSession({ ...config, model: "auto" });
+    }
+  }
+
   /**
    * A new process starts a new session. Resuming the saved one would reload its whole transcript.
    *
    * @param {string} command
    * @param {"plan" | "build" | "fast"} phase
+   * @param {string} modelId
    * @param {boolean} [fresh]
    */
-  async function ensureSession(command, phase, fresh = false) {
+  async function ensureSession(command, phase, modelId, fresh = false) {
     const needsTools = commandNeedsTools(command);
     if (fresh || (needsTools && session && !sessionHasTools)) {
       await dropSession();
       if (phase === "fast") fastTurns = 0;
     }
     if (session) return session;
-    const mod = await sdk();
-    const CopilotClient = mod.CopilotClient ?? mod.default?.CopilotClient ?? mod.default;
-    if (!CopilotClient) throw new Error("CopilotClient export missing from @github/copilot-sdk");
     const gitHubToken = token();
-    if (!client) {
-      client = new CopilotClient({
-        gitHubToken: gitHubToken || undefined,
-        useLoggedInUser: !gitHubToken,
-      });
-    }
     const sessionId = `clay-${ctx.slug}-${sessionGeneration}`;
-    session = await client.createSession({
+    session = await openSession({
       sessionId,
-      model: modelFor(phase, "copilot"),
+      model: modelId,
       gitHubToken: gitHubToken || undefined,
       workingDirectory: ctx.appDir,
       availableTools: needsTools ? Object.keys(previewTools(() => ctx.appDir)) : [],
@@ -164,7 +200,7 @@ export function createCopilotAdapter(ctx) {
       const command = options.command ?? "chat";
       const rest = options.rest ?? prompt;
       const phase = phaseFor(command);
-      const modelId = modelFor(phase, "copilot");
+      const modelId = command === "run" ? modelFor(phase, "copilot") : await modelForAccount(phase);
       const runId = `run-${Date.now()}`;
       yield makeEvent("run_started", { runId, agentId });
       yield makeEvent("seat", {
@@ -208,8 +244,19 @@ export function createCopilotAdapter(ctx) {
         thinkFirst: options.thinkFirst === true,
       });
 
-      const handle = await ensureSession(command, phase, phase !== "fast" || fastTurns >= FAST_TURN_LIMIT);
-      await useModel(handle, modelId, copilotEffort(phase));
+      const handle = await ensureSession(
+        command,
+        phase,
+        modelId,
+        phase !== "fast" || fastTurns >= FAST_TURN_LIMIT,
+      );
+      const usedModel = chosenModel || modelId;
+      if (usedModel !== modelId) {
+        yield makeEvent("seat", {
+          seat: { provider: "copilot", model: usedModel, caption: seatCaption("copilot", phase, usedModel) },
+        });
+      }
+      await useModel(handle, usedModel, copilotEffort(phase));
       const payload = { prompt: fullPrompt };
       if (typeof handle.sendAndWait === "function") {
         const response = await handle.sendAndWait(payload);
@@ -234,7 +281,7 @@ export function createCopilotAdapter(ctx) {
           runId,
           agentId,
           repair: async function* repair(prompt) {
-            const sessionHandle = await ensureSession(command, phase, false);
+            const sessionHandle = await ensureSession(command, phase, chosenModel || modelId, false);
             const payload = { prompt };
             if (typeof sessionHandle.sendAndWait === "function") {
               yield* fromResponse(await sessionHandle.sendAndWait(payload));

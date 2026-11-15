@@ -35,7 +35,7 @@ export const CopilotSeat = {
     <ClayChat
       events={copilotEvents}
       onSend={() => undefined}
-      seat={{ provider: "copilot", model: "gpt-5.4", caption: "Copilot seat" }}
+      seat={{ provider: "copilot", model: "gpt-6.1-sol", caption: "Copilot seat" }}
       previewUrl="about:blank"
     />
   ),

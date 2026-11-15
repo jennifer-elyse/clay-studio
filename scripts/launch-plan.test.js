@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -9,8 +11,10 @@ import {
   needsRuntimeInstall,
   nodeDownload,
   npmBin,
+  packageInstalled,
   parseNodeVersion,
   readPinnedNodeVersion,
+  seatPackagesInstalled,
 } from "./launch-plan.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,6 +55,19 @@ test("installs Node 26 when it or npm is missing", () => {
     needsRuntimeInstall({ nodeVersion: "26.13.1", npmOk: true, pinned, privateRuntime: true }),
     false,
   );
+});
+
+test("a finished install includes the seat packages", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "clay-launch-"));
+  assert.equal(seatPackagesInstalled(dir), false);
+  for (const name of ["@cursor/sdk", "@github/copilot-sdk", "@openai/codex-sdk", "@cswg/clay-studio"]) {
+    const folder = path.join(dir, "node_modules", ...name.split("/"));
+    fs.mkdirSync(folder, { recursive: true });
+    fs.writeFileSync(path.join(folder, "package.json"), "{}");
+    assert.equal(packageInstalled(dir, name), true);
+  }
+  assert.equal(seatPackagesInstalled(dir), true);
+  fs.rmSync(dir, { recursive: true, force: true });
 });
 
 test("npm sits beside node, and the browser opener matches the OS", () => {

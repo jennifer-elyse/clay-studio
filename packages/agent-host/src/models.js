@@ -1,8 +1,10 @@
 const PLAN_MODEL = "claude-4.5-sonnet";
 const BUILD_MODEL = "grok-4.7";
 const FAST_MODEL = "composer-2.5";
-const COPILOT_MODEL = "gpt-5.4";
-const COPILOT_FAST_MODEL = "gpt-5-mini";
+const COPILOT_MODEL = "gpt-6.1-sol";
+const COPILOT_FAST_MODEL = "gpt-6-luna";
+const COPILOT_PLAN_CHOICES = [COPILOT_MODEL, "gpt-6-sol", "gpt-5.6-sol", "claude-sonnet-5.5"];
+const COPILOT_FAST_CHOICES = [COPILOT_FAST_MODEL, "gpt-5.6-luna", "claude-haiku-5.5", "claude-haiku-4.5"];
 const CODEX_FAST_MODEL = "gpt-5.4-mini";
 const CODEX_WORK_MODEL = "gpt-5.4";
 
@@ -29,7 +31,8 @@ export function phaseFor(command) {
 
 /**
  * Cursor bills Claude per token and draws Grok and Composer from the weekly pool.
- * Copilot includes GPT-5 mini; GPT-5.4 spends a premium request.
+ * Copilot plan and build use GPT-6.1 Sol. Other turns use GPT-6 Luna.
+ * GPT-5.4 and GPT-5 mini left Copilot on 2026-10-19.
  * Codex bills GPT-5.4 mini at about a third of GPT-5.4, and low effort stays well under high.
  *
  * @param {"plan" | "build" | "fast"} phase
@@ -87,6 +90,21 @@ export function copilotEffort(phase) {
 }
 
 /**
+ * Prefer the phase model when this account lists it. Otherwise take the next
+ * current Copilot model the account actually offers.
+ *
+ * @param {"plan" | "build" | "fast"} phase
+ * @param {Array<{ id?: string }> | null | undefined} catalog
+ */
+export function resolveCopilotModel(phase, catalog) {
+  const preferred = modelFor(phase, "copilot");
+  const ids = (catalog ?? []).map((item) => item?.id).filter((id) => typeof id === "string" && id.length > 0);
+  if (ids.length === 0 || ids.includes(preferred)) return preferred;
+  const chain = phase === "fast" ? COPILOT_FAST_CHOICES : COPILOT_PLAN_CHOICES;
+  return chain.find((id) => ids.includes(id)) ?? ids[0];
+}
+
+/**
  * @param {"cursor" | "codex" | "copilot" | "mock"} seat
  * @param {"plan" | "build" | "fast"} phase
  * @param {string} modelId
@@ -95,7 +113,6 @@ export function seatCaption(seat, phase, modelId) {
   if (seat === "cursor" && phase === "plan") return `Planning with ${modelId}`;
   if (seat === "cursor" && phase === "build") return `Coding with ${modelId} High`;
   if (seat === "cursor") return `Working with ${modelId}`;
-  if (seat === "copilot" && phase === "fast") return `Copilot ${modelId} — included model`;
   if (seat === "copilot") return `Copilot ${modelId}`;
   if (seat === "codex" && phase === "fast") return `Codex ${modelId}, low effort`;
   if (seat === "codex") return `Codex ${modelId}, medium effort`;

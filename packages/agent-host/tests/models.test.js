@@ -1,4 +1,4 @@
-import { codexEffort, cursorModelOptions, modelFor, phaseFor } from "../src/models.js";
+import { codexEffort, cursorModelOptions, modelFor, phaseFor, resolveCopilotModel } from "../src/models.js";
 
 describe("seat models", () => {
   const previous = {};
@@ -45,10 +45,15 @@ describe("seat models", () => {
     expect(cursorModelOptions("composer-2.5", "fast").params).toBeUndefined();
   });
 
-  test("Copilot keeps premium requests on the plan and the build", () => {
-    expect(modelFor("fast", "copilot")).toBe("gpt-5-mini");
-    expect(modelFor("plan", "copilot")).toBe("gpt-5.4");
-    expect(modelFor("build", "copilot")).toBe("gpt-5.4");
+  test("Copilot uses Sol for plan and build, and a listed model when Sol is absent", () => {
+    expect(modelFor("fast", "copilot")).toBe("gpt-6-luna");
+    expect(modelFor("plan", "copilot")).toBe("gpt-6.1-sol");
+    expect(modelFor("build", "copilot")).toBe("gpt-6.1-sol");
+    const catalog = [{ id: "claude-sonnet-5.5" }, { id: "gpt-5.6-luna" }];
+    expect(resolveCopilotModel("plan", catalog)).toBe("claude-sonnet-5.5");
+    expect(resolveCopilotModel("fast", catalog)).toBe("gpt-5.6-luna");
+    expect(resolveCopilotModel("plan", [])).toBe("gpt-6.1-sol");
+    expect(resolveCopilotModel("plan", [{ id: "gpt-6.1-sol" }])).toBe("gpt-6.1-sol");
   });
 
   test("Codex uses the smaller model at low effort except for plan and build", () => {

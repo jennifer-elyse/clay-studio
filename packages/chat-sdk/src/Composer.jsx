@@ -11,10 +11,11 @@ export function Composer({ onSend, busy = false, value, onChange }) {
   const [inner, setInner] = useState("");
   const text = value ?? inner;
   const setText = onChange ?? setInner;
+  const locked = document.documentElement.dataset.clay === "download";
 
   function submit() {
     const next = text.trim();
-    if (!next || busy) return;
+    if (!next || busy || locked) return;
     const sent = onSend(next);
     if (sent !== false) setText("");
   }
@@ -25,8 +26,9 @@ export function Composer({ onSend, busy = false, value, onChange }) {
         <textarea
           aria-label="Message"
           value={text}
-          disabled={busy}
-          placeholder={busy ? "Working…" : "Ask Clay"}
+          disabled={busy || locked}
+          readOnly={locked}
+          placeholder={locked ? "Download Clay Studio to use this" : busy ? "Working…" : "Ask Clay"}
           onChange={(event) => setText(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {

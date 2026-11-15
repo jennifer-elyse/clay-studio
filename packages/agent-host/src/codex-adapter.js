@@ -26,7 +26,7 @@ export function createCodexAdapter(ctx) {
     try {
       return await import("@openai/codex-sdk");
     } catch {
-      throw new Error("Codex SDK is not installed. Run npm install @openai/codex-sdk in clay-studio.");
+      throw new Error("Codex is not installed with Clay Studio. Close the window and open Clay Studio again.");
     }
   }
 
