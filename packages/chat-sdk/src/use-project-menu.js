@@ -7,6 +7,7 @@ import { useProjectFolder } from "./use-project-folder.js";
  * @param {{ id?: string, name?: string, folder?: string, appDir?: string } | null} [props.project]
  * @param {{ folder?: string }[]} [props.projects]
  * @param {number} [props.openSignal]
+ * @param {string} [props.projectsRoot]
  * @param {(id: string) => void} [props.onSelect]
  * @param {(input: { id?: string, name: string, folder: string }) => void} [props.onSave]
  * @param {(draft: { name: string, folder: string, open: boolean }) => void} [props.onDraft]
@@ -25,6 +26,7 @@ export function useProjectMenu(props, rootRef) {
     mode,
     name,
     appDir: project?.appDir || "",
+    projectsRoot: props.projectsRoot,
     projectFolders: (props.projects ?? []).map((item) => item.folder).filter(Boolean),
     listDirectories: props.listDirectories,
   });

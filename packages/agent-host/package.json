@@ -8,7 +8,8 @@
     "./commands": "./src/commands.js",
     "./seats": "./src/seats.js",
     "./events": "./src/events.js",
-    "./directories": "./src/directories.js"
+    "./directories": "./src/directories.js",
+    "./settings": "./src/settings.js"
   },
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --config ./jest.config.js"

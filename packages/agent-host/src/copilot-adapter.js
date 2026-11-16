@@ -1,8 +1,24 @@
 import { commandNeedsTools, FAST_TURN_LIMIT } from "./context.js";
 import { makeEvent } from "./events.js";
-import { copilotEffort, modelFor, phaseFor, resolveCopilotModel, seatCaption } from "./models.js";
-import { assertBuildAllowed, nextPlanSlug, setPlanStatus } from "./plan-gate.js";
-import { containPreview, copyTemplate, getPreview, previewTools, stopPreview } from "./preview.js";
+import {
+  copilotEffort,
+  modelFor,
+  phaseFor,
+  resolveCopilotModel,
+  seatCaption,
+} from "./models.js";
+import {
+  assertBuildAllowed,
+  nextPlanSlug,
+  setPlanStatus,
+} from "./plan-gate.js";
+import {
+  containPreview,
+  copyTemplate,
+  getPreview,
+  previewTools,
+  stopPreview,
+} from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
 import { promptFor } from "./prompts.js";
 
@@ -12,6 +28,7 @@ import { promptFor } from "./prompts.js";
  * @param {string} ctx.slug
  * @param {string} [ctx.templateDir]
  * @param {string} [ctx.appsDir]
+ * @param {import("./models.js").SeatModelOverrides} [ctx.seatModels]
  * @param {string} [ctx.gitHubToken]
  */
 export function createCopilotAdapter(ctx) {
@@ -26,12 +43,15 @@ export function createCopilotAdapter(ctx) {
   let sessionGeneration = 0;
   let sessionHasTools = false;
   let chosenModel = "";
+  let requestedModel = "";
 
   async function sdk() {
     try {
       return await import("@github/copilot-sdk");
     } catch {
-      throw new Error("GitHub Copilot is not installed with Clay Studio. Close the window and open Clay Studio again.");
+      throw new Error(
+        "GitHub Copilot is not installed with Clay Studio. Close the window and open Clay Studio again.",
+      );
     }
   }
 
@@ -55,6 +75,8 @@ export function createCopilotAdapter(ctx) {
     }
     session = null;
     activeModel = "";
+    requestedModel = "";
+    chosenModel = "";
     sessionHasTools = false;
     sessionGeneration += 1;
   }
@@ -62,8 +84,10 @@ export function createCopilotAdapter(ctx) {
   async function copilotClient() {
     if (client) return client;
     const mod = await sdk();
-    const CopilotClient = mod.CopilotClient ?? mod.default?.CopilotClient ?? mod.default;
-    if (!CopilotClient) throw new Error("CopilotClient export missing from @github/copilot-sdk");
+    const CopilotClient =
+      mod.CopilotClient ?? mod.default?.CopilotClient ?? mod.default;
+    if (!CopilotClient)
+      throw new Error("CopilotClient export missing from @github/copilot-sdk");
     const gitHubToken = token();
     client = new CopilotClient({
       gitHubToken: gitHubToken || undefined,
@@ -80,9 +104,13 @@ export function createCopilotAdapter(ctx) {
     try {
       await handle.start();
       const listed = await handle.listModels();
-      return resolveCopilotModel(phase, Array.isArray(listed) ? listed : []);
+      return resolveCopilotModel(
+        phase,
+        Array.isArray(listed) ? listed : [],
+        ctx.seatModels,
+      );
     } catch {
-      return modelFor(phase, "copilot");
+      return modelFor(phase, "copilot", ctx.seatModels);
     }
   }
 
@@ -96,7 +124,11 @@ export function createCopilotAdapter(ctx) {
       return await handle.createSession(config);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      if (!/not available|unsupported/i.test(message) || config.model === "auto") throw error;
+      if (
+        !/not available|unsupported/i.test(message) ||
+        config.model === "auto"
+      )
+        throw error;
       chosenModel = "auto";
       return handle.createSession({ ...config, model: "auto" });
     }
@@ -112,7 +144,11 @@ export function createCopilotAdapter(ctx) {
    */
   async function ensureSession(command, phase, modelId, fresh = false) {
     const needsTools = commandNeedsTools(command);
-    if (fresh || (needsTools && session && !sessionHasTools)) {
+    if (
+      fresh ||
+      (session && requestedModel !== modelId) ||
+      (needsTools && session && !sessionHasTools)
+    ) {
       await dropSession();
       if (phase === "fast") fastTurns = 0;
     }
@@ -124,9 +160,12 @@ export function createCopilotAdapter(ctx) {
       model: modelId,
       gitHubToken: gitHubToken || undefined,
       workingDirectory: ctx.appDir,
-      availableTools: needsTools ? Object.keys(previewTools(() => ctx.appDir)) : [],
+      availableTools: needsTools
+        ? Object.keys(previewTools(() => ctx.appDir))
+        : [],
     });
     sessionHasTools = needsTools;
+    requestedModel = modelId;
     agentId = session.sessionId ?? session.id ?? sessionId;
     return session;
   }
@@ -200,22 +239,33 @@ export function createCopilotAdapter(ctx) {
       const command = options.command ?? "chat";
       const rest = options.rest ?? prompt;
       const phase = phaseFor(command);
-      const modelId = command === "run" ? modelFor(phase, "copilot") : await modelForAccount(phase);
+      const modelId =
+        command === "run"
+          ? modelFor(phase, "copilot", ctx.seatModels)
+          : await modelForAccount(phase);
       const runId = `run-${Date.now()}`;
       yield makeEvent("run_started", { runId, agentId });
       yield makeEvent("seat", {
-        seat: { provider: "copilot", model: modelId, caption: seatCaption("copilot", phase, modelId) },
+        seat: {
+          provider: "copilot",
+          model: modelId,
+          caption: seatCaption("copilot", phase, modelId),
+        },
       });
 
       if (command === "run") {
         yield makeEvent("preview", { preview: { status: "starting" } });
         const opened = await containPreview({ appDir: ctx.appDir });
         if (!opened.ok) {
-          yield makeEvent("preview", { preview: { status: "error", message: opened.message } });
+          yield makeEvent("preview", {
+            preview: { status: "error", message: opened.message },
+          });
           yield makeEvent("run_finished", { runId, agentId, status: "error" });
           return;
         }
-        yield makeEvent("preview", { preview: { status: "ready", url: opened.url } });
+        yield makeEvent("preview", {
+          preview: { status: "ready", url: opened.url },
+        });
         yield makeEvent("run_finished", { runId, agentId, status: "finished" });
         return;
       }
@@ -253,7 +303,11 @@ export function createCopilotAdapter(ctx) {
       const usedModel = chosenModel || modelId;
       if (usedModel !== modelId) {
         yield makeEvent("seat", {
-          seat: { provider: "copilot", model: usedModel, caption: seatCaption("copilot", phase, usedModel) },
+          seat: {
+            provider: "copilot",
+            model: usedModel,
+            caption: seatCaption("copilot", phase, usedModel),
+          },
         });
       }
       await useModel(handle, usedModel, copilotEffort(phase));
@@ -281,7 +335,12 @@ export function createCopilotAdapter(ctx) {
           runId,
           agentId,
           repair: async function* repair(prompt) {
-            const sessionHandle = await ensureSession(command, phase, chosenModel || modelId, false);
+            const sessionHandle = await ensureSession(
+              command,
+              phase,
+              modelId,
+              false,
+            );
             const payload = { prompt };
             if (typeof sessionHandle.sendAndWait === "function") {
               yield* fromResponse(await sessionHandle.sendAndWait(payload));
@@ -323,15 +382,25 @@ export function createCopilotAdapter(ctx) {
       return undefined;
     },
     async summarize() {
-      return makeEvent("summary", { text: "Copilot sessions summarize on the service.", status: "completed" });
+      return makeEvent("summary", {
+        text: "Copilot sessions summarize on the service.",
+        status: "completed",
+      });
     },
     async getUsage() {
-      return { seat: "copilot", model: activeModel || modelFor("fast", "copilot") };
+      return {
+        seat: "copilot",
+        model: activeModel || modelFor("fast", "copilot", ctx.seatModels),
+      };
     },
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),
     ensureWorkspace: async () => {
-      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir, appsDir: ctx.appsDir });
+      ctx.appDir = await copyTemplate({
+        slug: ctx.slug,
+        templateDir: ctx.templateDir,
+        appsDir: ctx.appsDir,
+      });
       return ctx.appDir;
     },
   };

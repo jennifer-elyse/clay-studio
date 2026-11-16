@@ -11,20 +11,17 @@ function seatLabel(provider) {
 /**
  * @param {object} props
  * @param {{ provider?: string, model?: string, caption?: string } | null} [props.seat]
- * @param {() => void} [props.onOpen]
  */
-export function SeatBadge({ seat, onOpen }) {
+export function SeatBadge({ seat }) {
   if (!seat?.provider) return null;
   const label = seatLabel(seat.provider);
   return (
-    <button
-      type="button"
+    <span
       className={`clay-badge${seat.provider === "copilot" ? " is-copilot" : ""}${seat.provider === "codex" ? " is-codex" : ""}`}
-      title={seat.caption || "Choose a product"}
-      onClick={onOpen}
+      title={seat.caption || undefined}
     >
       {label}
       {seat.model ? ` · ${seat.model}` : ""}
-    </button>
+    </span>
   );
 }

@@ -1,6 +1,6 @@
 # ERD
 
-Studio itself stores session metadata on disk, not in Postgres. Generated apps own their data.
+Studio itself stores session metadata and `settings.json` (the projects folder) in the installation profile on disk, not in Postgres. Generated apps own their data.
 
 ```mermaid
 erDiagram
@@ -11,6 +11,11 @@ erDiagram
     string appDir
     string previewPort
     string lastRunId
+  }
+
+  Settings {
+    string projectsRoot
+    object seatModels "per seat: optional work and fast model names; blank or default is not stored"
   }
 
   AppWorkspace {
@@ -25,6 +30,7 @@ erDiagram
   }
 
   StudioSession ||--|| AppWorkspace : uses
+  Settings ||--o{ AppWorkspace : "holds new"
   AppWorkspace ||--o{ Plan : contains
 ```
 

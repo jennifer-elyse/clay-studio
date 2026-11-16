@@ -2,6 +2,7 @@ import { Chevron } from "./Chevron.jsx";
 import { ClayBot } from "./ClayBot.jsx";
 import { ProjectMenu } from "./ProjectMenu.jsx";
 import { SeatBadge } from "./SeatBadge.jsx";
+import { SettingsButton } from "./SettingsButton.jsx";
 
 /**
  * @param {object} props
@@ -9,11 +10,12 @@ import { SeatBadge } from "./SeatBadge.jsx";
  * @param {boolean} props.minimized
  * @param {() => void} props.onToggle
  * @param {{ provider?: string, model?: string, caption?: string } | null} [props.seat]
- * @param {() => void} props.onOpenSeats
+ * @param {() => void} props.onOpenSettings
  * @param {{ id: string, name: string, folder: string } | null} [props.project]
  * @param {{ id: string, name: string, folder: string }[]} [props.projects]
  * @param {string} [props.projectNotice]
  * @param {number} [props.projectOpenSignal]
+ * @param {string} [props.projectsRoot]
  * @param {(id: string) => void} [props.onSelectProject]
  * @param {(input: { id?: string, name: string, folder: string }) => void} [props.onSaveProject]
  * @param {(draft: { name: string, folder: string, open: boolean }) => void} [props.onProjectDraft]
@@ -23,11 +25,12 @@ export function ClayHeader({
   minimized,
   onToggle,
   seat,
-  onOpenSeats,
+  onOpenSettings,
   project = null,
   projects = [],
   projectNotice = "",
   projectOpenSignal = 0,
+  projectsRoot = "",
   onSelectProject,
   onSaveProject,
   onProjectDraft,
@@ -56,12 +59,13 @@ export function ClayHeader({
           projects={projects}
           notice={projectNotice}
           openSignal={projectOpenSignal}
+          projectsRoot={projectsRoot}
           onSelect={onSelectProject}
           onSave={onSaveProject}
           onDraft={onProjectDraft}
         />
-        <button type="button" className="clay-header-tool is-seats" onClick={onOpenSeats}>Seats</button>
-        <SeatBadge seat={seat} onOpen={onOpenSeats} />
+        <SettingsButton onOpen={onOpenSettings} />
+        <SeatBadge seat={seat} />
       </div>
       <button type="button" className="clay-minimize" aria-expanded="true" aria-controls="clay-header" aria-label="Minimize" onClick={onToggle}>
         <Chevron />

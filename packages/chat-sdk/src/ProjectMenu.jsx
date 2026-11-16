@@ -9,6 +9,7 @@ import { useProjectMenu } from "./use-project-menu.js";
  * @param {{ id: string, name: string, folder: string }[]} [props.projects]
  * @param {string} [props.notice]
  * @param {number} [props.openSignal]
+ * @param {string} [props.projectsRoot]
  * @param {(id: string) => void} [props.onSelect]
  * @param {(input: { id?: string, name: string, folder: string }) => void} [props.onSave]
  * @param {(draft: { name: string, folder: string, open: boolean }) => void} [props.onDraft]

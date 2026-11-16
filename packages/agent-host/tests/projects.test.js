@@ -109,3 +109,23 @@ describe("named projects", () => {
     await expect(host.saveProject({ name: "Inside", folder: templateDir })).rejects.toThrow(/outside/);
   });
 });
+
+describe("projects folder setting", () => {
+  test("a new folder takes new projects and existing projects stay put", async () => {
+    const { appsDir, host } = await bareHost();
+    const first = await host.saveProject({ name: "Alpha" });
+    const other = await fs.mkdtemp(path.join(os.tmpdir(), "clay-root-"));
+    process.env.CLAY_PROFILE_DIR = path.join(other, "profile");
+    await host.setProjectsRoot(other);
+    expect(host.projectsRoot).toBe(other);
+    const second = await host.saveProject({ name: "Beta" });
+    expect(second.appDir).toBe(path.join(other, "beta"));
+    const listed = host.snapshot().projects.find((project) => project.id === first.id);
+    expect(listed.appDir).toBe(path.join(appsDir, "alpha"));
+  });
+
+  test("a missing folder is refused", async () => {
+    const { appsDir, host } = await bareHost();
+    await expect(host.setProjectsRoot(path.join(appsDir, "nope"))).rejects.toThrow("does not exist");
+  });
+});

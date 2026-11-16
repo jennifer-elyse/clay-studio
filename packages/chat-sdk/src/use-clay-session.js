@@ -14,6 +14,9 @@ const NAMED_SEATS = ["cursor", "codex", "copilot"];
  * @property {(path: string) => void} [onApprovePlan]
  * @property {() => void} [onAdjustPlan]
  * @property {(seat: string) => void} [onSelectSeat]
+ * @property {string} [projectsRoot]
+ * @property {object | null} [seatSettings] Saved seat model overrides and defaults from the host.
+ * @property {(input: object) => Promise<{ ok: boolean, message?: string }>} [onSaveSettings]
  * @property {{ provider?: string, model?: string, caption?: string } | null} [seat]
  * @property {string} [previewUrl]
  * @property {string} [previewStatus]
@@ -36,7 +39,8 @@ export function useClaySession(props) {
   const [debug, setDebug] = useState(false);
   const [clip, setClip] = useState("idle.webp");
   const [minimized, setMinimized] = useState(false);
-  const [seatsOpen, setSeatsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState("seat");
   const [seatProduct, setSeatProduct] = useState("");
   const events = useMemo(() => props.events ?? [], [props.events]);
   const items = props.items ?? events.reduce(applyEvent, []);
@@ -52,11 +56,13 @@ export function useClaySession(props) {
   }
 
   /**
-   * @param {string} [product]
+   * Open Settings on the Seat tab. A click passes an event, not a seat, so only a string picks one.
+   * @param {unknown} [product] a seat to preselect. Defaults to the current seat.
    */
-  function openSeats(product = "") {
-    setSeatProduct(product);
-    setSeatsOpen(true);
+  function openSettings(product) {
+    setSeatProduct(typeof product === "string" ? product : (props.seat?.provider ?? ""));
+    setSettingsSection("seat");
+    setSettingsOpen(true);
   }
 
   /**
@@ -70,7 +76,7 @@ export function useClaySession(props) {
       return;
     }
     if (parsed.command?.id === "seat") {
-      openSeats(NAMED_SEATS.includes(parsed.rest) ? parsed.rest : "");
+      openSettings(NAMED_SEATS.includes(parsed.rest) ? parsed.rest : undefined);
       playClip(text);
       return;
     }
@@ -132,7 +138,7 @@ export function useClaySession(props) {
    */
   function useSeat(id) {
     props.onSelectSeat?.(id);
-    setSeatsOpen(false);
+    setSettingsOpen(false);
   }
 
   return {
@@ -144,15 +150,17 @@ export function useClaySession(props) {
     clip,
     minimized,
     setMinimized,
-    seatsOpen,
-    setSeatsOpen,
+    settingsOpen,
+    setSettingsOpen,
+    settingsSection,
+    setSettingsSection,
     seatProduct,
     setSeatProduct,
     items,
     run,
     steps,
     working: Boolean(props.busy) || run.phase === "working",
-    openSeats,
+    openSettings,
     send,
     pick,
     adjust,

@@ -1,4 +1,5 @@
 import { ClayChat } from "@cswg/clay-chat";
+import { saveSettings } from "./save-settings.js";
 import { useStudioClient } from "./use-studio-client.js";
 
 /** Studio shell. */
@@ -12,6 +13,16 @@ export function App() {
       seat={studio.seat}
       project={studio.project}
       projects={studio.projects}
+      projectsRoot={studio.projectsRoot}
+      seatSettings={studio.seatSettings}
+      onSaveSettings={async (input) => {
+        const result = await saveSettings(input);
+        if (result.ok) {
+          studio.setProjectsRoot(result.settings.projectsRoot);
+          studio.setSeatSettings(result.settings);
+        }
+        return result;
+      }}
       previewUrl={studio.previewUrl}
       previewStatus={studio.previewStatus}
       previewMessage={studio.previewMessage}
