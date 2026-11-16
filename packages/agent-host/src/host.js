@@ -21,6 +21,7 @@ import {
 } from "./projects.js";
 import { openCodeInIde } from "./open-ide.js";
 import { loadSession, saveSession } from "./session-store.js";
+import { loadSettings, updateSettings } from "./settings.js";
 
 export const SendInputSchema = z.object({
   prompt: z.string(),
@@ -67,7 +68,9 @@ export function detectSeat() {
  * @param {(ms: number) => Promise<void>} [input.waitIde]
  */
 export async function createHost(input = {}) {
-  let seat = /** @type {"cursor" | "codex" | "copilot" | "mock"} */ (input.seat || detectSeat());
+  const savedSettings = await loadSettings();
+  // An explicit seat (CLAY_STUDIO_SEAT) wins, then the one chosen last time, then detection.
+  let seat = /** @type {"cursor" | "codex" | "copilot" | "mock"} */ (input.seat || savedSettings.seat || detectSeat());
   const appsDir = input.appsDir || defaultAppsDir();
   const registry = await loadProjectRegistry();
   const ctx = {
@@ -395,6 +398,7 @@ export async function createHost(input = {}) {
       seat = next;
       adapter = makeAdapter(seat, ctx);
       process.env.CLAY_STUDIO_SEAT = seat;
+      if (seat !== "mock") await updateSettings({ seat });
       await persist();
       yield makeEvent("seat", { seat: { provider: seat, caption } });
     },
