@@ -1,11 +1,12 @@
 import { commandNeedsTools, FAST_TURN_LIMIT } from "./context.js";
-import { makeEvent } from "./events.js";
+import { makeEvent, runStartFields } from "./events.js";
 import {
   copilotEffort,
   modelFor,
   phaseFor,
   resolveCopilotModel,
   seatCaption,
+  selectableModels,
 } from "./models.js";
 import {
   assertBuildAllowed,
@@ -16,10 +17,12 @@ import {
   containPreview,
   copyTemplate,
   getPreview,
+  onPreviewCrash,
   previewTools,
   stopPreview,
 } from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
+import { approvalEvents } from "./plan-offer.js";
 import { promptFor } from "./prompts.js";
 
 /**
@@ -44,6 +47,13 @@ export function createCopilotAdapter(ctx) {
   let sessionHasTools = false;
   let chosenModel = "";
   let requestedModel = "";
+  /** @type {import("./models.js").CatalogModel[] | null} */
+  let listedModels = null;
+
+  onPreviewCrash((appDir) => {
+    if (appDir !== ctx.appDir) return;
+    cancelled = true;
+  });
 
   async function sdk() {
     try {
@@ -97,18 +107,23 @@ export function createCopilotAdapter(ctx) {
   }
 
   /**
+   * The account catalog, cached after the first successful list.
+   */
+  async function accountModels() {
+    if (listedModels) return listedModels;
+    const handle = await copilotClient();
+    await handle.start();
+    const listed = await handle.listModels();
+    listedModels = Array.isArray(listed) ? listed : [];
+    return listedModels;
+  }
+
+  /**
    * @param {"plan" | "build" | "fast"} phase
    */
   async function modelForAccount(phase) {
-    const handle = await copilotClient();
     try {
-      await handle.start();
-      const listed = await handle.listModels();
-      return resolveCopilotModel(
-        phase,
-        Array.isArray(listed) ? listed : [],
-        ctx.seatModels,
-      );
+      return resolveCopilotModel(phase, await accountModels(), ctx.seatModels);
     } catch {
       return modelFor(phase, "copilot", ctx.seatModels);
     }
@@ -244,7 +259,7 @@ export function createCopilotAdapter(ctx) {
           ? modelFor(phase, "copilot", ctx.seatModels)
           : await modelForAccount(phase);
       const runId = `run-${Date.now()}`;
-      yield makeEvent("run_started", { runId, agentId });
+      yield makeEvent("run_started", { runId, agentId, ...runStartFields(command) });
       yield makeEvent("seat", {
         seat: {
           provider: "copilot",
@@ -272,7 +287,9 @@ export function createCopilotAdapter(ctx) {
 
       let planMeta = null;
       let specPath = null;
+      let planStarted = 0;
       if (command === "plan" || command === "spec") {
+        planStarted = Date.now();
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
@@ -328,7 +345,10 @@ export function createCopilotAdapter(ctx) {
       } else {
         throw new Error("Copilot session has no send method");
       }
-      if (cancelled) return;
+      if (cancelled) {
+        yield makeEvent("run_finished", { runId, agentId, status: "cancelled" });
+        return;
+      }
       if (needsSecurityPass(command)) {
         yield* secureAfterRun({
           appDir: ctx.appDir,
@@ -356,6 +376,17 @@ export function createCopilotAdapter(ctx) {
         });
       }
       if (!cancelled) await noteTurn(phase);
+      if (command === "plan" && planMeta) {
+        const events = await approvalEvents({
+          appDir: ctx.appDir,
+          relativePath: planMeta.path,
+          sinceMs: planStarted,
+          runId,
+          agentId,
+        });
+        for (const event of events) yield event;
+        if (events.some((event) => event.type === "error")) return;
+      }
       yield makeEvent("run_finished", { runId, agentId, status: "finished" });
     },
     async cancel() {
@@ -386,6 +417,13 @@ export function createCopilotAdapter(ctx) {
         text: "Copilot sessions summarize on the service.",
         status: "completed",
       });
+    },
+    /**
+     * Models this Copilot account can run.
+     * @returns {Promise<Array<{ id: string, label: string }>>}
+     */
+    async listModels() {
+      return selectableModels(await accountModels());
     },
     async getUsage() {
       return {

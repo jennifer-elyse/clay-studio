@@ -20,3 +20,11 @@ export const Busy = {
     </div>
   ),
 };
+
+export const Finished = {
+  render: () => (
+    <div className="clay-root" style={{ padding: 24 }}>
+      <CommandPills onPick={() => undefined} onSend={() => undefined} done={{ plan: true, build: true }} />
+    </div>
+  ),
+};

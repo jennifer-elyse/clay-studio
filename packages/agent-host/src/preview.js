@@ -180,6 +180,19 @@ async function ensureDeployment(dest, templateDir) {
 /** @type {Map<string, PreviewHandle>} */
 const running = new Map();
 
+/** @type {Set<(appDir: string) => void>} */
+const previewCrashSinks = new Set();
+
+/**
+ * A running app exited on its own. Listeners must not start a model call.
+ * @param {(appDir: string) => void} listener
+ * @returns {() => void}
+ */
+export function onPreviewCrash(listener) {
+  previewCrashSinks.add(listener);
+  return () => previewCrashSinks.delete(listener);
+}
+
 /**
  * @param {string} command
  * @param {string[]} args
@@ -264,13 +277,43 @@ export async function startFixturePreview(port, appDir = "__fixture__") {
   return handle;
 }
 
+/**
+ * @param {string} appDir
+ * @returns {Promise<boolean>}
+ */
+async function hasViteClient(appDir) {
+  return fs
+    .access(path.join(appDir, "client", "vite.config.js"))
+    .then(() => true)
+    .catch(() => false);
+}
+
+/**
+ * @param {number} port
+ * @param {import("node:child_process").ChildProcess} child
+ * @param {import("node:child_process").ChildProcess[]} children
+ * @param {string[]} logs
+ */
+async function waitForListen(port, child, children, logs) {
+  const deadline = Date.now() + 30000;
+  while (Date.now() < deadline) {
+    if (await isPortOpen(port)) return;
+    if (child.exitCode !== null) {
+      for (const proc of children) proc.kill("SIGTERM");
+      throw new PreviewStartError(PREVIEW_STOPPED, logs);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  for (const proc of children) proc.kill("SIGTERM");
+  throw new PreviewStartError(PREVIEW_QUIET, logs);
+}
+
 export async function startPreview({ appDir, port, install = true }) {
   const existing = running.get(appDir);
   if (existing) return existing;
 
-  const boundPort = port ?? (await pickPort());
   const logs = /** @type {string[]} */ ([]);
-  const children = [];
+  const children = /** @type {import("node:child_process").ChildProcess[]} */ ([]);
 
   if (install) {
     const hasModules = await fs
@@ -292,33 +335,66 @@ export async function startPreview({ appDir, port, install = true }) {
     if (report.blocking.length) throw new PreviewStartError(PREVIEW_CLOSED, logs);
   }
 
-  const child = spawnLogged("node", ["server/index.js"], {
+  const useVite = await hasViteClient(appDir);
+  const pagePort = port ?? (await pickPort());
+  const apiPort = useVite ? await pickPort() : pagePort;
+  const api = spawnLogged(process.execPath, ["server/index.js"], {
     cwd: appDir,
-    env: { PORT: String(boundPort), HOST: "127.0.0.1" },
+    env: { PORT: String(apiPort), HOST: "127.0.0.1", CLAY_STACK_CHECKED: "1" },
     logs,
   });
-  children.push(child);
+  children.push(api);
+  await waitForListen(apiPort, api, children, logs);
 
-  const deadline = Date.now() + 20000;
-  while (Date.now() < deadline) {
-    if (await isPortOpen(boundPort)) break;
-    if (child.exitCode !== null) throw new PreviewStartError(PREVIEW_STOPPED, logs);
-    await new Promise((r) => setTimeout(r, 150));
+  if (useVite) {
+    const viteBin = path.join(appDir, "node_modules", "vite", "bin", "vite.js");
+    const viteReady = await fs
+      .access(viteBin)
+      .then(() => true)
+      .catch(() => false);
+    if (!viteReady) {
+      for (const proc of children) proc.kill("SIGTERM");
+      logs.push("Vite is not installed.\n");
+      throw new PreviewStartError(PREVIEW_STOPPED, logs);
+    }
+    const vite = spawnLogged(
+      process.execPath,
+      [viteBin, "--config", "client/vite.config.js", "--host", "127.0.0.1", "--port", String(pagePort), "--strictPort"],
+      {
+        cwd: appDir,
+        env: {
+          PORT: String(pagePort),
+          CLAY_API_PORT: String(apiPort),
+          HOST: "127.0.0.1",
+          CLAY_STACK_CHECKED: "1",
+        },
+        logs,
+      },
+    );
+    children.push(vite);
+    await waitForListen(pagePort, vite, children, logs);
   }
-  if (!(await isPortOpen(boundPort))) {
-    children.forEach((c) => c.kill("SIGTERM"));
-    throw new PreviewStartError(PREVIEW_QUIET, logs);
+
+  let stopping = false;
+  function noteCrash() {
+    if (stopping) return;
+    stopping = true;
+    for (const proc of children) {
+      if (proc.exitCode === null && proc.signalCode === null) proc.kill("SIGTERM");
+    }
+    running.delete(appDir);
+    for (const sink of previewCrashSinks) sink(appDir);
   }
+  for (const proc of children) proc.on("exit", () => noteCrash());
 
   const handle = {
     appDir,
-    port: boundPort,
-    url: `http://127.0.0.1:${boundPort}`,
+    port: pagePort,
+    url: `http://127.0.0.1:${pagePort}`,
     logs,
     async stop() {
-      for (const proc of children) {
-        proc.kill("SIGTERM");
-      }
+      stopping = true;
+      for (const proc of children) proc.kill("SIGTERM");
       running.delete(appDir);
     },
   };

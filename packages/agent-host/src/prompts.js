@@ -1,3 +1,5 @@
+import { MAX_SUBTASKS } from "./subtasks.js";
+
 export const DATA_REMINDER =
   "Never put customer, payment, HR, or credential data in prompts, files, or logs. Use synthetic examples.";
 
@@ -13,11 +15,14 @@ function followRules(seat) {
   return `${product} already loaded AGENTS.md for this project. Follow it. Do not restate it, and do not open a doc this task does not name.`;
 }
 
+const SUBTASK_LIMIT =
+  `Clay may open at most ${MAX_SUBTASKS} subtasks. A subtask must not start an agent. If the app or Clay crashes, stop. Do not send another prompt or retry.`;
+
 /**
  * @param {string[]} lines
  */
 function pack(lines) {
-  return lines.filter(Boolean).join("\n");
+  return [SUBTASK_LIMIT, ...lines].filter(Boolean).join("\n");
 }
 
 /**
@@ -197,10 +202,10 @@ export function promptFor(command, ctx) {
   const seat = ctx.seat;
   const body = promptBody(command, { ...ctx, rest, seat });
   if (!ctx.thinkFirst) return body;
-  return pack([
+  return [
     "First write five short sentences of reasoning. Then do the task below. Do not open extra docs for the reasoning.",
     body,
-  ]);
+  ].join("\n");
 }
 
 /**

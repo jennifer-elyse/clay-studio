@@ -7,8 +7,8 @@ import { createCursorAdapter } from "./cursor-adapter.js";
 import { isProductSeat, productSeat } from "./seats.js";
 import { makeEvent } from "./events.js";
 import { createMockAdapter } from "./mock-adapter.js";
-import { PlanGateError } from "./plan-gate.js";
-import { copyTemplate, defaultAppsDir, stopPreview } from "./preview.js";
+import { commandDone, markPlanBuilt, PlanGateError } from "./plan-gate.js";
+import { copyTemplate, defaultAppsDir, onPreviewCrash, stopPreview } from "./preview.js";
 import {
   assertFolderName,
   isClayProject,
@@ -36,6 +36,7 @@ export const SendInputSchema = z.object({
   thinkFirst: z.boolean().optional(),
   projectName: z.string().optional(),
   projectFolder: z.string().optional(),
+  replaceId: z.string().optional(),
 });
 
 /**
@@ -94,6 +95,24 @@ export async function createHost(input = {}) {
   /** @type {AgentPort} */
   let adapter;
   let busy = false;
+  /** @type {{ status: "error", message: string } | null} */
+  let previewStopped = null;
+  /** @type {{ plan: boolean, build: boolean }} */
+  let done = { plan: false, build: false };
+  const runOk = new Set(["finished", "done", "completed", "success"]);
+
+  async function refreshDone() {
+    done = await commandDone(ctx.appDir || "");
+  }
+  /** @type {Set<(event: import("./events.js").UiEvent) => void>} */
+  const listeners = new Set();
+
+  onPreviewCrash((appDir) => {
+    if (appDir !== ctx.appDir) return;
+    previewStopped = { status: "error", message: "The app stopped." };
+    const event = makeEvent("preview", { preview: previewStopped });
+    for (const listener of listeners) listener(event);
+  });
 
   /**
    * @param {import("./projects.js").ProjectRecord} project
@@ -130,6 +149,7 @@ export async function createHost(input = {}) {
       registry.activeId = project.id;
       await saveProjectRegistry(registry);
       await persist();
+      await refreshDone();
       return;
     }
     if (ctx.appDir && ctx.appDir !== nextDir) await stopPreview(ctx.appDir);
@@ -143,6 +163,7 @@ export async function createHost(input = {}) {
     await saveProjectRegistry(registry);
     adapter = makeAdapter(seat, ctx);
     await persist();
+    await refreshDone();
   }
 
   /**
@@ -289,6 +310,7 @@ export async function createHost(input = {}) {
 
   adapter = makeAdapter(seat, ctx);
   if (active) await persist();
+  await refreshDone();
 
   return {
     get seat() {
@@ -407,13 +429,25 @@ export async function createHost(input = {}) {
         }
       }
       busy = true;
+      let failed = false;
       try {
+        if (parsed.replaceId) await adapter.reset();
         const thinkFirst = parsed.thinkFirst === true && (command === "plan" || command === "fix");
         if (thinkFirst) yield makeEvent("user_text", { text: rest ? `/think ${rest}` : "/think" });
         yield makeEvent("user_text", { text: parsed.prompt });
         for await (const event of adapter.send(parsed.prompt, { command, rest, thinkFirst })) {
           yield event;
-          if (event.type === "error") break;
+          if (event.type === "error") {
+            failed = true;
+            break;
+          }
+          if (event.type === "run_finished" && !runOk.has(String(event.status ?? "finished").toLowerCase())) {
+            failed = true;
+          }
+        }
+        if (command === "build" && !failed && ctx.appDir) {
+          await markPlanBuilt(ctx.appDir);
+          await refreshDone();
         }
       } catch (error) {
         const raw =
@@ -450,7 +484,11 @@ export async function createHost(input = {}) {
     },
     cancel: () => adapter.cancel(),
     reset: () => adapter.reset(),
-    approvePlan: (planPath) => adapter.approvePlan(planPath),
+    approvePlan: async (planPath) => {
+      const event = await adapter.approvePlan(planPath);
+      await refreshDone();
+      return event;
+    },
     steer: (text) => adapter.steer(text),
     summarize: () => adapter.summarize(),
     getUsage: () => adapter.getUsage(),
@@ -459,6 +497,19 @@ export async function createHost(input = {}) {
     setProjectsRoot,
     setSeatModels,
     seatModelSettings,
+    /**
+     * Models the current harness can run. An empty list includes the reason when the account could not be read.
+     * @returns {Promise<{ seat: string, models: Array<{ id: string, label: string }>, message?: string }>}
+     */
+    async listModels() {
+      try {
+        const models = typeof adapter.listModels === "function" ? await adapter.listModels() : [];
+        return { seat, models: Array.isArray(models) ? models : [] };
+      } catch (error) {
+        const raw = error instanceof Error ? error.message : "Could not list models.";
+        return { seat, models: [], message: raw.split("\n")[0].slice(0, 160) };
+      }
+    },
     get projectsRoot() {
       return appsDir;
     },
@@ -472,8 +523,19 @@ export async function createHost(input = {}) {
         appsDir,
         project: active ? describe(active) : null,
         projects: registry.projects.map((project) => describe(project)),
-        preview: adapter.getPreview?.() ? { url: adapter.getPreview().url, status: "ready" } : null,
+        done,
+        preview: adapter.getPreview?.()
+          ? { url: adapter.getPreview().url, status: "ready" }
+          : previewStopped,
       };
+    },
+    /**
+     * @param {(event: import("./events.js").UiEvent) => void} listener
+     * @returns {() => void}
+     */
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
     },
   };
 }

@@ -6,6 +6,7 @@ import { warnStack } from "../scripts/stack-versions.js";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const appRoot = path.resolve(root, "..");
+const apiPort = Number(process.env.CLAY_API_PORT || 4174);
 
 export default defineConfig({
   plugins: [
@@ -22,6 +23,6 @@ export default defineConfig({
   build: { outDir: "dist", emptyOutDir: true },
   server: {
     port: 4173,
-    proxy: { "/v1": "http://127.0.0.1:4174" },
+    proxy: { "/v1": `http://127.0.0.1:${apiPort}` },
   },
 });

@@ -46,6 +46,10 @@ app.get("/api/settings", (_req, res) => {
   res.json({ projectsRoot: host.projectsRoot, ...host.seatModelSettings() });
 });
 
+app.get("/api/models", async (_req, res) => {
+  res.json(await host.listModels());
+});
+
 /** Replies already sent, by Idempotency-Key. A repeat gets the same reply. */
 const settingsReplies = new Map();
 

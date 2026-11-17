@@ -38,7 +38,7 @@ export function parsePlanMarkdown(raw) {
 
 /**
  * @param {string} appDir
- * @returns {Promise<Array<{ id: string, path: string, status: string, title: string, body: string }>>}
+ * @returns {Promise<Array<{ id: string, path: string, status: string, title: string, body: string, built: boolean }>>}
  */
 export async function listPlans(appDir) {
   const dir = plansDir(appDir);
@@ -66,6 +66,7 @@ export async function listPlans(appDir) {
         status: parsed.status,
         title: parsed.title,
         body: parsed.body,
+        built: parsed.front.built === "true",
       });
     } catch {
       // skip unreadable stubs
@@ -123,18 +124,59 @@ export async function writePlan({ appDir, slug, title, body, status = "draft" })
 }
 
 /**
+ * @param {Record<string, string>} front
+ * @returns {string}
+ */
+function frontMatter(front) {
+  return Object.entries(front)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join("\n");
+}
+
+/**
+ * @param {string} filePath
+ * @param {Record<string, string>} patch
+ */
+async function rewritePlan(filePath, patch) {
+  const raw = await fs.readFile(filePath, "utf8");
+  const parsed = parsePlanMarkdown(raw);
+  const nextFront = { ...parsed.front, title: parsed.front.title ?? parsed.title, ...patch };
+  await fs.writeFile(filePath, `---\n${frontMatter(nextFront)}\n---\n\n${parsed.body.trim()}\n`, "utf8");
+  return { ...parsed, front: nextFront, status: nextFront.status ?? parsed.status, path: filePath };
+}
+
+/**
  * @param {string} filePath
  * @param {"draft" | "approved" | "rejected"} status
  */
 export async function setPlanStatus(filePath, status) {
-  const raw = await fs.readFile(filePath, "utf8");
-  const parsed = parsePlanMarkdown(raw);
-  const nextFront = { ...parsed.front, status, title: parsed.front.title ?? parsed.title };
-  const front = Object.entries(nextFront)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join("\n");
-  await fs.writeFile(filePath, `---\n${front}\n---\n\n${parsed.body.trim()}\n`, "utf8");
-  return { ...parsed, status, path: filePath };
+  return rewritePlan(filePath, { status });
+}
+
+/**
+ * Plan is done once a person approves it. Build is done once /build finishes against that plan.
+ * @param {string} appDir
+ * @returns {Promise<{ plan: boolean, build: boolean }>}
+ */
+export async function commandDone(appDir) {
+  if (!appDir) return { plan: false, build: false };
+  const plans = await listPlans(appDir);
+  return {
+    plan: plans.some((plan) => plan.status === "approved"),
+    build: plans.some((plan) => plan.built),
+  };
+}
+
+/**
+ * Remember a successful /build on the approved plan for this project.
+ * @param {string} appDir
+ * @returns {Promise<boolean>}
+ */
+export async function markPlanBuilt(appDir) {
+  const plan = await latestApprovedPlan(appDir);
+  if (!plan) return false;
+  await rewritePlan(plan.path, { built: "true" });
+  return true;
 }
 
 /**
@@ -147,6 +189,84 @@ export function slugify(name) {
     .replace(/^-|-$/g, "")
     .slice(0, 48);
   return slug || "change";
+}
+
+/**
+ * A finished /plan only offers approval when this returns the written file.
+ * Unknown statuses stay drafts so the card can still ask for approval.
+ *
+ * @param {string} filePath
+ * @param {string} raw
+ */
+export function planFromMarkdown(filePath, raw) {
+  const parsed = parsePlanMarkdown(raw);
+  const status = String(parsed.status).replace(/^["']|["']$/g, "").trim();
+  return {
+    id: path.basename(path.dirname(filePath)),
+    path: filePath,
+    title: parsed.title,
+    body: parsed.body.trim(),
+    status: status === "approved" || status === "rejected" ? status : "draft",
+  };
+}
+
+/**
+ * @param {string} filePath
+ */
+async function readPlanIfPresent(filePath) {
+  try {
+    const raw = await fs.readFile(filePath, "utf8");
+    return planFromMarkdown(filePath, raw);
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+/**
+ * @param {string} appDir
+ * @param {number} sinceMs
+ */
+async function newestPlanSince(appDir, sinceMs) {
+  const dir = plansDir(appDir);
+  let entries = [];
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") return null;
+    throw error;
+  }
+  /** @type {{ plan: ReturnType<typeof planFromMarkdown>, mtimeMs: number } | null} */
+  let newest = null;
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const filePath = path.join(dir, entry.name, "plan.md");
+    try {
+      const info = await fs.stat(filePath);
+      if (info.mtimeMs < sinceMs) continue;
+      const plan = await readPlanIfPresent(filePath);
+      if (!plan) continue;
+      if (!newest || info.mtimeMs >= newest.mtimeMs) newest = { plan, mtimeMs: info.mtimeMs };
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") throw error;
+    }
+  }
+  return newest?.plan ?? null;
+}
+
+/**
+ * @param {string} appDir
+ * @param {string} relativePath
+ * @param {number} [sinceMs]
+ * @returns {Promise<{ ok: true, plan: ReturnType<typeof planFromMarkdown> } | { ok: false, message: string }>}
+ */
+export async function planReadyForApproval(appDir, relativePath, sinceMs = 0) {
+  const expected = path.resolve(appDir, relativePath);
+  const direct = await readPlanIfPresent(expected);
+  if (direct) return { ok: true, plan: direct };
+  const fallback = sinceMs > 0 ? await newestPlanSince(appDir, sinceMs) : null;
+  if (fallback) return { ok: true, plan: fallback };
+  return { ok: false, message: "The plan file was not written, so there is nothing to approve." };
 }
 
 /**

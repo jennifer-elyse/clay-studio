@@ -38,7 +38,8 @@ test("Advanced seat models save, survive a reload, and reset", async ({ page }) 
   await dialog.getByRole("radio", { name: /^Codex/ }).click();
   await dialog.getByText("Advanced options").click();
   const work = dialog.getByLabel("Plan & build model");
-  await expect(work).toHaveValue("gpt-5.4");
+  await expect(work).toHaveValue("");
+  await expect(work).toHaveAttribute("placeholder", "gpt-5.4");
   await work.fill("gpt-5.5");
   await dialog.getByRole("button", { name: "Save models" }).click();
   await expect(dialog.getByText("Saved. Applies to the next run.")).toBeVisible();
@@ -51,6 +52,8 @@ test("Advanced seat models save, survive a reload, and reset", async ({ page }) 
   await expect(reopened.getByLabel("Plan & build model")).toHaveValue("gpt-5.5");
 
   await reopened.getByRole("button", { name: "Reset to defaults" }).click();
-  await expect(reopened.getByLabel("Plan & build model")).toHaveValue("gpt-5.4", { timeout: 5000 });
+  const reset = reopened.getByLabel("Plan & build model");
+  await expect(reset).toHaveValue("", { timeout: 5000 });
+  await expect(reset).toHaveAttribute("placeholder", "gpt-5.4");
   await page.keyboard.press("Escape");
 });

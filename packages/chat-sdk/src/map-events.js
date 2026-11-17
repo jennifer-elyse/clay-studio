@@ -56,25 +56,66 @@ export function stepsFrom(events) {
 const FINISHED = new Set(["finished", "done", "completed", "success"]);
 
 /**
+ * Drop a user message and everything after it, so an edit or resend can replace that turn.
  * @param {import("@cswg/agent-host").UiEvent[]} events
- * @returns {{ phase: "idle" | "working" | "finished" | "error", label: string }}
+ * @param {string} messageId
+ */
+export function truncateFromMessage(events, messageId) {
+  const index = events.findIndex((event) => event.type === "user_text" && event.id === messageId);
+  if (index < 0) return events;
+  return events.slice(0, index);
+}
+
+/**
+ * @param {{ label: string, status: string }} step
+ */
+export function stepLabel(step) {
+  if (step.status === "done") return `${step.label} — done`;
+  if (step.status === "error") return `${step.label} — failed`;
+  if (step.status === "stopped") return `${step.label} — stopped`;
+  return `${step.label}…`;
+}
+
+/**
+ * @param {import("@cswg/agent-host").UiEvent[]} events
+ * @returns {{ phase: "idle" | "working" | "finished" | "cancelled" | "error", label: string }}
  */
 export function runStateFrom(events) {
-  /** @type {"idle" | "working" | "finished" | "error"} */
+  /** @type {"idle" | "working" | "finished" | "cancelled" | "error"} */
   let phase = "idle";
+  let workingLabel = "";
   for (const event of events) {
-    if (event.type === "clear") phase = "idle";
-    if (event.type === "run_started") phase = "working";
+    if (event.type === "clear") {
+      phase = "idle";
+      workingLabel = "";
+    }
+    if (event.type === "run_started") {
+      phase = "working";
+      workingLabel = event.text || "";
+    }
     if (event.type === "error") phase = "error";
     if (event.type === "run_finished") {
+      workingLabel = "";
       const status = String(event.status ?? "finished");
-      phase = FINISHED.has(status) ? "finished" : "error";
+      if (FINISHED.has(status)) phase = "finished";
+      else if (status === "cancelled" || status === "canceled") phase = "cancelled";
+      else phase = "error";
     }
   }
-  if (phase === "working") return { phase, label: "Working…" };
-  if (phase === "error") return { phase, label: "Stopped" };
+  if (phase === "working") return { phase, label: workingLabel || "Working…" };
+  if (phase === "cancelled" || phase === "error") return { phase, label: "Stopped" };
   if (phase === "finished") return { phase, label: "Done" };
   return { phase, label: "" };
+}
+
+/**
+ * The preview shows a build's status until the run ends. Other runs leave that pane alone.
+ * @param {{ phase: string, label: string }} run
+ * @returns {string}
+ */
+export function previewActivity(run) {
+  if (run.phase !== "working" || !run.label || run.label === "Working…") return "";
+  return run.label;
 }
 
 /**
@@ -91,6 +132,9 @@ export function stepsForRun(events) {
   const phase = runStateFrom(events).phase;
   if (phase === "finished") {
     return steps.map((step) => (step.status === "running" ? { ...step, status: "done" } : step));
+  }
+  if (phase === "cancelled") {
+    return steps.map((step) => (step.status === "running" ? { ...step, status: "stopped" } : step));
   }
   if (phase === "error") {
     return steps.map((step) => (step.status === "running" ? { ...step, status: "error" } : step));

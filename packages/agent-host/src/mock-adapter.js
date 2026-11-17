@@ -1,4 +1,4 @@
-import { makeEvent } from "./events.js";
+import { makeEvent, runStartFields } from "./events.js";
 import { modelFor } from "./models.js";
 import {
   assertBuildAllowed,
@@ -44,7 +44,7 @@ export function createMockAdapter(ctx) {
       const command = options.command ?? "chat";
       const rest = options.rest ?? "";
       const runId = `run-${Date.now()}`;
-      yield makeEvent("run_started", { runId, agentId });
+      yield makeEvent("run_started", { runId, agentId, ...runStartFields(command) });
       yield makeEvent("seat", {
         seat: {
           provider: "mock",
@@ -95,7 +95,10 @@ export function createMockAdapter(ctx) {
       } else if (command === "plan") {
         yield makeEvent("step", { step: { label: "Reading your vision", status: "running" } });
         await delay(40);
-        if (cancelled) return;
+        if (cancelled) {
+          yield makeEvent("run_finished", { runId, agentId, status: "cancelled" });
+          return;
+        }
         const title = rest || "First slice of the app";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const body = [
@@ -123,7 +126,10 @@ export function createMockAdapter(ctx) {
         const approved = await assertBuildAllowed(ctx.appDir);
         yield makeEvent("step", { step: { label: "Following the approved plan", status: "running" } });
         await delay(40);
-        if (cancelled) return;
+        if (cancelled) {
+          yield makeEvent("run_finished", { runId, agentId, status: "cancelled" });
+          return;
+        }
         yield makeEvent("step", { step: { label: "Following the approved plan", status: "done" } });
         yield makeEvent("assistant_text", {
           text: `Built against ${approved.title}. Press Run to open it locally.`,
@@ -198,9 +204,11 @@ export function createMockAdapter(ctx) {
         });
       }
 
-      if (!cancelled) {
-        yield makeEvent("run_finished", { runId, agentId, status: "finished" });
-      }
+      yield makeEvent("run_finished", {
+        runId,
+        agentId,
+        status: cancelled ? "cancelled" : "finished",
+      });
     },
     async cancel() {
       cancelled = true;
@@ -229,6 +237,13 @@ export function createMockAdapter(ctx) {
     },
     async getUsage() {
       return { seat: "mock", included: true };
+    },
+    /**
+     * Demo mode has no account catalog.
+     * @returns {Promise<Array<{ id: string, label: string }>>}
+     */
+    async listModels() {
+      return [];
     },
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),

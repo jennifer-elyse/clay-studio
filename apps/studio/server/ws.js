@@ -8,6 +8,7 @@ export const ClientMessage = z.discriminatedUnion("type", [
     thinkFirst: z.boolean().optional(),
     projectName: z.string().optional(),
     projectFolder: z.string().optional(),
+    replaceId: z.string().optional(),
   }),
   z.object({ type: z.literal("approve_plan"), path: z.string() }),
   z.object({ type: z.literal("steer"), text: z.string() }),
@@ -28,9 +29,32 @@ export const ClientMessage = z.discriminatedUnion("type", [
  */
 export function attachSocket(server, host) {
   const wss = new WebSocketServer({ server, path: "/ws" });
+  /** @type {Set<import("ws").WebSocket>} */
+  const sockets = new Set();
+
+  /**
+   * Every open studio window hears the same preview, so Run fills the right-hand pane.
+   * @param {object} payload
+   */
+  function sendAll(payload) {
+    const text = JSON.stringify(payload);
+    for (const client of sockets) {
+      if (client.readyState === 1) client.send(text);
+    }
+  }
+
+  /** Project identity plus which of Plan and Build are already finished. */
+  function viewKey() {
+    const snap = host.snapshot();
+    return JSON.stringify({ project: snap.project, done: snap.done });
+  }
+
+  host.subscribe?.((event) => sendAll(event));
 
   wss.on("connection", (socket) => {
-    socket.send(JSON.stringify({ type: "snapshot", snapshot: host.snapshot() }));
+    sockets.add(socket);
+    socket.on("close", () => sockets.delete(socket));
+    sendAll({ type: "snapshot", snapshot: host.snapshot() });
 
     socket.on("message", async (raw) => {
       let parsed;
@@ -42,44 +66,44 @@ export function attachSocket(server, host) {
       }
       try {
         if (parsed.type === "send") {
-          const before = JSON.stringify(host.snapshot().project);
+          const before = viewKey();
           for await (const event of host.send({
             prompt: parsed.prompt,
             thinkFirst: parsed.thinkFirst,
             projectName: parsed.projectName,
             projectFolder: parsed.projectFolder,
+            replaceId: parsed.replaceId,
           })) {
-            socket.send(JSON.stringify(event));
+            sendAll(event);
           }
-          if (JSON.stringify(host.snapshot().project) !== before) {
-            socket.send(JSON.stringify({ type: "snapshot", snapshot: host.snapshot() }));
+          if (viewKey() !== before) {
+            sendAll({ type: "snapshot", snapshot: host.snapshot() });
           }
         } else if (parsed.type === "approve_plan") {
           const event = await host.approvePlan(parsed.path);
-          socket.send(JSON.stringify(event));
+          sendAll(event);
+          sendAll({ type: "snapshot", snapshot: host.snapshot() });
         } else if (parsed.type === "steer") {
           await host.steer(parsed.text);
         } else if (parsed.type === "set_seat") {
           for await (const event of host.setSeat(parsed.seat)) {
-            socket.send(JSON.stringify(event));
+            sendAll(event);
           }
         } else if (parsed.type === "save_project") {
           await host.saveProject({ id: parsed.id, name: parsed.name, folder: parsed.folder });
-          socket.send(JSON.stringify({ type: "snapshot", snapshot: host.snapshot() }));
+          sendAll({ type: "snapshot", snapshot: host.snapshot() });
         } else if (parsed.type === "select_project") {
           await host.selectProject(parsed.id);
-          socket.send(JSON.stringify({ type: "snapshot", snapshot: host.snapshot() }));
+          sendAll({ type: "snapshot", snapshot: host.snapshot() });
         } else if (parsed.type === "cancel") {
           await host.cancel();
         }
       } catch (error) {
-        socket.send(
-          JSON.stringify({
-            type: "error",
-            id: "ws",
-            text: error instanceof Error ? error.message : "Host error",
-          }),
-        );
+        sendAll({
+          type: "error",
+          id: "ws",
+          text: error instanceof Error ? error.message : "Host error",
+        });
       }
     });
   });

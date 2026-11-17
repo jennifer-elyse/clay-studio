@@ -5,6 +5,7 @@ import { planNeedsProject } from "./project-gate.js";
 import { KeepShell } from "./KeepShell.jsx";
 import { PreviewPane } from "./PreviewPane.jsx";
 import { SettingsModal } from "./SettingsModal.jsx";
+import { previewActivity } from "./map-events.js";
 import { useClaySession } from "./use-clay-session.js";
 import "./tokens.css";
 import "./ClayChat.css";
@@ -37,6 +38,9 @@ export function ClayChat(props) {
           clip={session.clip}
           minimized={session.minimized}
           seat={props.seat}
+          seatSettings={props.seatSettings}
+          onLoadModels={props.onLoadModels}
+          onSelectModel={session.chooseModel}
           project={props.project}
           projects={props.projects}
           projectNotice={projectNotice}
@@ -59,16 +63,17 @@ export function ClayChat(props) {
           run={session.run}
           draft={session.draft}
           onDraft={session.setDraft}
-          onSend={session.send}
+          onSend={session.send} {...session.messageActions}
           onPick={session.pick}
           onThink={session.think}
           thinkFirst={session.thinkFirst}
           onSeats={() => session.openSettings()}
           onApprove={props.onApprovePlan}
           onAdjust={() => session.adjust()}
+          done={props.done}
         />
         <KeepShell>
-          <PreviewPane url={props.previewUrl} status={props.previewStatus} message={props.previewMessage} debug={session.debug} log={props.log} onOpen={props.onOpenPreview} />
+          <PreviewPane url={props.previewUrl} status={props.previewStatus} message={props.previewMessage} activity={previewActivity(session.run)} debug={session.debug} log={props.log} onOpen={props.onOpenPreview} />
         </KeepShell>
         <SettingsModal
           open={session.settingsOpen}
@@ -79,7 +84,7 @@ export function ClayChat(props) {
           busy={session.working}
           projectsRoot={props.projectsRoot}
           onProduct={session.setSeatProduct}
-          onUse={session.useSeat}
+          onUse={session.chooseSeat}
           seatSettings={props.seatSettings}
           onSaveSettings={props.onSaveSettings}
           onClose={() => session.setSettingsOpen(false)}

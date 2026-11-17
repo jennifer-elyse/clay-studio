@@ -64,6 +64,9 @@ export function parseUiEvent(value) {
   return UiEventSchema.parse(value);
 }
 
+/** Shown for the whole /build, until the run finishes. */
+export const BUILDING_STATUS = "Creating the application…";
+
 /**
  * @param {string} type
  * @param {Partial<UiEvent>} rest
@@ -75,4 +78,14 @@ export function makeEvent(type, rest = {}) {
     id: rest.id ?? `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     ...rest,
   });
+}
+
+/**
+ * Status text for the start of a run. Only /build names what it is doing.
+ * @param {string} command
+ * @returns {Partial<UiEvent>}
+ */
+export function runStartFields(command) {
+  if (command === "build") return { text: BUILDING_STATUS };
+  return {};
 }

@@ -10,6 +10,9 @@ import { SettingsButton } from "./SettingsButton.jsx";
  * @param {boolean} props.minimized
  * @param {() => void} props.onToggle
  * @param {{ provider?: string, model?: string, caption?: string } | null} [props.seat]
+ * @param {import("./seat-model-form.js").SeatSettings | null} [props.seatSettings]
+ * @param {() => Promise<{ ok?: boolean, models?: Array<{ id: string, label?: string }>, message?: string } | void>} [props.onLoadModels]
+ * @param {(id: string) => Promise<{ ok?: boolean, message?: string } | void>} [props.onSelectModel]
  * @param {() => void} props.onOpenSettings
  * @param {{ id: string, name: string, folder: string } | null} [props.project]
  * @param {{ id: string, name: string, folder: string }[]} [props.projects]
@@ -25,6 +28,9 @@ export function ClayHeader({
   minimized,
   onToggle,
   seat,
+  seatSettings = null,
+  onLoadModels,
+  onSelectModel,
   onOpenSettings,
   project = null,
   projects = [],
@@ -65,7 +71,7 @@ export function ClayHeader({
           onDraft={onProjectDraft}
         />
         <SettingsButton onOpen={onOpenSettings} />
-        <SeatBadge seat={seat} />
+        <SeatBadge seat={seat} settings={seatSettings} onLoadModels={onLoadModels} onSelect={onSelectModel} />
       </div>
       <button type="button" className="clay-minimize" aria-expanded="true" aria-controls="clay-header" aria-label="Minimize" onClick={onToggle}>
         <Chevron />

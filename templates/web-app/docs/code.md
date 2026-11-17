@@ -60,15 +60,15 @@ The bill follows the work. Grok and Composer draw from the weekly pool first. Cl
 
 Grok 4.7 and Composer 2.5 draw from the weekly pool first. Ordinary coding does not create a second invoice, and the pool refreshes every week. Claude planning has no included allowance. It is paid from prepaid credit at list price plus the $0.25 Teams rate, under a team spending cap.
 
-Clay spends the attached seat on the cheapest model that can do the step. `/plan` and `/spec` write the spec of record. `/build` implements it. Every other turn, including `/think`, `/fix`, and chat, uses the seat's cheap model. A prompt does not paste this file. The product already loaded `AGENTS.md`. The prompt names only the docs that step needs.
+Clay spends the attached seat on the cheapest model that can do the step. `/plan` and `/spec` write the spec of record. `/build` implements it. Every other turn, including `/think`, `/fix`, and chat, uses the seat's cheap model. Cursor and Copilot ask the account for its model list and take the first listed model in that step's family. A name saved in Settings is sent as typed. An empty list keeps the built-in name. The Codex SDK does not return a catalog, so Codex keeps the names in the table. A prompt does not paste this file. The product already loaded `AGENTS.md`. The prompt names only the docs that step needs.
 
 | Seat | Plan and spec | Build | Every other turn |
 | --- | --- | --- | --- |
-| Cursor | Claude, billed per token. No extra reasoning effort. | Grok 4.7 High, from the weekly pool | Composer 2.5, from the weekly pool |
-| Copilot | GPT-6.1 Sol at medium effort | GPT-6.1 Sol at medium effort | GPT-6 Luna at low effort |
+| Cursor | First listed Claude, billed per token. No extra reasoning effort. | First listed Grok, high reasoning when that model allows it, from the weekly pool | First listed Composer, from the weekly pool |
+| Copilot | First listed Sol, Sonnet, Opus, or Fable, at medium effort | First listed Sol, Sonnet, Opus, or Fable, at medium effort | First listed Luna, Haiku, mini, or Flash, at low effort |
 | Codex | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 mini at low effort. The chat thread is reused |
 
-One agent stays with the project and is disposed when the project or the seat changes. Cursor resumes that agent, summarizes before a plan or a build when the thread already has turns, and summarizes again after, so the next turn sees the summary. Preview tools are sent only for build, fix, and code. Copilot starts a new session instead of reloading the saved transcript. Codex and Copilot drop the thread after a plan or a build, and after four short turns. The brain's reasoning is the opening of that same turn, not a second copy of the context. Cursor loads project rules only.
+One agent stays with the project and is disposed when the project or the seat changes. Cursor resumes that agent, summarizes before a plan or a build when the thread already has turns, and summarizes again after, so the next turn sees the summary. Preview tools are sent only for build, fix, and code. Copilot starts a new session instead of reloading the saved transcript. Codex and Copilot drop the thread after a plan or a build, and after four short turns. The brain's reasoning is the opening of that same turn, not a second copy of the context. Cursor loads project rules only. Clay may open at most 5 subtasks. A subtask must not start an agent. If the app or Clay crashes, stop. Do not start another model call, summary, or retry.
 
 ### What AI may see and do
 

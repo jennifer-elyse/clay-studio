@@ -1,5 +1,5 @@
 import { ClayChat } from "@cswg/clay-chat";
-import { saveSettings } from "./save-settings.js";
+import { loadModels, saveSettings } from "./save-settings.js";
 import { useStudioClient } from "./use-studio-client.js";
 
 /** Studio shell. */
@@ -12,9 +12,11 @@ export function App() {
       busy={studio.busy}
       seat={studio.seat}
       project={studio.project}
+      done={studio.done}
       projects={studio.projects}
       projectsRoot={studio.projectsRoot}
       seatSettings={studio.seatSettings}
+      onLoadModels={loadModels}
       onSaveSettings={async (input) => {
         const result = await saveSettings(input);
         if (result.ok) {
@@ -32,6 +34,7 @@ export function App() {
         });
       }}
       onSend={(prompt) => studio.client?.send(prompt)}
+      onCancel={() => studio.client?.cancel()}
       onApprovePlan={(path) => studio.client?.approve(path)}
       onSelectSeat={(seat) => studio.client?.setSeat(seat)}
       onSelectProject={(id) => studio.client?.selectProject(id)}
