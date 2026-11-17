@@ -13,8 +13,9 @@ import { HelpMenu } from "./HelpMenu.jsx";
  * @param {(slash: string) => void} [props.onSend]
  * @param {() => void} [props.onSeats]
  * @param {boolean} [props.busy]
+ * @param {{ plan?: boolean, build?: boolean }} [props.done]
  */
-export function CommandPills({ onPick, onThink, thinkFirst = false, draft = "", onSend, onSeats, busy = false }) {
+export function CommandPills({ onPick, onThink, thinkFirst = false, draft = "", onSend, onSeats, busy = false, done }) {
   const [collapsed, setCollapsed] = useState(false);
   const buttonsId = useId();
   const pills = PILL_IDS.map((id) => COMMANDS.find((command) => command.id === id)).filter((command) => command);
@@ -28,6 +29,7 @@ export function CommandPills({ onPick, onThink, thinkFirst = false, draft = "", 
             key={command.id}
             command={command}
             busy={busy}
+            done={done}
             armed={thinkFirst && (text === command.slash || text.startsWith(`${command.slash} `))}
             onPick={onPick}
             onThink={onThink}

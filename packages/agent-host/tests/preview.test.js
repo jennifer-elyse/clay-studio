@@ -6,7 +6,10 @@ import {
   containPreview,
   copyTemplate,
   defaultAppsDir,
+  getPreview,
   isInsideRepo,
+  isPortOpen,
+  onPreviewCrash,
   pickPort,
   PREVIEW_STOPPED,
   startPreview,
@@ -114,6 +117,50 @@ http.createServer((req, res) => { res.end("ok"); }).listen(port, "127.0.0.1");
     await stopPreview(appDir);
   });
 
+  test("serves the client index through Vite", async () => {
+    const appDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-prev-"));
+    const port = await pickPort();
+    await fs.writeFile(path.join(appDir, "package.json"), '{"type":"module"}\n', "utf8");
+    await fs.mkdir(path.join(appDir, "server"), { recursive: true });
+    await fs.mkdir(path.join(appDir, "client"), { recursive: true });
+    await fs.mkdir(path.join(appDir, "node_modules", "vite", "bin"), { recursive: true });
+    await fs.writeFile(
+      path.join(appDir, "server", "index.js"),
+      `import http from "node:http";
+const port = Number(process.env.PORT);
+http.createServer((req, res) => { res.end("api"); }).listen(port, "127.0.0.1");
+`,
+      "utf8",
+    );
+    await fs.writeFile(path.join(appDir, "client", "vite.config.js"), "export default {};\n", "utf8");
+    await fs.writeFile(path.join(appDir, "client", "index.html"), "<!doctype html><h1>Clay</h1>\n", "utf8");
+    await fs.writeFile(
+      path.join(appDir, "node_modules", "vite", "bin", "vite.js"),
+      `import http from "node:http";
+const flag = process.argv.indexOf("--port");
+const port = Number(process.argv[flag + 1]);
+const api = process.env.CLAY_API_PORT;
+http.createServer((req, res) => {
+  res.setHeader("content-type", "text/html; charset=utf-8");
+  res.end("<!doctype html><h1>Clay</h1><p>index " + api + "</p>");
+}).listen(port, "127.0.0.1");
+`,
+      "utf8",
+    );
+    const handle = await startPreview({ appDir, port, install: false });
+    const body = await new Promise((resolve, reject) => {
+      http.get(handle.url, (res) => {
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => resolve(data));
+      }).on("error", reject);
+    });
+    expect(String(body)).toContain("<h1>Clay</h1>");
+    expect(String(body)).not.toContain("api");
+    expect(String(body)).toMatch(/index \d+/);
+    await stopPreview(appDir);
+  });
+
   test("a crashed app stays a short preview message", async () => {
     const appDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-prev-"));
     await fs.mkdir(path.join(appDir, "server"), { recursive: true });
@@ -125,5 +172,39 @@ http.createServer((req, res) => { res.end("ok"); }).listen(port, "127.0.0.1");
     const opened = await containPreview({ appDir, install: false });
     expect(opened).toEqual({ ok: false, message: PREVIEW_STOPPED });
     expect(opened.ok ? "" : opened.message).not.toMatch(/advisories|poisoning/);
+  });
+
+  test("a running app that exits is not started again", async () => {
+    const appDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-prev-"));
+    const port = await pickPort();
+    await fs.mkdir(path.join(appDir, "server"), { recursive: true });
+    await fs.writeFile(
+      path.join(appDir, "server", "index.js"),
+      `import http from "node:http";
+const port = Number(process.env.PORT);
+const server = http.createServer((req, res) => { res.end("ok"); });
+server.listen(port, "127.0.0.1", () => {
+  setTimeout(() => server.close(() => process.exit(1)), 200);
+});
+`,
+      "utf8",
+    );
+    let crashes = 0;
+    const stop = onPreviewCrash((dir) => {
+      if (dir === appDir) crashes += 1;
+    });
+    try {
+      await startPreview({ appDir, port, install: false });
+      const deadline = Date.now() + 2000;
+      while (crashes === 0 && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      expect(crashes).toBe(1);
+      expect(getPreview(appDir)).toBeNull();
+      expect(await isPortOpen(port)).toBe(false);
+    } finally {
+      stop();
+      await stopPreview(appDir);
+    }
   });
 });

@@ -5,11 +5,13 @@ export { createCursorAdapter } from "./cursor-adapter.js";
 export { isProductSeat, PRODUCT_SEATS, productSeat } from "./seats.js";
 export { createCopilotAdapter } from "./copilot-adapter.js";
 export { createMockAdapter } from "./mock-adapter.js";
-export { makeEvent, parseUiEvent, UiEventSchema, PlanSchema, SeatSchema } from "./events.js";
+export { BUILDING_STATUS, makeEvent, parseUiEvent, runStartFields, UiEventSchema, PlanSchema, SeatSchema } from "./events.js";
 export {
   assertBuildAllowed,
+  commandDone,
   latestApprovedPlan,
   listPlans,
+  markPlanBuilt,
   PlanGateError,
   setPlanStatus,
   writePlan,

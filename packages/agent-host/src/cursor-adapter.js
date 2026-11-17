@@ -1,11 +1,14 @@
 import { commandNeedsTools, compactAfter, compactBefore } from "./context.js";
-import { makeEvent } from "./events.js";
+import { makeEvent, runStartFields } from "./events.js";
 import { friendlyTool, textFromCursorEvent } from "./friendly.js";
 import {
-  cursorModelOptions,
-  modelFor,
+  harnessModelChoices,
+  hasSeatOverride,
+  nextModelAfterLimit,
   phaseFor,
+  resolveHarnessModel,
   seatCaption,
+  selectableModels,
 } from "./models.js";
 import {
   assertBuildAllowed,
@@ -17,11 +20,39 @@ import {
   copyTemplate,
   getPreview,
   isInsideRepo,
+  onPreviewCrash,
   previewTools,
   stopPreview,
 } from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
+import { approvalEvents } from "./plan-offer.js";
 import { promptFor } from "./prompts.js";
+import { decideSubtask, emptySubtaskGate, MAX_SUBTASKS } from "./subtasks.js";
+
+/**
+ * A stored SDK login uses `status: "logged-in"`. `loggedIn` is not a field, so reading it
+ * always looks signed out and opens the browser login on every new agent.
+ * An API key in the environment is its own login.
+ *
+ * @param {{ status?: string } | null | undefined} status
+ * @param {string} [apiKey]
+ */
+export function needsCursorLogin(status, apiKey = process.env.CURSOR_API_KEY) {
+  if (apiKey) return false;
+  return status?.status !== "logged-in";
+}
+
+/**
+ * @param {{ error?: { message?: string, code?: string }, result?: string } | null | undefined} result
+ */
+function cursorFailureText(result) {
+  const message = result?.error?.message?.trim();
+  if (message) return message;
+  const code = result?.error?.code?.trim();
+  if (code && code.includes(" ")) return code;
+  const text = result?.result?.trim();
+  return text || "";
+}
 
 /**
  * @param {object} ctx
@@ -37,9 +68,20 @@ export function createCursorAdapter(ctx) {
   let agent = null;
   /** @type {any} */
   let activeRun = null;
+  let cancelRequested = false;
   let agentId = "";
   let turns = 0;
   let hasHistory = false;
+  /** @type {import("./models.js").CatalogModel[] | null} */
+  let listedModels = null;
+  let lastCursorError = "";
+
+  onPreviewCrash((appDir) => {
+    if (appDir !== ctx.appDir || !activeRun) return;
+    cancelRequested = true;
+    const run = activeRun;
+    if (run.supports?.("cancel")) run.cancel().catch(() => {});
+  });
 
   async function sdk() {
     try {
@@ -66,6 +108,21 @@ export function createCursorAdapter(ctx) {
   }
 
   /**
+   * The account catalog, cached after the first successful list.
+   * @param {{ models?: { list?: () => Promise<import("./models.js").CatalogModel[]> } }} Cursor
+   */
+  async function cursorCatalog(Cursor) {
+    if (listedModels) return listedModels;
+    try {
+      const listed = await Cursor.models?.list?.();
+      listedModels = Array.isArray(listed) ? listed : [];
+    } catch {
+      return [];
+    }
+    return listedModels;
+  }
+
+  /**
    * @param {"plan" | "build" | "fast"} phase
    */
   async function ensureAgent(phase) {
@@ -76,17 +133,17 @@ export function createCursorAdapter(ctx) {
     }
     const { Agent, Cursor } = await sdk();
     const cwd = ctx.appDir;
-    const model = cursorModelOptions(
-      modelFor(phase, "cursor", ctx.seatModels),
+    if (!agent) {
+      const status = await Cursor.auth.status().catch(() => ({ status: "logged-out" }));
+      if (needsCursorLogin(status)) await Cursor.auth.login();
+    }
+    const model = resolveHarnessModel(
       phase,
+      "cursor",
+      await cursorCatalog(Cursor),
+      ctx.seatModels,
     );
     if (!agent) {
-      const status = await Cursor.auth
-        .status()
-        .catch(() => ({ loggedIn: false }));
-      if (!status?.loggedIn && !process.env.CURSOR_API_KEY) {
-        await Cursor.auth.login();
-      }
       const resumeId = ctx.resumeAgentId || "";
       ctx.resumeAgentId = "";
       if (resumeId) {
@@ -109,7 +166,7 @@ export function createCursorAdapter(ctx) {
         hasHistory = false;
       }
     }
-    return { agent, model, Agent };
+    return { agent, model, catalog: await cursorCatalog(Cursor) };
   }
 
   /**
@@ -140,7 +197,26 @@ export function createCursorAdapter(ctx) {
    */
   async function* streamRun(run, runId) {
     if (typeof run.stream !== "function") return;
+    let gate = emptySubtaskGate();
     for await (const event of run.stream()) {
+      const decision = decideSubtask(gate, event);
+      gate = decision.gate;
+      if (decision.stop) {
+        const text =
+          decision.stop === "loop"
+            ? "Stopped. A subtask cannot start another agent."
+            : `Stopped. Clay can open ${MAX_SUBTASKS} subtasks, and no more.`;
+        yield makeEvent("assistant_text", { text, runId, agentId });
+        cancelRequested = true;
+        if (run.supports?.("cancel")) {
+          try {
+            await run.cancel();
+          } catch {
+            /* The run already finished. */
+          }
+        }
+        return;
+      }
       const text = textFromCursorEvent(event);
       if (text) {
         yield makeEvent("assistant_text", { text, runId, agentId });
@@ -157,6 +233,10 @@ export function createCursorAdapter(ctx) {
           runId,
           agentId,
         });
+      }
+      if (typed.type === "status" && String(typed.status).toUpperCase() === "ERROR" && typed.message) {
+        lastCursorError = String(typed.message);
+        yield makeEvent("assistant_text", { text: lastCursorError, runId, agentId });
       }
       if (typed.type === "summary") {
         yield makeEvent("summary", {
@@ -182,13 +262,14 @@ export function createCursorAdapter(ctx) {
      * @param {boolean} [options.thinkFirst]
      */
     async *send(prompt, options = {}) {
+      cancelRequested = false;
       const command = options.command ?? "chat";
       const rest = options.rest ?? prompt;
       const phase = phaseFor(command);
 
       if (command === "run") {
         const runId = `run-${Date.now()}`;
-        yield makeEvent("run_started", { runId, agentId });
+        yield makeEvent("run_started", { runId, agentId, ...runStartFields(command) });
         yield makeEvent("preview", { preview: { status: "starting" } });
         const opened = await containPreview({ appDir: ctx.appDir });
         if (!opened.ok) {
@@ -207,7 +288,9 @@ export function createCursorAdapter(ctx) {
 
       let planMeta = null;
       let specPath = null;
+      let planStarted = 0;
       if (command === "plan" || command === "spec") {
+        planStarted = Date.now();
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
@@ -219,8 +302,10 @@ export function createCursorAdapter(ctx) {
         planMeta = await assertBuildAllowed(ctx.appDir);
       }
 
-      const { agent: handle } = await ensureAgent(phase);
-      const modelId = modelFor(phase, "cursor", ctx.seatModels);
+      const { agent: handle, model: firstModel, catalog } = await ensureAgent(phase);
+      const choices = harnessModelChoices(phase, "cursor", catalog, ctx.seatModels);
+      let model = choices.find((choice) => choice.id === firstModel.id) ?? firstModel;
+      const modelId = model.id;
       yield makeEvent("seat", {
         seat: {
           provider: "cursor",
@@ -240,23 +325,62 @@ export function createCursorAdapter(ctx) {
         thinkFirst: options.thinkFirst === true,
       });
 
-      const run = await handle.send(fullPrompt, {
-        model: cursorModelOptions(modelId, phase),
-        local: sendLocal(command),
-      });
-      activeRun = run;
-      const runId = run.id ?? `run-${Date.now()}`;
-      yield makeEvent("run_started", { runId, agentId });
-      yield* streamRun(run, runId);
-      const result = await run.wait();
-      activeRun = null;
-      if (result?.status === "error") {
-        yield makeEvent("error", {
-          text: "The Cursor run failed. Check the transcript.",
+      let result;
+      let runId = "";
+      let choiceIndex = Math.max(0, choices.findIndex((choice) => choice.id === model.id));
+      while (true) {
+        const run = await handle.send(fullPrompt, {
+          model,
+          local: sendLocal(command),
+        });
+        activeRun = run;
+        runId = run.id ?? `run-${Date.now()}`;
+        yield makeEvent("run_started", { runId, agentId, ...runStartFields(command) });
+        yield* streamRun(run, runId);
+        try {
+          result = await run.wait();
+        } catch (error) {
+          activeRun = null;
+          if (cancelRequested) {
+            yield makeEvent("run_finished", { runId, agentId, status: "cancelled" });
+            return;
+          }
+          throw error;
+        }
+        activeRun = null;
+        if (cancelRequested) {
+          yield makeEvent("run_finished", { runId, agentId, status: "cancelled" });
+          return;
+        }
+        if (result?.status !== "error") break;
+        const reason = cursorFailureText(result) || lastCursorError;
+        lastCursorError = "";
+        const next = hasSeatOverride("cursor", phase, ctx.seatModels)
+          ? null
+          : nextModelAfterLimit(choices, choiceIndex, reason);
+        if (!next) {
+          yield makeEvent("run_finished", { runId, agentId, status: "error" });
+          yield makeEvent("error", {
+            text: reason || "The Cursor run failed.",
+            runId,
+            agentId,
+          });
+          return;
+        }
+        choiceIndex = choices.findIndex((choice) => choice.id === next.id);
+        model = next;
+        yield makeEvent("assistant_text", {
+          text: `Switching to ${next.id}.`,
           runId,
           agentId,
         });
-        return;
+        yield makeEvent("seat", {
+          seat: {
+            provider: "cursor",
+            model: next.id,
+            caption: seatCaption("cursor", phase, next.id),
+          },
+        });
       }
       if (needsSecurityPass(command)) {
         yield* secureAfterRun({
@@ -265,7 +389,7 @@ export function createCursorAdapter(ctx) {
           agentId,
           repair: async function* repair(prompt) {
             const follow = await handle.send(prompt, {
-              model: cursorModelOptions(modelId, phase),
+              model,
               local: sendLocal(command),
             });
             activeRun = follow;
@@ -280,6 +404,17 @@ export function createCursorAdapter(ctx) {
       }
       if (compactAfter(phase)) yield* compact(handle);
       else turns += 1;
+      if (command === "plan" && planMeta) {
+        const events = await approvalEvents({
+          appDir: ctx.appDir,
+          relativePath: planMeta.path,
+          sinceMs: planStarted,
+          runId,
+          agentId,
+        });
+        for (const event of events) yield event;
+        if (events.some((event) => event.type === "error")) return;
+      }
       yield makeEvent("run_finished", {
         runId,
         agentId,
@@ -287,7 +422,13 @@ export function createCursorAdapter(ctx) {
       });
     },
     async cancel() {
-      if (activeRun?.supports?.("cancel")) await activeRun.cancel();
+      cancelRequested = true;
+      if (!activeRun?.supports?.("cancel")) return;
+      try {
+        await activeRun.cancel();
+      } catch {
+        /* The run already finished. */
+      }
     },
     async reset() {
       if (agent?.close) await agent.close();
@@ -296,6 +437,7 @@ export function createCursorAdapter(ctx) {
       agentId = "";
       turns = 0;
       hasHistory = false;
+      listedModels = null;
       ctx.resumeAgentId = "";
     },
     async approvePlan(planPath) {
@@ -329,6 +471,18 @@ export function createCursorAdapter(ctx) {
     async getUsage() {
       if (agent?.getUsage) return agent.getUsage();
       return { seat: "cursor" };
+    },
+    /**
+     * Models this Cursor account can run. Uses the catalog already fetched for a run when there is one.
+     * @returns {Promise<Array<{ id: string, label: string }>>}
+     */
+    async listModels() {
+      if (listedModels) return selectableModels(listedModels);
+      const { Cursor } = await sdk();
+      if (typeof Cursor.models?.list !== "function") throw new Error("Cursor did not list its models.");
+      const listed = await Cursor.models.list();
+      listedModels = Array.isArray(listed) ? listed : [];
+      return selectableModels(listedModels);
     },
     async login() {
       const { Cursor } = await sdk();

@@ -1,6 +1,6 @@
 import { useActionState } from "react";
 import { SeatModelField } from "./SeatModelField.jsx";
-import { seatModelFields, seatModelHint, seatModelInput } from "./seat-model-form.js";
+import { seatModelFields, seatModelHint, seatModelInput, seatModelKey } from "./seat-model-form.js";
 
 /**
  * Saves through the form action. Save and Reset are both submit buttons, told apart by `intent`.
@@ -23,14 +23,15 @@ export function SeatModelForm({ seat, settings, onSave }) {
   };
   const [state, submit, pending] = useActionState(submitModels, { message: "" });
   const fields = seatModelFields(seat, settings);
-  const disabled = !settings || !onSave || pending;
+  const fieldKey = seatModelKey(seat, settings);
+  const disabled = !fieldKey || !onSave || pending;
   return (
     <form action={submit} className="clay-seat-models">
-      <SeatModelField name="work" label="Plan & build model" field={fields.work} disabled={disabled} />
-      <SeatModelField name="fast" label="Quick-turn model" field={fields.fast} disabled={disabled} />
+      {fieldKey ? <SeatModelField key={`${fieldKey}:work`} name="work" label="Plan & build model" field={fields.work} disabled={disabled} /> : null}
+      {fieldKey ? <SeatModelField key={`${fieldKey}:fast`} name="fast" label="Quick-turn model" field={fields.fast} disabled={disabled} /> : null}
       <p className="clay-modal-note">{seatModelHint(seat)}</p>
-      {!settings ? <p className="clay-modal-note" role="status">Loading the current models.</p> : null}
-      {state.message ? <p className="clay-modal-note" role="status">{state.message}</p> : null}
+      {fieldKey ? null : <p className="clay-modal-note" role="status">Loading the current models.</p>}
+      {pending || state.message ? <p className="clay-modal-note" role="status">{pending ? "Saving models." : state.message}</p> : null}
       <div className="clay-seat-models-actions">
         <button type="submit" name="intent" value="save" className="clay-seat-use" disabled={disabled}>
           Save models

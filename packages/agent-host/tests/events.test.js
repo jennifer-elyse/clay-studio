@@ -1,4 +1,4 @@
-import { makeEvent, parseUiEvent, UiEventSchema } from "../src/events.js";
+import { BUILDING_STATUS, makeEvent, parseUiEvent, runStartFields, UiEventSchema } from "../src/events.js";
 
 describe("UiEvent", () => {
   test("parses a plan event", () => {
@@ -13,6 +13,13 @@ describe("UiEvent", () => {
     });
     expect(event.type).toBe("plan");
     expect(event.plan?.status).toBe("draft");
+  });
+
+  test("build names its status and other commands stay quiet", () => {
+    expect(runStartFields("build")).toEqual({ text: BUILDING_STATUS });
+    expect(runStartFields("plan")).toEqual({});
+    const event = makeEvent("run_started", { runId: "r", ...runStartFields("build") });
+    expect(event.text).toBe("Creating the application…");
   });
 
   test("rejects unknown types", () => {

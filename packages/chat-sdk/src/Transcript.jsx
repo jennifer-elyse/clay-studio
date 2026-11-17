@@ -1,5 +1,7 @@
 import { ClayBot } from "./ClayBot.jsx";
+import { stepLabel } from "./map-events.js";
 import { PlanCard } from "./PlanCard.jsx";
+import { TranscriptBubble } from "./TranscriptBubble.jsx";
 
 /**
  * @param {object} props
@@ -8,9 +10,11 @@ import { PlanCard } from "./PlanCard.jsx";
  * @param {boolean} [props.busy]
  * @param {string} [props.clip]
  * @param {(path: string) => void} [props.onApprove]
- * @param {(path: string) => void} [props.onAdjust]
+ * @param {() => void} [props.onAdjust]
+ * @param {(item: import("./map-events.js").TranscriptItem) => void} [props.onEdit]
+ * @param {(item: import("./map-events.js").TranscriptItem) => void} [props.onResend]
  */
-export function Transcript({ items, steps = [], clip = "idle.webp", onApprove, onAdjust }) {
+export function Transcript({ items, steps = [], busy = false, clip = "idle.webp", onApprove, onAdjust, onEdit, onResend }) {
   if (items.length === 0) {
     return (
       <div className="clay-transcript">
@@ -28,19 +32,14 @@ export function Transcript({ items, steps = [], clip = "idle.webp", onApprove, o
         item.kind === "plan" && item.plan ? (
           <PlanCard key={item.id} plan={item.plan} onApprove={onApprove} onAdjust={onAdjust} />
         ) : (
-          <div key={item.id} className={`clay-bubble${item.kind === "user" ? " is-user" : ""}${item.kind === "error" ? " is-error" : ""}`}>
-            {item.text}
-          </div>
+          <TranscriptBubble key={item.id} item={item} busy={busy} onEdit={onEdit} onResend={onResend} />
         ),
       )}
       {steps.length > 0 ? (
         <div className="clay-steps">
           {steps.map((step) => (
-            <span
-              key={step.label}
-              className={`clay-step${step.status === "running" ? " is-running" : ""}${step.status === "done" ? " is-done" : ""}${step.status === "error" ? " is-error" : ""}`}
-            >
-              {step.status === "done" ? `${step.label} — done` : step.status === "error" ? `${step.label} — failed` : `${step.label}…`}
+            <span key={step.label} className={`clay-step is-${step.status}`}>
+              {stepLabel(step)}
             </span>
           ))}
         </div>

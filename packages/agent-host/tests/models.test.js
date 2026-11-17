@@ -6,6 +6,10 @@ import {
   modelFor,
   phaseFor,
   resolveCopilotModel,
+  harnessModelChoices,
+  nextModelAfterLimit,
+  resolveHarnessModel,
+  selectableModels,
 } from "../src/models.js";
 
 describe("seat models", () => {
@@ -121,5 +125,81 @@ describe("seat models", () => {
     const catalog = [{ id: "claude-sonnet-5.5" }];
     expect(resolveCopilotModel("plan", catalog, { copilot: { work: "typed-model" } })).toBe("typed-model");
     expect(resolveCopilotModel("plan", catalog)).toBe("claude-sonnet-5.5");
+  });
+
+  test("the first listed model in the family wins, ahead of an older built-in name", () => {
+    const cursor = [
+      { id: "auto-smart" },
+      { id: "claude-fable-5", aliases: ["claude-4.5-sonnet"] },
+      { id: "claude-4.5-sonnet" },
+      { id: "grok-4.7", parameters: [{ id: "reasoning_effort", values: [{ value: "high" }, { value: "low" }] }] },
+      { id: "grok-4" },
+      { id: "composer-2.5" },
+      { id: "composer-2" },
+    ];
+    expect(resolveHarnessModel("plan", "cursor", cursor).id).toBe("claude-fable-5");
+    expect(harnessModelChoices("plan", "cursor", cursor).map((choice) => choice.id)).toEqual([
+      "claude-fable-5",
+      "claude-4.5-sonnet",
+    ]);
+    const limit = "You've hit your usage limit for Opus You've saved $633 on API model usage this month with Pro+.";
+    const opusCatalog = [{ id: "claude-opus-4.8" }, { id: "claude-sonnet-5.5" }, { id: "claude-haiku-4.5" }];
+    const opusChoices = harnessModelChoices("plan", "cursor", opusCatalog);
+    expect(nextModelAfterLimit(opusChoices, 0, limit)?.id).toBe("claude-sonnet-5.5");
+    expect(nextModelAfterLimit(opusChoices, 0, "The file could not be written.")).toBeNull();
+    expect(resolveHarnessModel("build", "cursor", cursor)).toEqual({
+      id: "grok-4.7",
+      params: [{ id: "reasoning_effort", value: "high" }],
+    });
+    expect(resolveHarnessModel("fast", "cursor", cursor).id).toBe("composer-2.5");
+    const copilot = [{ id: "gpt-5.6-sol" }, { id: "gpt-6.1-sol" }, { id: "gpt-5.6-luna" }];
+    expect(resolveCopilotModel("plan", copilot)).toBe("gpt-5.6-sol");
+    expect(resolveCopilotModel("fast", copilot)).toBe("gpt-5.6-luna");
+    const codex = [{ model: "gpt-5.5", isDefault: true }, { model: "gpt-5.4-mini", isDefault: false }];
+    expect(resolveHarnessModel("plan", "codex", codex).id).toBe("gpt-5.5");
+    expect(resolveHarnessModel("fast", "codex", codex).id).toBe("gpt-5.4-mini");
+  });
+
+  test("a missing family uses the first concrete model, and a router-only list uses auto-smart", () => {
+    expect(resolveHarnessModel("plan", "cursor", [{ id: "auto-smart" }, { id: "grok-4.7" }]).id).toBe("grok-4.7");
+    expect(resolveHarnessModel("fast", "cursor", [{ id: "muse-wonder-1" }]).id).toBe("muse-wonder-1");
+    const router = [{
+      id: "auto-smart",
+      parameters: [{ id: "optimize_for", values: [{ value: "cost" }, { value: "intelligence" }] }],
+    }];
+    expect(resolveHarnessModel("plan", "cursor", router)).toEqual({
+      id: "auto-smart",
+      params: [{ id: "optimize_for", value: "intelligence" }],
+    });
+    expect(resolveHarnessModel("fast", "cursor", router).params).toEqual([{ id: "optimize_for", value: "cost" }]);
+    expect(resolveHarnessModel("plan", "cursor", []).id).toBe("claude-4.5-sonnet");
+  });
+
+  test("high reasoning is sent only when the listed Grok allows it", () => {
+    const grok = [{
+      id: "grok-4.7",
+      parameters: [{ id: "reasoning_effort", values: [{ value: "low" }] }],
+      variants: [{ isDefault: true, params: [{ id: "reasoning_effort", value: "low" }] }],
+    }];
+    expect(resolveHarnessModel("build", "cursor", grok).params).toEqual([{ id: "reasoning_effort", value: "low" }]);
+    expect(resolveHarnessModel("build", "cursor", [{ id: "grok-4.7" }]).params).toEqual([
+      { id: "reasoning_effort", value: "high" },
+    ]);
+  });
+
+  test("the picker lists concrete models and keeps a display name", () => {
+    expect(selectableModels([
+      { id: "auto" },
+      { id: "claude-fable-5", displayName: "Claude Fable" },
+      { id: "claude-fable-5", displayName: "again" },
+      { id: "grok-4.7", name: "Grok" },
+    ])).toEqual([
+      { id: "claude-fable-5", label: "Claude Fable" },
+      { id: "grok-4.7", label: "Grok" },
+    ]);
+    expect(selectableModels([{ id: "auto" }, { model: "default", isDefault: true }])).toEqual([
+      { id: "auto", label: "auto" },
+      { id: "default", label: "default" },
+    ]);
   });
 });

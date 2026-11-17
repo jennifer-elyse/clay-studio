@@ -9,6 +9,8 @@ describe("Clay 1.0 prompts", () => {
       rest: "",
       seat: "cursor",
     });
+    expect(plan).toContain("Clay may open at most 5 subtasks");
+    expect(plan).toContain("A subtask must not start an agent");
     expect(plan).toContain("Cursor already loaded AGENTS.md");
     expect(plan).toContain("docs/vision.md");
     expect(plan).toContain("docs/erd.md");

@@ -13,7 +13,11 @@ export class KeepShell extends Component {
 
   render() {
     if (this.state.failed) {
-      return <div className="clay-preview-empty">This part stopped. The rest of Clay is fine.</div>;
+      return (
+        <aside className="clay-preview" aria-label="Live preview">
+          <div className="clay-preview-empty">This part stopped. The rest of Clay is fine.</div>
+        </aside>
+      );
     }
     return this.props.children;
   }

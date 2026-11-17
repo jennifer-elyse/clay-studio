@@ -28,10 +28,23 @@ describe("mock host", () => {
     const planEvent = planned.find((e) => e.type === "plan");
     expect(planEvent?.plan?.status).toBe("draft");
 
+    expect(host.snapshot().done).toEqual({ plan: false, build: false });
     await host.approvePlan(planEvent.plan.path);
+    expect(host.snapshot().done).toEqual({ plan: true, build: false });
     const built = await collect(host.send("/build"));
     expect(built.some((e) => e.type === "assistant_text")).toBe(true);
     expect(built.some((e) => e.type === "error")).toBe(false);
+    expect(host.snapshot().done).toEqual({ plan: true, build: true });
+
+    const other = await host.saveProject({ name: "Other", folder: "other-app" });
+    expect(host.snapshot().project?.id).toBe(other.id);
+    expect(host.snapshot().done).toEqual({ plan: false, build: false });
+    const demo = host.snapshot().projects.find((project) => project.folder === "demo");
+    await host.selectProject(demo.id);
+    expect(host.snapshot().done).toEqual({ plan: true, build: true });
+
+    const again = await createHost({ slug: "demo", seat: "mock", appsDir, templateDir });
+    expect(again.snapshot().done).toEqual({ plan: true, build: true });
   });
 
   test("help, settings, and clear", async () => {
@@ -80,5 +93,36 @@ describe("mock host", () => {
     const fixed = await collect(host.send({ prompt: "/fix the button", thinkFirst: true }));
     const fixedSaid = fixed.filter((event) => event.type === "user_text").map((event) => event.text);
     expect(fixedSaid).toEqual(["/think the button", "/fix the button"]);
+  });
+
+  test("cancel stops a plan and resend starts a fresh turn", async () => {
+    const appsDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-apps-"));
+    process.env.CLAY_SESSION_PATH = path.join(appsDir, "session.json");
+    process.env.CLAY_PROFILE_DIR = path.join(appsDir, "profile");
+    const host = await createHost({ slug: "turns", seat: "mock", appsDir, templateDir });
+    const started = host.snapshot().agentId;
+
+    const iter = host.send("/plan request tracker");
+    const seen = [];
+    for (;;) {
+      const next = await iter.next();
+      if (next.done) break;
+      seen.push(next.value);
+      if (next.value.type === "step") break;
+    }
+    await host.cancel();
+    for (;;) {
+      const next = await iter.next();
+      if (next.done) break;
+      seen.push(next.value);
+    }
+    expect(seen.at(-1)).toMatchObject({ type: "run_finished", status: "cancelled" });
+    expect(seen.some((event) => event.type === "plan")).toBe(false);
+    expect(host.busy).toBe(false);
+    expect(host.snapshot().agentId).toBe(started);
+
+    const resent = await collect(host.send({ prompt: "hello again", replaceId: "u1" }));
+    expect(resent.some((event) => event.type === "user_text" && event.text === "hello again")).toBe(true);
+    expect(host.snapshot().agentId).not.toBe(started);
   });
 });

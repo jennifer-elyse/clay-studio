@@ -5,5 +5,5 @@ export { CommandPills } from "./CommandPills.jsx";
 export { PlanCard } from "./PlanCard.jsx";
 export { SeatBadge } from "./SeatBadge.jsx";
 export { SettingsModal } from "./SettingsModal.jsx";
-export { applyEvent, runStateFrom, stepsForRun, stepsFrom } from "./map-events.js";
+export { applyEvent, previewActivity, runStateFrom, stepLabel, stepsForRun, stepsFrom, truncateFromMessage } from "./map-events.js";
 export { COMMANDS, PILL_IDS } from "./commands.js";

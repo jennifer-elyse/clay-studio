@@ -2,6 +2,17 @@ import { useMemo, useState } from "react";
 import { clipForCommand } from "./animations.js";
 import { parseSlash } from "./commands.js";
 import { applyEvent, runStateFrom, stepsForRun } from "./map-events.js";
+import { harnessModelChoice } from "./seat-model-form.js";
+
+/**
+ * @param {string | { prompt: string, thinkFirst?: boolean, projectName?: string, projectFolder?: string }} payload
+ * @param {string} replaceId
+ */
+function withReplace(payload, replaceId) {
+  if (!replaceId) return payload;
+  if (typeof payload === "string") return { prompt: payload, replaceId };
+  return { ...payload, replaceId };
+}
 
 const NAMED_SEATS = ["cursor", "codex", "copilot"];
 
@@ -9,7 +20,8 @@ const NAMED_SEATS = ["cursor", "codex", "copilot"];
  * @typedef {object} ClayChatProps
  * @property {import("@cswg/agent-host").UiEvent[]} [events]
  * @property {import("./map-events.js").TranscriptItem[]} [items]
- * @property {(input: string | { prompt: string, thinkFirst?: boolean, projectName?: string, projectFolder?: string }) => void} onSend
+ * @property {(input: string | { prompt: string, thinkFirst?: boolean, projectName?: string, projectFolder?: string, replaceId?: string }) => void | false} onSend
+ * @property {() => void} [onCancel]
  * @property {() => { ok: boolean, message?: string, projectName?: string, projectFolder?: string }} [preparePlan]
  * @property {(path: string) => void} [onApprovePlan]
  * @property {() => void} [onAdjustPlan]
@@ -17,6 +29,7 @@ const NAMED_SEATS = ["cursor", "codex", "copilot"];
  * @property {string} [projectsRoot]
  * @property {object | null} [seatSettings] Saved seat model overrides and defaults from the host.
  * @property {(input: object) => Promise<{ ok: boolean, message?: string }>} [onSaveSettings]
+ * @property {() => Promise<{ ok?: boolean, models?: Array<{ id: string, label?: string }>, message?: string }>} [onLoadModels]
  * @property {{ provider?: string, model?: string, caption?: string } | null} [seat]
  * @property {string} [previewUrl]
  * @property {string} [previewStatus]
@@ -27,6 +40,7 @@ const NAMED_SEATS = ["cursor", "codex", "copilot"];
  * @property {{ id: string, name: string, folder: string }[]} [projects]
  * @property {(id: string) => void} [onSelectProject]
  * @property {(input: { id?: string, name: string, folder: string }) => void} [onSaveProject]
+ * @property {{ plan?: boolean, build?: boolean }} [done] Plan and Build stay off once each has finished for this project.
  */
 
 /**
@@ -35,6 +49,7 @@ const NAMED_SEATS = ["cursor", "codex", "copilot"];
  */
 export function useClaySession(props) {
   const [draft, setDraft] = useState("");
+  const [editingId, setEditingId] = useState("");
   const [thinkFirst, setThinkFirst] = useState(false);
   const [debug, setDebug] = useState(false);
   const [clip, setClip] = useState("idle.webp");
@@ -67,38 +82,78 @@ export function useClaySession(props) {
 
   /**
    * @param {string} text
+   * @param {string} [replaceId]
    */
-  function send(text) {
+  function deliver(text, replaceId = "") {
     const parsed = parseSlash(text);
     if (parsed.command?.id === "debug") {
       setDebug((value) => !value);
       playClip(text);
+      setEditingId("");
       return;
     }
     if (parsed.command?.id === "seat") {
       openSettings(NAMED_SEATS.includes(parsed.rest) ? parsed.rest : undefined);
       playClip(text);
+      setEditingId("");
       return;
     }
+    const replacing = replaceId || editingId;
     if (parsed.command?.id === "plan") {
       const ready = props.preparePlan?.() ?? { ok: true };
       if (!ready.ok) return false;
       playClip(text);
-      /** @type {{ prompt: string, thinkFirst?: boolean, projectName?: string, projectFolder?: string }} */
+      /** @type {{ prompt: string, thinkFirst?: boolean, projectName?: string, projectFolder?: string, replaceId?: string }} */
       const body = { prompt: text };
       if (thinkFirst) body.thinkFirst = true;
       if (ready.projectName) {
         body.projectName = ready.projectName;
         if (ready.projectFolder) body.projectFolder = ready.projectFolder;
       }
-      props.onSend(body.thinkFirst || body.projectName ? body : text);
+      if (replacing) body.replaceId = replacing;
+      props.onSend(body.thinkFirst || body.projectName || body.replaceId ? body : text);
       setThinkFirst(false);
+      setEditingId("");
       return;
     }
     playClip(text);
     const thinks = thinkFirst && parsed.command?.id === "fix";
-    props.onSend(thinks ? { prompt: text, thinkFirst: true } : text);
+    props.onSend(withReplace(thinks ? { prompt: text, thinkFirst: true } : text, replacing));
     setThinkFirst(false);
+    setEditingId("");
+  }
+
+  /**
+   * @param {string} text
+   */
+  function send(text) {
+    return deliver(text);
+  }
+
+  const working = Boolean(props.busy) || run.phase === "working";
+
+  /**
+   * @param {import("./map-events.js").TranscriptItem} item
+   */
+  function editMessage(item) {
+    if (working) return;
+    setEditingId(item.id);
+    updateDraft(item.text ?? "");
+  }
+
+  /**
+   * @param {import("./map-events.js").TranscriptItem} item
+   */
+  function resendMessage(item) {
+    const text = item.text ?? "";
+    if (!text.trim() || working) return;
+    updateDraft("");
+    deliver(text, item.id);
+  }
+
+  function cancelEdit() {
+    setEditingId("");
+    updateDraft("");
   }
 
   /**
@@ -136,9 +191,29 @@ export function useClaySession(props) {
   /**
    * @param {string} id
    */
-  function useSeat(id) {
+  function chooseSeat(id) {
     props.onSelectSeat?.(id);
     setSettingsOpen(false);
+  }
+
+  /**
+   * The picked model runs plan and build. Quick turns keep their saved model.
+   * @param {string} id
+   * @returns {Promise<{ ok: boolean, message?: string }>}
+   */
+  async function chooseModel(id) {
+    const provider = props.seat?.provider;
+    if (provider !== "cursor" && provider !== "codex" && provider !== "copilot") {
+      return { ok: false, message: "Choose Cursor, Codex, or Copilot first." };
+    }
+    if (!props.onSaveSettings) return { ok: false, message: "Could not save that model." };
+    try {
+      const result = await props.onSaveSettings(harnessModelChoice(provider, props.seatSettings, id));
+      if (result && result.ok === false) return result;
+      return { ok: true };
+    } catch {
+      return { ok: false, message: "Could not save that model." };
+    }
   }
 
   return {
@@ -159,11 +234,19 @@ export function useClaySession(props) {
     items,
     run,
     steps,
-    working: Boolean(props.busy) || run.phase === "working",
+    working,
+    messageActions: {
+      onCancel: () => props.onCancel?.(),
+      editing: Boolean(editingId),
+      onCancelEdit: cancelEdit,
+      onEdit: editMessage,
+      onResend: resendMessage,
+    },
     openSettings,
     send,
     pick,
     adjust,
-    useSeat,
+    chooseSeat,
+    chooseModel,
   };
 }

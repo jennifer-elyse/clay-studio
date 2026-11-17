@@ -1,9 +1,10 @@
 import { FAST_TURN_LIMIT } from "./context.js";
-import { makeEvent } from "./events.js";
-import { codexEffort, modelFor, phaseFor, seatCaption } from "./models.js";
+import { makeEvent, runStartFields } from "./events.js";
+import { codexEffort, defaultModels, modelFor, phaseFor, seatCaption, selectableModels } from "./models.js";
 import { assertBuildAllowed, nextPlanSlug, setPlanStatus } from "./plan-gate.js";
-import { containPreview, copyTemplate, getPreview, stopPreview } from "./preview.js";
+import { containPreview, copyTemplate, getPreview, onPreviewCrash, stopPreview } from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
+import { approvalEvents } from "./plan-offer.js";
 import { promptFor } from "./prompts.js";
 
 /**
@@ -22,6 +23,11 @@ export function createCodexAdapter(ctx) {
   let fastTurns = 0;
   let agentId = `codex-${ctx.slug}`;
   let cancelled = false;
+
+  onPreviewCrash((appDir) => {
+    if (appDir !== ctx.appDir) return;
+    cancelled = true;
+  });
 
   async function sdk() {
     try {
@@ -85,7 +91,7 @@ export function createCodexAdapter(ctx) {
       const phase = phaseFor(command);
       const modelId = modelFor(phase, "codex", ctx.seatModels);
       const runId = `run-${Date.now()}`;
-      yield makeEvent("run_started", { runId, agentId });
+      yield makeEvent("run_started", { runId, agentId, ...runStartFields(command) });
       yield makeEvent("seat", {
         seat: { provider: "codex", model: modelId, caption: seatCaption("codex", phase, modelId) },
       });
@@ -105,7 +111,9 @@ export function createCodexAdapter(ctx) {
 
       let planMeta = null;
       let specPath = null;
+      let planStarted = 0;
       if (command === "plan" || command === "spec") {
+        planStarted = Date.now();
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
@@ -129,7 +137,10 @@ export function createCodexAdapter(ctx) {
       const handle = await ensureThread(phase);
       if (typeof handle.run !== "function") throw new Error("Codex thread has no run method.");
       const result = await handle.run(fullPrompt);
-      if (cancelled) return;
+      if (cancelled) {
+        yield makeEvent("run_finished", { runId, agentId, status: "cancelled" });
+        return;
+      }
       const text = result?.finalResponse ?? result?.text ?? "";
       if (text) yield makeEvent("assistant_text", { text: String(text), runId, agentId });
       if (needsSecurityPass(command)) {
@@ -153,6 +164,17 @@ export function createCodexAdapter(ctx) {
       } else {
         releaseThread();
         fastTurns = 0;
+      }
+      if (command === "plan" && planMeta) {
+        const events = await approvalEvents({
+          appDir: ctx.appDir,
+          relativePath: planMeta.path,
+          sinceMs: planStarted,
+          runId,
+          agentId,
+        });
+        for (const event of events) yield event;
+        if (events.some((event) => event.type === "error")) return;
       }
       yield makeEvent("run_finished", { runId, agentId, status: "finished" });
     },
@@ -186,6 +208,19 @@ export function createCodexAdapter(ctx) {
     },
     async getUsage() {
       return { seat: "codex", model: modelFor("fast", "codex", ctx.seatModels) };
+    },
+    /**
+     * Codex exposes no catalog. The plan model and the quick-turn model are the choices.
+     * @returns {Promise<Array<{ id: string, label: string }>>}
+     */
+    async listModels() {
+      const defaults = defaultModels("codex");
+      const saved = ctx.seatModels?.codex?.work;
+      return selectableModels(
+        [saved ? { id: saved } : null, { id: defaults.work }, { id: defaults.build }, { id: defaults.fast }].filter(
+          (entry) => entry,
+        ),
+      );
     },
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),

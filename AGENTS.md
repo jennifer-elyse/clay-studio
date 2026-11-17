@@ -23,8 +23,10 @@ Studio follows the same rules a generated app enforces. The constitution is `tem
 - Tokens only. Studio tokens live in `packages/chat-sdk/src/tokens.css`. Generated apps use `client/src/tokens.css`. Numbers use tabular figures. Layout is intrinsic, with container queries. A viewport breakpoint media query is not used for layout. The only media query is `prefers-reduced-motion`, and it may only reduce or remove motion. Hover is a warm-gray surface change and slight elevation, only on an actionable element. Focus uses `--focus-ring` and is not color-only. A disabled control says why when the reason is not obvious.
 - User credentials stay in the host. The browser never sees API keys. No customer, payment, HR, or secret data in prompts, logs, or seed data.
 - A project Clay builds is not done while npm audit reports a high or critical advisory that has a newer patched release. Upgrade to that release. Do not downgrade a package to clear an advisory.
-- `/plan` is required before `/build`. Claude plans on Cursor and Grok 4.7 High builds. Copilot and Codex use their fuller model only for the plan and the build. Every other turn uses that seat's cheaper model. Agents open pull requests. A person merges.
+- `/plan` is required before `/build`. Cursor and Copilot ask the account which models it can run, then use the top listed model for that step: Claude to plan, Grok to build, Composer for every other Cursor turn; the top listed work model for a Copilot plan or build, and the top listed cheap model otherwise. Codex has no catalog in its SDK, so it keeps its fuller model for the plan and the build and the smaller model for every other turn. Agents open pull requests. A person merges.
 - One agent run at a time. Always `wait()`. Dispose on quit.
+- Clay may open at most 5 subtasks. A subtask must not start an agent.
+- If the app or Clay crashes, stop. Do not start another model call, summary, or retry.
 
 ## Where to look
 
