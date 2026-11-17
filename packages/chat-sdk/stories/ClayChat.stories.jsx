@@ -40,3 +40,34 @@ export const CopilotSeat = {
     />
   ),
 };
+
+export const WithSeatModels = {
+  render: () => (
+    <ClayChat
+      events={[]}
+      onSend={() => undefined}
+      seat={{ provider: "codex", model: "gpt-5.4", caption: "Codex gpt-5.4, medium effort" }}
+      seatSettings={{
+        seatModels: { codex: { work: "gpt-5.5" } },
+        defaults: {
+          codex: { work: "gpt-5.4", build: "gpt-5.4", fast: "gpt-5.4-mini" },
+          cursor: { work: "claude-4.5-sonnet", build: "grok-4.7", fast: "composer-2.5" },
+          copilot: { work: "gpt-6.1-sol", build: "gpt-6.1-sol", fast: "gpt-6-luna" },
+        },
+      }}
+      onSaveSettings={async () => ({ ok: true })}
+    />
+  ),
+};
+
+export const WithProjectsFolder = {
+  render: () => (
+    <ClayChat
+      events={[]}
+      onSend={() => undefined}
+      seat={{ provider: "cursor", model: "claude-4.5-sonnet" }}
+      projectsRoot="/Users/you/Projects"
+      onSaveSettings={async () => ({ ok: true })}
+    />
+  ),
+};

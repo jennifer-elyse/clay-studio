@@ -11,6 +11,7 @@ import { promptFor } from "./prompts.js";
  * @param {string} ctx.appDir
  * @param {string} ctx.slug
  * @param {string} [ctx.templateDir]
+ * @param {import("./models.js").SeatModelOverrides} [ctx.seatModels]
  */
 export function createCodexAdapter(ctx) {
   /** @type {any} */
@@ -42,7 +43,7 @@ export function createCodexAdapter(ctx) {
   }
 
   async function ensureThread(phase) {
-    const model = modelFor(phase, "codex");
+    const model = modelFor(phase, "codex", ctx.seatModels);
     const effort = codexEffort(phase);
     if (phase !== "fast" || fastTurns >= FAST_TURN_LIMIT) {
       releaseThread();
@@ -82,7 +83,7 @@ export function createCodexAdapter(ctx) {
       const command = options.command ?? "chat";
       const rest = options.rest ?? prompt;
       const phase = phaseFor(command);
-      const modelId = modelFor(phase, "codex");
+      const modelId = modelFor(phase, "codex", ctx.seatModels);
       const runId = `run-${Date.now()}`;
       yield makeEvent("run_started", { runId, agentId });
       yield makeEvent("seat", {
@@ -184,7 +185,7 @@ export function createCodexAdapter(ctx) {
       return makeEvent("summary", { text: "Codex keeps the thread. Ask it to summarize the work so far.", status: "completed" });
     },
     async getUsage() {
-      return { seat: "codex", model: modelFor("fast", "codex") };
+      return { seat: "codex", model: modelFor("fast", "codex", ctx.seatModels) };
     },
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),

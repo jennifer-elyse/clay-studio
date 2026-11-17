@@ -4,7 +4,7 @@ import { ClayHeader } from "./ClayHeader.jsx";
 import { planNeedsProject } from "./project-gate.js";
 import { KeepShell } from "./KeepShell.jsx";
 import { PreviewPane } from "./PreviewPane.jsx";
-import { SeatModal } from "./SeatModal.jsx";
+import { SettingsModal } from "./SettingsModal.jsx";
 import { useClaySession } from "./use-clay-session.js";
 import "./tokens.css";
 import "./ClayChat.css";
@@ -41,6 +41,7 @@ export function ClayChat(props) {
           projects={props.projects}
           projectNotice={projectNotice}
           projectOpenSignal={projectOpenSignal}
+          projectsRoot={props.projectsRoot}
           onSelectProject={props.onSelectProject}
           onSaveProject={props.onSaveProject}
           onProjectDraft={(draft) => {
@@ -48,7 +49,7 @@ export function ClayChat(props) {
             if (draft.name.trim()) setProjectNotice("");
           }}
           onToggle={() => session.setMinimized((value) => !value)}
-          onOpenSeats={() => session.openSeats(props.seat?.provider)}
+          onOpenSettings={session.openSettings}
         />
         <ChatPane
           items={session.items}
@@ -62,14 +63,27 @@ export function ClayChat(props) {
           onPick={session.pick}
           onThink={session.think}
           thinkFirst={session.thinkFirst}
-          onSeats={() => session.openSeats()}
+          onSeats={() => session.openSettings()}
           onApprove={props.onApprovePlan}
           onAdjust={() => session.adjust()}
         />
         <KeepShell>
           <PreviewPane url={props.previewUrl} status={props.previewStatus} message={props.previewMessage} debug={session.debug} log={props.log} onOpen={props.onOpenPreview} />
         </KeepShell>
-        <SeatModal open={session.seatsOpen} product={session.seatProduct} current={props.seat?.provider} onProduct={session.setSeatProduct} onUse={session.useSeat} onClose={() => session.setSeatsOpen(false)} />
+        <SettingsModal
+          open={session.settingsOpen}
+          section={session.settingsSection}
+          onSection={session.setSettingsSection}
+          product={session.seatProduct}
+          current={props.seat?.provider}
+          busy={session.working}
+          projectsRoot={props.projectsRoot}
+          onProduct={session.setSeatProduct}
+          onUse={session.useSeat}
+          seatSettings={props.seatSettings}
+          onSaveSettings={props.onSaveSettings}
+          onClose={() => session.setSettingsOpen(false)}
+        />
       </div>
     </div>
   );

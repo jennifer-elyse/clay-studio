@@ -1,9 +1,25 @@
 import { commandNeedsTools, compactAfter, compactBefore } from "./context.js";
 import { makeEvent } from "./events.js";
 import { friendlyTool, textFromCursorEvent } from "./friendly.js";
-import { cursorModelOptions, modelFor, phaseFor, seatCaption } from "./models.js";
-import { assertBuildAllowed, nextPlanSlug, setPlanStatus } from "./plan-gate.js";
-import { containPreview, copyTemplate, getPreview, isInsideRepo, previewTools, stopPreview } from "./preview.js";
+import {
+  cursorModelOptions,
+  modelFor,
+  phaseFor,
+  seatCaption,
+} from "./models.js";
+import {
+  assertBuildAllowed,
+  nextPlanSlug,
+  setPlanStatus,
+} from "./plan-gate.js";
+import {
+  containPreview,
+  copyTemplate,
+  getPreview,
+  isInsideRepo,
+  previewTools,
+  stopPreview,
+} from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
 import { promptFor } from "./prompts.js";
 
@@ -14,6 +30,7 @@ import { promptFor } from "./prompts.js";
  * @param {string} [ctx.templateDir]
  * @param {string} [ctx.appsDir]
  * @param {string} [ctx.resumeAgentId]
+ * @param {import("./models.js").SeatModelOverrides} [ctx.seatModels]
  */
 export function createCursorAdapter(ctx) {
   /** @type {any} */
@@ -28,7 +45,9 @@ export function createCursorAdapter(ctx) {
     try {
       return await import("@cursor/sdk");
     } catch {
-      throw new Error("Cursor is not installed with Clay Studio. Close the window and open Clay Studio again.");
+      throw new Error(
+        "Cursor is not installed with Clay Studio. Close the window and open Clay Studio again.",
+      );
     }
   }
 
@@ -41,7 +60,8 @@ export function createCursorAdapter(ctx) {
   function sendLocal(command) {
     /** @type {{ settingSources: string[], customTools?: ReturnType<typeof previewTools> }} */
     const local = { settingSources: ["project"] };
-    if (commandNeedsTools(command)) local.customTools = previewTools(() => ctx.appDir);
+    if (commandNeedsTools(command))
+      local.customTools = previewTools(() => ctx.appDir);
     return local;
   }
 
@@ -50,13 +70,20 @@ export function createCursorAdapter(ctx) {
    */
   async function ensureAgent(phase) {
     if (isInsideRepo(ctx.appDir)) {
-      throw new Error(`The Cursor project must stay outside Clay. Refusing ${ctx.appDir}.`);
+      throw new Error(
+        `The Cursor project must stay outside Clay. Refusing ${ctx.appDir}.`,
+      );
     }
     const { Agent, Cursor } = await sdk();
     const cwd = ctx.appDir;
-    const model = cursorModelOptions(modelFor(phase, "cursor"), phase);
+    const model = cursorModelOptions(
+      modelFor(phase, "cursor", ctx.seatModels),
+      phase,
+    );
     if (!agent) {
-      const status = await Cursor.auth.status().catch(() => ({ loggedIn: false }));
+      const status = await Cursor.auth
+        .status()
+        .catch(() => ({ loggedIn: false }));
       if (!status?.loggedIn && !process.env.CURSOR_API_KEY) {
         await Cursor.auth.login();
       }
@@ -64,7 +91,9 @@ export function createCursorAdapter(ctx) {
       ctx.resumeAgentId = "";
       if (resumeId) {
         try {
-          agent = await Agent.resume(resumeId, { local: { cwd, settingSources: ["project"] } });
+          agent = await Agent.resume(resumeId, {
+            local: { cwd, settingSources: ["project"] },
+          });
           agentId = agent.agentId ?? agent.id ?? resumeId;
           hasHistory = true;
         } catch {
@@ -117,10 +146,17 @@ export function createCursorAdapter(ctx) {
         yield makeEvent("assistant_text", { text, runId, agentId });
         continue;
       }
-      const typed = event && typeof event === "object" ? /** @type {Record<string, unknown>} */ (event) : {};
+      const typed =
+        event && typeof event === "object"
+          ? /** @type {Record<string, unknown>} */ (event)
+          : {};
       if (typed.type === "tool_call" || typed.type === "tool") {
         const name = String(typed.name ?? typed.tool ?? "tool");
-        yield makeEvent("step", { step: { label: friendlyTool(name), status: "running" }, runId, agentId });
+        yield makeEvent("step", {
+          step: { label: friendlyTool(name), status: "running" },
+          runId,
+          agentId,
+        });
       }
       if (typed.type === "summary") {
         yield makeEvent("summary", {
@@ -156,11 +192,15 @@ export function createCursorAdapter(ctx) {
         yield makeEvent("preview", { preview: { status: "starting" } });
         const opened = await containPreview({ appDir: ctx.appDir });
         if (!opened.ok) {
-          yield makeEvent("preview", { preview: { status: "error", message: opened.message } });
+          yield makeEvent("preview", {
+            preview: { status: "error", message: opened.message },
+          });
           yield makeEvent("run_finished", { runId, agentId, status: "error" });
           return;
         }
-        yield makeEvent("preview", { preview: { status: "ready", url: opened.url } });
+        yield makeEvent("preview", {
+          preview: { status: "ready", url: opened.url },
+        });
         yield makeEvent("run_finished", { runId, agentId, status: "finished" });
         return;
       }
@@ -180,9 +220,13 @@ export function createCursorAdapter(ctx) {
       }
 
       const { agent: handle } = await ensureAgent(phase);
-      const modelId = modelFor(phase, "cursor");
+      const modelId = modelFor(phase, "cursor", ctx.seatModels);
       yield makeEvent("seat", {
-        seat: { provider: "cursor", model: modelId, caption: seatCaption("cursor", phase, modelId) },
+        seat: {
+          provider: "cursor",
+          model: modelId,
+          caption: seatCaption("cursor", phase, modelId),
+        },
       });
       if (compactBefore({ phase, turns, hasHistory })) yield* compact(handle);
 
@@ -207,7 +251,11 @@ export function createCursorAdapter(ctx) {
       const result = await run.wait();
       activeRun = null;
       if (result?.status === "error") {
-        yield makeEvent("error", { text: "The Cursor run failed. Check the transcript.", runId, agentId });
+        yield makeEvent("error", {
+          text: "The Cursor run failed. Check the transcript.",
+          runId,
+          agentId,
+        });
         return;
       }
       if (needsSecurityPass(command)) {
@@ -232,7 +280,11 @@ export function createCursorAdapter(ctx) {
       }
       if (compactAfter(phase)) yield* compact(handle);
       else turns += 1;
-      yield makeEvent("run_finished", { runId, agentId, status: result?.status ?? "finished" });
+      yield makeEvent("run_finished", {
+        runId,
+        agentId,
+        status: result?.status ?? "finished",
+      });
     },
     async cancel() {
       if (activeRun?.supports?.("cancel")) await activeRun.cancel();
@@ -262,10 +314,17 @@ export function createCursorAdapter(ctx) {
       if (activeRun?.steer) await activeRun.steer(text);
     },
     async summarize() {
-      if (!agent?.summarize) return makeEvent("summary", { text: "Nothing to summarize yet.", status: "completed" });
+      if (!agent?.summarize)
+        return makeEvent("summary", {
+          text: "Nothing to summarize yet.",
+          status: "completed",
+        });
       const run = await agent.summarize();
       const result = await run.wait();
-      return makeEvent("summary", { text: String(result?.result ?? ""), status: result?.status ?? "completed" });
+      return makeEvent("summary", {
+        text: String(result?.result ?? ""),
+        status: result?.status ?? "completed",
+      });
     },
     async getUsage() {
       if (agent?.getUsage) return agent.getUsage();
@@ -279,7 +338,11 @@ export function createCursorAdapter(ctx) {
     getPreview: () => getPreview(ctx.appDir),
     stopPreview: () => stopPreview(ctx.appDir),
     ensureWorkspace: async () => {
-      ctx.appDir = await copyTemplate({ slug: ctx.slug, templateDir: ctx.templateDir, appsDir: ctx.appsDir });
+      ctx.appDir = await copyTemplate({
+        slug: ctx.slug,
+        templateDir: ctx.templateDir,
+        appsDir: ctx.appsDir,
+      });
       return ctx.appDir;
     },
   };

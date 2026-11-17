@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import express from "express";
 import { createHost } from "@cswg/agent-host";
 import { browseDirectories, DirectoryQuery } from "@cswg/agent-host/directories";
+import { SettingsInput } from "@cswg/agent-host/settings";
 import { warnStack } from "../../../scripts/stack-versions.js";
 import { openRunningApp } from "./open-preview.js";
 import { attachSocket } from "./ws.js";
@@ -40,6 +41,57 @@ app.get("/api/directories", async (req, res) => {
     });
   }
 });
+
+app.get("/api/settings", (_req, res) => {
+  res.json({ projectsRoot: host.projectsRoot, ...host.seatModelSettings() });
+});
+
+/** Replies already sent, by Idempotency-Key. A repeat gets the same reply. */
+const settingsReplies = new Map();
+
+app.put("/api/settings", async (req, res) => {
+  const key = req.get("Idempotency-Key")?.trim();
+  if (!key) {
+    res.status(400).json({ code: "BAD_REQUEST", message: "Send an Idempotency-Key.", requestId: "settings" });
+    return;
+  }
+  const seen = settingsReplies.get(key);
+  if (seen) {
+    res.status(seen.status).json(seen.body);
+    return;
+  }
+  const reply = await settingsReply(req.body);
+  settingsReplies.set(key, reply);
+  res.status(reply.status).json(reply.body);
+});
+
+/**
+ * @param {unknown} body
+ * @returns {Promise<{ status: number, body: object }>}
+ */
+async function settingsReply(body) {
+  const parsed = SettingsInput.safeParse(body);
+  if (!parsed.success) {
+    const message = parsed.error.issues[0]?.message ?? "Choose a folder.";
+    return { status: 400, body: { code: "BAD_REQUEST", message, requestId: "settings" } };
+  }
+  try {
+    return { status: 200, body: await settingsBody(parsed.data) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "That folder is not available.";
+    return { status: 400, body: { code: "BAD_REQUEST", message, requestId: "settings" } };
+  }
+}
+
+/**
+ * Apply a folder change and/or seat model change, then return the full settings.
+ * @param {{ projectsRoot?: string, seatModels?: object }} data
+ */
+async function settingsBody(data) {
+  if (data.projectsRoot !== undefined) await host.setProjectsRoot(data.projectsRoot);
+  if (data.seatModels !== undefined) await host.setSeatModels(data.seatModels);
+  return { projectsRoot: host.projectsRoot, ...host.seatModelSettings() };
+}
 
 app.get("/api/session", (_req, res) => {
   res.json(host.snapshot());

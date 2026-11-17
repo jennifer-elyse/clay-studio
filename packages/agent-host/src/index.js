@@ -28,3 +28,4 @@ export {
 } from "./preview.js";
 export { browseDirectories, DirectoryQuery, displayPath, projectsHome } from "./directories.js";
 export { installationProfileDir, loadSession, saveSession, SessionSchema } from "./session-store.js";
+export { loadSettings, saveSettings, SettingsInput, validateProjectsRoot } from "./settings.js";

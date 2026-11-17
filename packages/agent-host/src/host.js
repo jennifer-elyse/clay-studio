@@ -21,6 +21,13 @@ import {
 } from "./projects.js";
 import { openCodeInIde } from "./open-ide.js";
 import { loadSession, saveSession } from "./session-store.js";
+import {
+  loadSettings,
+  mergeSeatModels,
+  seatModelDefaults,
+  updateSettings,
+  validateProjectsRoot,
+} from "./settings.js";
 
 export const SendInputSchema = z.object({
   prompt: z.string(),
@@ -67,13 +74,17 @@ export function detectSeat() {
  * @param {(ms: number) => Promise<void>} [input.waitIde]
  */
 export async function createHost(input = {}) {
-  let seat = /** @type {"cursor" | "codex" | "copilot" | "mock"} */ (input.seat || detectSeat());
-  const appsDir = input.appsDir || defaultAppsDir();
+  const savedSettings = await loadSettings();
+  // An explicit seat (CLAY_STUDIO_SEAT) wins, then the one chosen last time, then detection.
+  let seat = /** @type {"cursor" | "codex" | "copilot" | "mock"} */ (input.seat || savedSettings.seat || detectSeat());
+  let appsDir = input.appsDir || (await savedProjectsRoot(savedSettings)) || defaultAppsDir();
+  let seatModels = savedSettings.seatModels ?? {};
   const registry = await loadProjectRegistry();
   const ctx = {
     appDir: "",
     slug: "",
     appsDir,
+    seatModels,
     templateDir: input.templateDir,
     gitHubToken: input.gitHubToken,
   };
@@ -188,6 +199,44 @@ export async function createHost(input = {}) {
       throw error;
     }
     return describe(project);
+  }
+
+  /**
+   * Move where new projects go. Projects already on disk stay where they are.
+   * @param {string} value
+   */
+  async function setProjectsRoot(value) {
+    const next = await validateProjectsRoot(value);
+    if (next === path.resolve(appsDir)) return next;
+    registry.projects = registry.projects.map((project) =>
+      project.dir ? project : { ...project, dir: projectLocation(project, appsDir) },
+    );
+    active = registry.projects.find((project) => project.id === active?.id) ?? active;
+    await saveProjectRegistry(registry);
+    await updateSettings({ projectsRoot: next });
+    appsDir = next;
+    ctx.appsDir = next;
+    return next;
+  }
+
+  /**
+   * Saved overrides and the defaults each seat falls back to.
+   */
+  function seatModelSettings() {
+    return { seatModels, defaults: seatModelDefaults() };
+  }
+
+  /**
+   * Typed model names per seat. A blank or default value clears that seat's override.
+   * Takes effect on the next run.
+   * @param {Parameters<typeof mergeSeatModels>[1]} input
+   */
+  async function setSeatModels(input) {
+    const next = mergeSeatModels(seatModels, input, seatModelDefaults());
+    await updateSettings({ seatModels: next });
+    seatModels = next;
+    ctx.seatModels = next;
+    return seatModelSettings();
   }
 
   /**
@@ -395,6 +444,7 @@ export async function createHost(input = {}) {
       seat = next;
       adapter = makeAdapter(seat, ctx);
       process.env.CLAY_STUDIO_SEAT = seat;
+      if (seat !== "mock") await updateSettings({ seat });
       await persist();
       yield makeEvent("seat", { seat: { provider: seat, caption } });
     },
@@ -406,6 +456,12 @@ export async function createHost(input = {}) {
     getUsage: () => adapter.getUsage(),
     saveProject,
     selectProject,
+    setProjectsRoot,
+    setSeatModels,
+    seatModelSettings,
+    get projectsRoot() {
+      return appsDir;
+    },
     snapshot() {
       return {
         seat,
@@ -420,6 +476,16 @@ export async function createHost(input = {}) {
       };
     },
   };
+}
+
+/**
+ * The saved projects folder, when it is still a usable folder.
+ * @param {{ projectsRoot?: string }} saved
+ * @returns {Promise<string>}
+ */
+async function savedProjectsRoot(saved) {
+  if (!saved.projectsRoot) return "";
+  return validateProjectsRoot(saved.projectsRoot).catch(() => "");
 }
 
 /**

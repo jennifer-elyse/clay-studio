@@ -1,21 +1,18 @@
 /**
+ * Only offers a switch. The current seat has nothing to confirm.
  * @param {object} props
  * @param {import("@cswg/agent-host/seats").ProductSeat | null} props.chosen
  * @param {string} props.current
+ * @param {boolean} [props.busy]
  * @param {(id: string) => void} props.onUse
- * @param {() => void} props.onClose
  */
-export function SeatActions({ chosen, current, onUse, onClose }) {
-  const label = chosen && current === chosen.id ? `Stay on ${chosen.label}` : `Use ${chosen?.label}`;
+export function SeatActions({ chosen, current, busy = false, onUse }) {
+  if (!chosen || current === chosen.id) return null;
   return (
     <div className="clay-modal-actions">
-      {chosen ? (
-        <button type="button" className="clay-seat-use" onClick={() => onUse(chosen.id)}>
-          {label}
-        </button>
-      ) : null}
-      <button type="button" className="clay-modal-close" onClick={onClose}>
-        Close
+      {busy ? <p className="clay-modal-note" id="clay-seat-busy">Clay is working. Switch when it finishes.</p> : null}
+      <button type="button" className="clay-seat-use" disabled={busy} aria-describedby={busy ? "clay-seat-busy" : undefined} onClick={() => onUse(chosen.id)}>
+        Use {chosen.label}
       </button>
     </div>
   );

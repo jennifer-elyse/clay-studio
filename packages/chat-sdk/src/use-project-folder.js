@@ -31,11 +31,12 @@ const EMPTY = {
  * @param {"new" | "edit"} input.mode
  * @param {string} input.name
  * @param {string} input.appDir
+ * @param {string} [input.projectsRoot] where new projects start browsing
  * @param {string[]} [input.projectFolders]
  * @param {typeof fetchDirectories} [input.listDirectories]
  * @returns {ProjectFolder}
  */
-export function useProjectFolder({ open, mode, name, appDir, projectFolders = [], listDirectories = fetchDirectories }) {
+export function useProjectFolder({ open, mode, name, appDir, projectsRoot = "", projectFolders = [], listDirectories = fetchDirectories }) {
   const [parent, setParent] = useState("");
   const [listing, setListing] = useState(EMPTY);
   const slug = mode === "edit" ? pathLeaf(appDir) : folderFromName(name);
@@ -48,6 +49,7 @@ export function useProjectFolder({ open, mode, name, appDir, projectFolders = []
     const query = {};
     if (parent) query.path = parent;
     else if (mode === "edit" && appDir) query.path = pathParent(appDir);
+    else if (projectsRoot) query.path = projectsRoot;
     if (mode === "edit" && slug) query.leaf = slug;
     else if (name.trim()) query.name = name.trim();
     const ac = new AbortController();
@@ -58,7 +60,7 @@ export function useProjectFolder({ open, mode, name, appDir, projectFolders = []
         setListing(EMPTY);
       });
     return () => ac.abort();
-  }, [open, mode, name, appDir, parent, slug, listDirectories]);
+  }, [open, mode, name, appDir, projectsRoot, parent, slug, listDirectories]);
 
   return {
     path: listing.path,
