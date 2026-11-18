@@ -12,12 +12,32 @@ import { attachSocket } from "./ws.js";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.CLAY_HOST_PORT || 8787);
 const app = express();
-app.use(express.json({ limit: "1mb" }));
 
 const host = await createHost({
   slug: process.env.CLAY_APP_SLUG,
   seat: process.env.CLAY_STUDIO_SEAT,
 });
+
+/** Replies already sent, by Idempotency-Key. A repeat gets the same reply. */
+const imageReplies = new Map();
+
+app.post("/api/project-files", express.json({ limit: "36mb" }), async (req, res) => {
+  const key = req.get("Idempotency-Key")?.trim();
+  if (!key) {
+    res.status(400).json({ code: "BAD_REQUEST", message: "Send an Idempotency-Key.", requestId: "project-files" });
+    return;
+  }
+  const seen = imageReplies.get(key);
+  if (seen) {
+    res.status(seen.status).json(seen.body);
+    return;
+  }
+  const reply = await host.uploadFiles(req.body?.files);
+  imageReplies.set(key, reply);
+  res.status(reply.status).json(reply.body);
+});
+
+app.use(express.json({ limit: "1mb" }));
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, ...host.snapshot() });

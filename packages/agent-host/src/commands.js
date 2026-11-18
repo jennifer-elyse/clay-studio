@@ -13,6 +13,7 @@ export const COMMANDS = [
   { id: "write", slash: "/write", label: "Write", summary: "Draft docs or copy, not application code", needsInput: true },
   { id: "code", slash: "/code", label: "Code", summary: "Open this project in the IDE with the change ready to review", needsInput: true },
   { id: "image", slash: "/image", label: "Image", summary: "Sketch a screen or illustration in words", needsInput: true },
+  { id: "upload", slash: "/upload", label: "Upload", summary: "Add files to this project", needsInput: false },
   { id: "settings", slash: "/settings", label: "Settings", summary: "Show seat, model, and workspace", needsInput: false },
   { id: "reset", slash: "/reset", label: "Reset", summary: "Start a fresh agent", needsInput: false },
   { id: "seat", slash: "/seats", aliases: ["/seat"], label: "Seats", summary: "Choose Cursor, Codex, or Copilot", needsInput: false },

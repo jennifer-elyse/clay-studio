@@ -21,6 +21,7 @@ const NAMED_SEATS = ["cursor", "codex", "copilot"];
  * @property {import("@cswg/agent-host").UiEvent[]} [events]
  * @property {import("./map-events.js").TranscriptItem[]} [items]
  * @property {(input: string | { prompt: string, thinkFirst?: boolean, projectName?: string, projectFolder?: string, replaceId?: string }) => void | false} onSend
+ * @property {() => void} [onUpload]
  * @property {() => void} [onCancel]
  * @property {() => { ok: boolean, message?: string, projectName?: string, projectFolder?: string }} [preparePlan]
  * @property {(path: string) => void} [onApprovePlan]
@@ -86,6 +87,13 @@ export function useClaySession(props) {
    */
   function deliver(text, replaceId = "") {
     const parsed = parseSlash(text);
+    if (parsed.command?.id === "upload") {
+      setDraft("");
+      setEditingId("");
+      playClip(text);
+      props.onUpload?.();
+      return;
+    }
     if (parsed.command?.id === "debug") {
       setDebug((value) => !value);
       playClip(text);

@@ -11,5 +11,6 @@ export const PILL_IDS = [
   "write",
   "code",
   "image",
+  "upload",
   "debug",
 ];

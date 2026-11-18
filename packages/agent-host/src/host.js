@@ -20,6 +20,7 @@ import {
   saveProjectRegistry,
 } from "./projects.js";
 import { openCodeInIde } from "./open-ide.js";
+import { ProjectFilesInput, saveProjectFiles, uploadMessage } from "./project-uploads.js";
 import { loadSession, saveSession } from "./session-store.js";
 import {
   loadSettings,
@@ -385,6 +386,10 @@ export async function createHost(input = {}) {
         yield makeEvent("assistant_text", { text: "Opened in the IDE. Review the prompt there, then send it." });
         return;
       }
+      if (command === "upload") {
+        await this.uploadFiles([]);
+        return;
+      }
       if (command === "settings") {
         const snap = this.snapshot();
         yield makeEvent("user_text", { text: parsed.prompt });
@@ -530,9 +535,42 @@ export async function createHost(input = {}) {
       };
     },
     /**
-     * @param {(event: import("./events.js").UiEvent) => void} listener
-     * @returns {() => void}
+     * Save files into the open project and tell the chat where they live.
+     * @param {unknown} files
+     * @returns {Promise<{ status: number, body: { code?: string, message?: string, requestId?: string, paths?: string[] } }>}
      */
+    async uploadFiles(files) {
+      /**
+       * @param {string} type
+       * @param {Partial<import("./events.js").UiEvent>} rest
+       */
+      const emit = (type, rest) => {
+        const event = makeEvent(type, rest);
+        for (const listener of listeners) listener(event);
+        return event;
+      };
+      emit("user_text", { text: "/upload" });
+      if (!ctx.appDir) {
+        const text = "Name a project before adding files.";
+        emit("error", { text, status: "project" });
+        return { status: 400, body: { code: "BAD_REQUEST", message: text, requestId: "project-files" } };
+      }
+      const parsed = ProjectFilesInput.safeParse({ files: Array.isArray(files) ? files : [] });
+      if (!parsed.success) {
+        const text = parsed.error.issues[0]?.message ?? "Choose a file.";
+        emit("error", { text });
+        return { status: 400, body: { code: "BAD_REQUEST", message: text, requestId: "project-files" } };
+      }
+      try {
+        const paths = await saveProjectFiles(ctx.appDir, parsed.data.files);
+        emit("assistant_text", { text: uploadMessage(paths) });
+        return { status: 200, body: { paths } };
+      } catch (error) {
+        const text = error instanceof Error ? error.message : "The file could not be saved.";
+        emit("error", { text });
+        return { status: 400, body: { code: "BAD_REQUEST", message: text, requestId: "project-files" } };
+      }
+    },
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

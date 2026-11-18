@@ -824,6 +824,11 @@
   background: color-mix(in srgb, var(--clay-pink) 22%, var(--clay-paper));
 }
 
+.clay-pill.is-upload {
+  border-color: var(--clay-blob);
+  background: color-mix(in srgb, var(--clay-blob) 18%, var(--clay-paper));
+}
+
 .clay-pill.is-settings {
   border-color: var(--clay-muted);
   background: color-mix(in srgb, var(--clay-surface) 80%, var(--clay-stroke));
