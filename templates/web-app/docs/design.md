@@ -22,6 +22,8 @@ Brand differences override tokens. They do not create a second stylesheet.
 
 Numbers always use tabular figures: `font-variant-numeric: tabular-nums`. Counts, prices, times, and ids stay aligned.
 
+A table column and its header use the same alignment. Strings align left. Numbers align right. Actions (buttons) align center.
+
 ## Layout
 
 Layout is intrinsic. A component sizes from its content and adapts with container queries (`@container`). Viewport breakpoint media queries are not used for layout.

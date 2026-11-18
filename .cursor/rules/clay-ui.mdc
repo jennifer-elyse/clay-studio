@@ -10,6 +10,7 @@ Follow `docs/design.md`. A generated app follows the same rules in its `docs/des
 
 - Tokens only, from `packages/chat-sdk/src/tokens.css` in Studio and `client/src/tokens.css` in a generated app. Do not type a hex, a raw radius, or a new font in a component.
 - Numbers use `font-variant-numeric: tabular-nums`.
+- A table column and its header use the same alignment. Strings align left. Numbers align right. Actions (buttons) align center.
 - Layout is intrinsic. Use `@container`. Do not use a viewport `@media` breakpoint for layout.
 - The only media query is `@media (prefers-reduced-motion: reduce)`. It may reduce or remove motion only.
 - Hover is a warm-gray surface change and slight elevation, only when the element is actionable.
