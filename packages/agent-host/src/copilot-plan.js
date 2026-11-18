@@ -14,6 +14,42 @@ export function withoutToolPlaceholders(text) {
 }
 
 /**
+ * A plan path, the plan folder itself, or a parent such as docs.
+ * @param {string} value
+ * @param {string} planFolder
+ * @returns {boolean}
+ */
+export function isPlanPath(value, planFolder) {
+  const parts = String(value ?? "")
+    .replaceAll("\\", "/")
+    .split("/")
+    .filter((part) => part && part !== "." && part !== "-p");
+  if (parts.length === 0 || !planFolder) return false;
+  if (parts.includes(planFolder)) return true;
+  const joined = parts.join("/");
+  return `docs/${planFolder}`.startsWith(`${joined}/`) || `docs/${planFolder}` === joined;
+}
+
+/**
+ * mkdir of the plan folder only. Other commands stay refused during a plan.
+ * @param {any} request
+ * @param {string} planFolder
+ * @returns {boolean}
+ */
+function isPlanDirectoryCommand(request, planFolder) {
+  if (request.kind !== "shell" || request.hasWriteFileRedirection) return false;
+  const text = String(request.fullCommandText ?? "").trim();
+  if (!/^mkdir(?:\s+-p)?\s+\S/i.test(text) || /[;&|`$<>]/.test(text)) return false;
+  const commands = Array.isArray(request.commands) ? request.commands : [];
+  if (commands.some((command) => command?.identifier && command.identifier !== "mkdir")) return false;
+  const listed = Array.isArray(request.possiblePaths) ? request.possiblePaths : [];
+  const targets = (listed.length > 0 ? listed : text.split(/\s+/).slice(1)).filter(
+    (target) => target && !String(target).startsWith("-"),
+  );
+  return targets.length > 0 && targets.every((target) => isPlanPath(target, planFolder));
+}
+
+/**
  * @param {any} request
  * @param {string} command
  * @param {string} planFolder
@@ -27,15 +63,16 @@ export function copilotPermissionDecision(request, command, planFolder) {
   if (request.kind === "read") return { kind: "approve-once" };
   if (request.kind === "write") {
     if (command === "plan" || command === "spec") {
-      const name = String(request.fileName ?? "").replaceAll("\\", "/");
-      if (!name.includes(`${planFolder}/`) && !name.endsWith(`/${planFolder}`)) {
+      const name = String(request.fileName ?? "");
+      if (!isPlanPath(name, planFolder)) {
         return { kind: "reject", feedback: `Write the plan under docs/${planFolder}/.` };
       }
     }
     return { kind: "approve-once" };
   }
   if (command === "plan" || command === "spec") {
-    return { kind: "reject", feedback: "Write the plan file. Do not run commands." };
+    if (isPlanDirectoryCommand(request, planFolder)) return { kind: "approve-once" };
+    return { kind: "reject", feedback: `Create docs/${planFolder}/ and write the plan there.` };
   }
   return { kind: "approve-once" };
 }

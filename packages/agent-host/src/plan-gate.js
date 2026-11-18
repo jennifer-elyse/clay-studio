@@ -35,6 +35,77 @@ export function plansDir(appDir) {
 }
 
 /**
+ * The old starter said docs/plans. A project plan lives under docs/{project-name}-plan.
+ * @param {string} text
+ * @param {string} folder
+ * @returns {string}
+ */
+export function projectPlanMention(text, folder) {
+  return text
+    .replaceAll("{project-name}-plan", folder)
+    .replaceAll("docs/plans/", `docs/${folder}/`)
+    .replaceAll("docs/plans", `docs/${folder}`);
+}
+
+/**
+ * Move a leftover docs/plans directory and retarget the docs that name it.
+ * @param {string} appDir
+ */
+export async function pointPlansAtProject(appDir) {
+  const folder = planFolderName(appDir);
+  const from = path.join(appDir, "docs", "plans");
+  const to = plansDir(appDir);
+  if (path.resolve(from) !== path.resolve(to)) {
+    let info = null;
+    try {
+      info = await fs.stat(from);
+    } catch (error) {
+      if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ENOENT") throw error;
+    }
+    if (info?.isDirectory()) {
+      await fs.mkdir(to, { recursive: true });
+      const entries = await fs.readdir(from);
+      for (const name of entries) {
+        const dest = path.join(to, name);
+        const taken = await fs.access(dest).then(() => true).catch(() => false);
+        if (!taken) await fs.rename(path.join(from, name), dest);
+      }
+      const left = await fs.readdir(from);
+      if (left.length === 0) await fs.rmdir(from);
+    }
+  }
+  for (const name of ["AGENTS.md", "README.md", "docs", ".agents"]) {
+    await rewritePlanMentions(path.join(appDir, name), folder);
+  }
+}
+
+/**
+ * @param {string} target
+ * @param {string} folder
+ */
+async function rewritePlanMentions(target, folder) {
+  let info;
+  try {
+    info = await fs.stat(target);
+  } catch (error) {
+    if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") return;
+    throw error;
+  }
+  if (info.isDirectory()) {
+    const entries = await fs.readdir(target, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name === "node_modules") continue;
+      await rewritePlanMentions(path.join(target, entry.name), folder);
+    }
+    return;
+  }
+  if (!target.endsWith(".md")) return;
+  const raw = await fs.readFile(target, "utf8");
+  const next = projectPlanMention(raw, folder);
+  if (next !== raw) await fs.writeFile(target, next, "utf8");
+}
+
+/**
  * @param {string} raw
  * @returns {{ status: string, title: string, body: string, front: Record<string, string> }}
  */
@@ -147,6 +218,18 @@ export async function ensureDraftPlan({ appDir, slug, title, body }) {
 }
 
 /**
+ * The numbered plan directory, created before the seat writes the file.
+ * @param {string} appDir
+ * @param {string} slug
+ * @returns {Promise<string>}
+ */
+export async function ensurePlanDir(appDir, slug) {
+  const dir = path.join(plansDir(appDir), slug);
+  await fs.mkdir(dir, { recursive: true });
+  return dir;
+}
+
+/**
  * @param {object} input
  * @param {string} input.appDir
  * @param {string} input.slug
@@ -155,8 +238,7 @@ export async function ensureDraftPlan({ appDir, slug, title, body }) {
  * @param {string} [input.status]
  */
 export async function writePlan({ appDir, slug, title, body, status = "draft" }) {
-  const dir = path.join(plansDir(appDir), slug);
-  await fs.mkdir(dir, { recursive: true });
+  const dir = await ensurePlanDir(appDir, slug);
   const filePath = path.join(dir, "plan.md");
   const raw = `---\nstatus: ${status}\ntitle: ${title}\n---\n\n${body.trim()}\n`;
   await fs.writeFile(filePath, raw, "utf8");

@@ -12,6 +12,7 @@ import {
 import {
   assertBuildAllowed,
   ensureDraftPlan,
+  ensurePlanDir,
   nextPlanSlug,
   planFolderName,
   planRelativePath,
@@ -28,6 +29,20 @@ import {
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
 import { approvalEvents } from "./plan-offer.js";
 import { promptFor } from "./prompts.js";
+
+/** Copilot waits 60 seconds unless a turn asks for longer. A build needs ten minutes. */
+export const BUILD_WAIT_MS = 10 * 60 * 1000;
+const PLAN_WAIT_MS = 3 * 60 * 1000;
+
+/**
+ * @param {string} command
+ * @returns {number | undefined}
+ */
+export function copilotWaitMs(command) {
+  if (command === "build") return BUILD_WAIT_MS;
+  if (command === "plan" || command === "spec") return PLAN_WAIT_MS;
+  return undefined;
+}
 
 /**
  * @param {object} ctx
@@ -342,6 +357,7 @@ export function createCopilotAdapter(ctx) {
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
+        await ensurePlanDir(ctx.appDir, slug);
         const target = { slug, path: planRelativePath(ctx.appDir, slug, file), title };
         if (command === "spec") specPath = target.path;
         else planMeta = target;
@@ -382,7 +398,7 @@ export function createCopilotAdapter(ctx) {
       await useModel(handle, usedModel, copilotEffort(phase));
       const payload = command === "plan" ? { prompt: fullPrompt, agentMode: "plan" } : { prompt: fullPrompt };
       if (typeof handle.sendAndWait === "function") {
-        const response = await handle.sendAndWait(payload, command === "plan" || command === "spec" ? 180000 : undefined);
+        const response = await handle.sendAndWait(payload, copilotWaitMs(command));
         if (!cancelled) yield* fromResponse(response);
       } else if (typeof handle.send === "function") {
         const response = await handle.send(payload);
@@ -415,7 +431,7 @@ export function createCopilotAdapter(ctx) {
             );
             const payload = { prompt };
             if (typeof sessionHandle.sendAndWait === "function") {
-              yield* fromResponse(await sessionHandle.sendAndWait(payload));
+              yield* fromResponse(await sessionHandle.sendAndWait(payload, copilotWaitMs(command)));
               return;
             }
             const response = await sessionHandle.send(payload);

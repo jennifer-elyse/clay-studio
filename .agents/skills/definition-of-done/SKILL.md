@@ -7,7 +7,7 @@ description: Check a Clay Studio change against the same definition of done a ge
 
 Read the checklist at the end of `templates/web-app/docs/code.md`, and `docs/design.md` for any UI line. Studio applies that checklist. A generated app reads its own `docs/code.md`, which is the same text. A line that names Cloud Run, APIM, tracing, or a canary applies once that system exists. Until then it is met by leaving the contract and the file layout.
 
-1. An approved plan in `docs/{project-name}-plan/` matches what was built. Someone other than the author approved it. No extra scope.
+1. An approved plan in `docs/clay-studio-plan/` matches what was built. Someone other than the author approved it. No extra scope.
 2. Contract first, Zod in and out, noun paths, one error shape, catalog codes.
 3. Writes have `Idempotency-Key`. Status changes are legal transitions. `schema.sql` can run again.
 4. Tokens are imported. Components use them. A Figma component with code uses Code Connect.

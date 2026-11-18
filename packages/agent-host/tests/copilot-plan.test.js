@@ -20,7 +20,17 @@ describe("copilot plan tools", () => {
       "route-board-plan",
     );
     expect(code.kind).toBe("reject");
-    const shell = copilotPermissionDecision({ kind: "shell" }, "plan", "route-board-plan");
+    const folder = copilotPermissionDecision(
+      { kind: "shell", fullCommandText: "mkdir -p docs/route-board-plan/001-intake", commands: [{ identifier: "mkdir" }] },
+      "plan",
+      "route-board-plan",
+    );
+    expect(folder).toEqual({ kind: "approve-once" });
+    const shell = copilotPermissionDecision(
+      { kind: "shell", fullCommandText: "npm test", commands: [{ identifier: "npm" }] },
+      "plan",
+      "route-board-plan",
+    );
     expect(shell.kind).toBe("reject");
     expect(copilotPermissionDecision({ kind: "read" }, "plan", "route-board-plan")).toEqual({ kind: "approve-once" });
   });

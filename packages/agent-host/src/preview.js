@@ -5,6 +5,7 @@ import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { securitySummary, settleNpmSecurity } from "./npm-security.js";
+import { pointPlansAtProject } from "./plan-gate.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -140,10 +141,12 @@ export async function copyTemplate({ slug, templateDir = defaultTemplateDir(), a
       throw new Error(`${dest} already exists. Clay will not reuse a folder that is not a Clay project.`);
     }
     await ensureDeployment(dest, templateDir);
+    await pointPlansAtProject(dest);
     return dest;
   }
   await copyDir(templateDir, dest);
   await ensureDeployment(dest, templateDir);
+  await pointPlansAtProject(dest);
   return dest;
 }
 

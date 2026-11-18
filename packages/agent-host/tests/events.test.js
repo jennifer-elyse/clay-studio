@@ -5,7 +5,7 @@ describe("UiEvent", () => {
     const event = makeEvent("plan", {
       plan: {
         id: "001-tracker",
-        path: "docs/plans/001-tracker/plan.md",
+        path: "docs/tracker-plan/001-tracker/plan.md",
         title: "Tracker",
         body: "Goal",
         status: "draft",

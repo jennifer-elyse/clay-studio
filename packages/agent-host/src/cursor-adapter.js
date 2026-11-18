@@ -12,6 +12,7 @@ import {
 } from "./models.js";
 import {
   assertBuildAllowed,
+  ensurePlanDir,
   nextPlanSlug,
   planRelativePath,
   setPlanStatus,
@@ -295,6 +296,7 @@ export function createCursorAdapter(ctx) {
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
+        await ensurePlanDir(ctx.appDir, slug);
         const target = { slug, path: planRelativePath(ctx.appDir, slug, file), title };
         if (command === "spec") specPath = target.path;
         else planMeta = target;

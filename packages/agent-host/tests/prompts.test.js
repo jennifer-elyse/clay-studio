@@ -5,7 +5,7 @@ describe("Clay 1.0 prompts", () => {
     const plan = planPrompt({ appDir: "/tmp/app", rest: "intake form", seat: "cursor" });
     const build = buildPrompt({
       appDir: "/tmp/app",
-      plan: { path: "/tmp/app/docs/plans/001/plan.md", title: "Intake" },
+      plan: { path: "/tmp/app/docs/app-plan/001/plan.md", title: "Intake" },
       rest: "",
       seat: "cursor",
     });
@@ -22,15 +22,15 @@ describe("Clay 1.0 prompts", () => {
     expect(plan).not.toContain("docs/design.md, docs/vision.md, and docs/erd.md");
     expect(build).toContain("Implement ONLY the approved plan");
     expect(build).toContain("Do not downgrade a package");
-    expect(build).toContain("docs/plans/001/plan.md");
+    expect(build).toContain("docs/app-plan/001/plan.md");
     expect(build).not.toContain("Read docs/vision.md");
-    const spec = specPrompt({ appDir: "/tmp/app", rest: "intake form", specPath: "docs/plans/001-intake/spec.md", seat: "codex" });
+    const spec = specPrompt({ appDir: "/tmp/app", rest: "intake form", specPath: "docs/app-plan/001-intake/spec.md", seat: "codex" });
     expect(spec).toContain("Codex already loaded AGENTS.md");
     expect(spec).toContain("behavioral spec");
     expect(spec).toContain("AC-1");
-    expect(spec).toContain("docs/plans/001-intake/spec.md");
+    expect(spec).toContain("docs/app-plan/001-intake/spec.md");
     expect(spec).toContain("Do not implement code");
-    expect(promptFor("spec", { appDir: "/tmp/app", rest: "intake form", specPath: "docs/plans/001-intake/spec.md", seat: "codex" })).toBe(spec);
+    expect(promptFor("spec", { appDir: "/tmp/app", rest: "intake form", specPath: "docs/app-plan/001-intake/spec.md", seat: "codex" })).toBe(spec);
   });
 
   test("a short turn does not open the constitution", () => {

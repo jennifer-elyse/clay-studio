@@ -1,7 +1,7 @@
 import { FAST_TURN_LIMIT } from "./context.js";
 import { makeEvent, runStartFields } from "./events.js";
 import { codexEffort, defaultModels, modelFor, phaseFor, seatCaption, selectableModels } from "./models.js";
-import { assertBuildAllowed, nextPlanSlug, planRelativePath, setPlanStatus } from "./plan-gate.js";
+import { assertBuildAllowed, ensurePlanDir, nextPlanSlug, planRelativePath, setPlanStatus } from "./plan-gate.js";
 import { containPreview, copyTemplate, getPreview, onPreviewCrash, stopPreview } from "./preview.js";
 import { needsSecurityPass, secureAfterRun } from "./npm-security.js";
 import { approvalEvents } from "./plan-offer.js";
@@ -117,6 +117,7 @@ export function createCodexAdapter(ctx) {
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
+        await ensurePlanDir(ctx.appDir, slug);
         const target = { slug, path: planRelativePath(ctx.appDir, slug, file), title };
         if (command === "spec") specPath = target.path;
         else planMeta = target;

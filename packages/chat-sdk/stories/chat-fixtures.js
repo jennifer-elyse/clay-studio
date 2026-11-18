@@ -1,6 +1,6 @@
 const trackerPlan = {
   id: "001",
-  path: "docs/plans/001-tracker/plan.md",
+  path: "docs/tracker-plan/001-tracker/plan.md",
   title: "Tracker",
   body: "## Goal\n\nApprove store requests.",
   status: "draft",

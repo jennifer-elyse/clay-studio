@@ -34,7 +34,7 @@ Studio follows the same rules a generated app enforces. The constitution is `tem
 - Chat UI: `docs/design.md`
 - Code and API rules: `docs/code.md`
 - Data: `docs/erd.md`
-- Approved specs: `docs/plans/`
+- Approved specs: `docs/clay-studio-plan/`
 - Chat primitives: `packages/chat-sdk`
 - Agent seats and preview: `packages/agent-host`
 - Generated app shape: `templates/web-app`

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { approvalEvents } from "../src/plan-offer.js";
-import { assertBuildAllowed, commandDone, ensureDraftPlan, markPlanBuilt, PlanGateError, planReadyForApproval, planRelativePath, setPlanStatus, writePlan } from "../src/plan-gate.js";
+import { assertBuildAllowed, commandDone, ensureDraftPlan, markPlanBuilt, PlanGateError, planReadyForApproval, planRelativePath, pointPlansAtProject, projectPlanMention, setPlanStatus, writePlan } from "../src/plan-gate.js";
 
 async function tmpApp() {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-plan-"));
@@ -32,7 +32,7 @@ describe("plan gate", () => {
   test("a written plan is what the approval card offers", async () => {
     const appDir = await tmpApp();
     const started = Date.now();
-    const missing = await planReadyForApproval(appDir, "docs/plans/001-tracker/plan.md", started);
+    const missing = await planReadyForApproval(appDir, "docs/missing/001-tracker/plan.md", started);
     expect(missing.ok).toBe(false);
     const written = await writePlan({
       appDir,
@@ -41,7 +41,7 @@ describe("plan gate", () => {
       body: "## Goal\n\nTrack requests.",
     });
     expect(written.path).toBe(path.join(appDir, planRelativePath(appDir, "009-other", "plan.md")));
-    const offered = await planReadyForApproval(appDir, "docs/plans/001-tracker/plan.md", started);
+    const offered = await planReadyForApproval(appDir, "docs/missing/001-tracker/plan.md", started);
     expect(offered.ok).toBe(true);
     if (!offered.ok) return;
     expect(offered.plan.path).toBe(written.path);
@@ -92,5 +92,22 @@ describe("plan gate", () => {
       body: "## Goal\n\nA different draft.",
     });
     expect(again?.body).toContain("Ship a tracker.");
+  });
+
+  test("a project no longer points at the starter plan folder", async () => {
+    const appDir = await tmpApp();
+    const folder = `${path.basename(appDir).toLowerCase()}-plan`;
+    expect(projectPlanMention("Write `docs/plans/NNN-name/plan.md`.", folder)).toBe(
+      `Write \`docs/${folder}/NNN-name/plan.md\`.`,
+    );
+    await fs.mkdir(path.join(appDir, "docs", "plans", "001-tracker"), { recursive: true });
+    await fs.writeFile(path.join(appDir, "AGENTS.md"), "Approved specs: `docs/plans/`.\n", "utf8");
+    await fs.writeFile(path.join(appDir, "docs", "plans", "001-tracker", "plan.md"), "# Tracker\n", "utf8");
+    await pointPlansAtProject(appDir);
+    const agents = await fs.readFile(path.join(appDir, "AGENTS.md"), "utf8");
+    expect(agents).toBe(`Approved specs: \`docs/${folder}/\`.\n`);
+    expect(agents).not.toContain("docs/plans");
+    const moved = await fs.readFile(path.join(appDir, "docs", folder, "001-tracker", "plan.md"), "utf8");
+    expect(moved).toContain("Tracker");
   });
 });
