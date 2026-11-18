@@ -1,3 +1,4 @@
+import { copilotPermissionDecision, planTextFromWrite, withoutToolPlaceholders } from "./copilot-plan.js";
 import { commandNeedsTools, FAST_TURN_LIMIT } from "./context.js";
 import { makeEvent, runStartFields } from "./events.js";
 import {
@@ -12,6 +13,7 @@ import {
   assertBuildAllowed,
   ensureDraftPlan,
   nextPlanSlug,
+  planFolderName,
   planRelativePath,
   setPlanStatus,
 } from "./plan-gate.js";
@@ -182,6 +184,11 @@ export function createCopilotAdapter(ctx) {
       model: modelId,
       gitHubToken: gitHubToken || undefined,
       workingDirectory: ctx.appDir,
+      onPermissionRequest: (request) => {
+        const written = planTextFromWrite(request);
+        if ((command === "plan" || command === "spec") && written.length > planDraft.length) planDraft = written;
+        return copilotPermissionDecision(request, command, planFolderName(ctx.appDir));
+      },
       onExitPlanModeRequest: (request) => acceptPlanDraft(request),
       ...(needsTools
         ? {
@@ -222,12 +229,13 @@ export function createCopilotAdapter(ctx) {
   function* fromResponse(response) {
     const data = response?.data ?? response ?? {};
     const content = data.content ?? data.text ?? data.message;
-    if (typeof content === "string" && content) {
-      spoken += `${content}\n`;
-      yield makeEvent("assistant_text", { text: content, agentId });
+    const visible = withoutToolPlaceholders(typeof content === "string" ? content : "");
+    if (visible) {
+      spoken += `${visible}\n`;
+      yield makeEvent("assistant_text", { text: visible, agentId });
     } else if (Array.isArray(content)) {
       for (const part of content) {
-        const text = typeof part === "string" ? part : part?.text;
+        const text = withoutToolPlaceholders(typeof part === "string" ? part : part?.text ?? "");
         if (text) {
           spoken += `${text}\n`;
           yield makeEvent("assistant_text", { text, agentId });
@@ -262,7 +270,8 @@ export function createCopilotAdapter(ctx) {
    * @param {{ planContent?: string }} request
    */
   async function acceptPlanDraft(request) {
-    const content = typeof request?.planContent === "string" ? request.planContent.trim() : "";
+    const content =
+      withoutToolPlaceholders(request?.planContent ?? "") || withoutToolPlaceholders(request?.summary ?? "");
     if (content) planDraft = content;
     if (pendingPlan && content) {
       await ensureDraftPlan({
@@ -373,7 +382,7 @@ export function createCopilotAdapter(ctx) {
       await useModel(handle, usedModel, copilotEffort(phase));
       const payload = command === "plan" ? { prompt: fullPrompt, agentMode: "plan" } : { prompt: fullPrompt };
       if (typeof handle.sendAndWait === "function") {
-        const response = await handle.sendAndWait(payload);
+        const response = await handle.sendAndWait(payload, command === "plan" || command === "spec" ? 180000 : undefined);
         if (!cancelled) yield* fromResponse(response);
       } else if (typeof handle.send === "function") {
         const response = await handle.send(payload);

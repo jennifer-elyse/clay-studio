@@ -1,0 +1,35 @@
+import { copilotPermissionDecision, planTextFromWrite, withoutToolPlaceholders } from "../src/copilot-plan.js";
+
+describe("copilot plan tools", () => {
+  test("placeholder tags are not plan text", () => {
+    const text = withoutToolPlaceholders("## Goal\n\n<invoke_tool_placeholder>\nShip it.\n</invoke_tool_placeholder>");
+    expect(text).toBe("## Goal\n\nShip it.");
+    expect(withoutToolPlaceholders("<invoke_tool_placeholder></invoke_tool_placeholder>")).toBe("");
+  });
+
+  test("a plan may write its own file and nothing else", () => {
+    const write = copilotPermissionDecision(
+      { kind: "write", fileName: "docs/route-board-plan/001-intake/plan.md" },
+      "plan",
+      "route-board-plan",
+    );
+    expect(write).toEqual({ kind: "approve-once" });
+    const code = copilotPermissionDecision(
+      { kind: "write", fileName: "client/src/App.jsx" },
+      "plan",
+      "route-board-plan",
+    );
+    expect(code.kind).toBe("reject");
+    const shell = copilotPermissionDecision({ kind: "shell" }, "plan", "route-board-plan");
+    expect(shell.kind).toBe("reject");
+    expect(copilotPermissionDecision({ kind: "read" }, "plan", "route-board-plan")).toEqual({ kind: "approve-once" });
+  });
+
+  test("the write request carries the plan", () => {
+    const text = planTextFromWrite({
+      kind: "write",
+      newFileContents: "---\nstatus: draft\n---\n\n## Goal\n\nTrack requests.\n",
+    });
+    expect(text).toContain("Track requests.");
+  });
+});

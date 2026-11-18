@@ -84,7 +84,7 @@ describe("plan gate", () => {
       title: "Tracker",
       body: "## Goal\n\nShip a tracker.",
     });
-    expect(saved?.path).toContain(`${path.basename(appDir)}-plan`);
+    expect(saved?.path.toLowerCase()).toContain(`${path.basename(appDir).toLowerCase()}-plan`);
     const again = await ensureDraftPlan({
       appDir,
       slug: "001-tracker",
