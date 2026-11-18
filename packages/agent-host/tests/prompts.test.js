@@ -16,6 +16,8 @@ describe("Clay 1.0 prompts", () => {
     expect(plan).toContain("docs/erd.md");
     expect(plan).toContain("docs/code.md");
     expect(plan).toContain("Do not implement code yet");
+    expect(plan).toContain("docs/app-plan/");
+    expect(plan).toContain("Clay asks the person to approve it");
     expect(plan).toContain("definition of done");
     expect(plan).not.toContain("docs/design.md, docs/vision.md, and docs/erd.md");
     expect(build).toContain("Implement ONLY the approved plan");

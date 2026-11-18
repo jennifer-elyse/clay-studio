@@ -7,7 +7,7 @@ description: Check a Clay change against the definition of done before calling i
 
 Read the checklist at the end of `docs/code.md`. A slice is ready only when each line that applies is true. A line that names Cloud Run, APIM, tracing, or a canary applies once that system exists. Until then it is met by leaving the contract and the file layout.
 
-1. An approved plan in `docs/plans/` matches what was built. Someone other than the author approved it. No extra scope.
+1. An approved plan in `docs/{project-name}-plan/` matches what was built. Someone other than the author approved it. No extra scope.
 2. Contract first, Zod in and out, noun paths, one error shape, catalog codes.
 3. Writes have `Idempotency-Key`. Status changes are legal transitions. `schema.sql` can run again.
 4. Tokens are imported. Components use them. A Figma component with code uses Code Connect.

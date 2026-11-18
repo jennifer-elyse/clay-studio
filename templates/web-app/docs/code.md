@@ -273,7 +273,7 @@ If a doc is not in the repository, the agent cannot read it and the reviewer can
 | `docs/design.md` | Clay | When a change touches the UI | Tokens, component states, and accessibility. |
 | `docs/code.md` | Clay (Spec Kit: constitution) | When code is written or reviewed | This file. |
 | `docs/erd.md` | Clay, generated | When a change touches data | The current data model, so the plan starts from the real schema. |
-| `docs/plans/NNN-name/plan.md` | Clay (Spec Kit: spec, plan, tasks) | Written at `/plan`; read by Grok and the reviewer | The approved spec of record for one change. |
+| `docs/{project-name}-plan/NNN-name/plan.md` | Clay (Spec Kit: spec, plan, tasks) | Written at `/plan`; the person approves it before `/build` | The approved spec of record for one change. |
 | `docs/adr/` | Clay | When an architecture choice needs a written reason | Why the architecture is the way it is, including a time-boxed exception. |
 
 Cursor and Copilot load `AGENTS.md` every session, so every line costs context on every request. The agent sees only each skill's name and description until the task matches, then it loads that `SKILL.md`. Twenty skills cost almost nothing until one is needed. `AGENTS.md` routes the rest: before `/plan`, read `docs/vision.md` and `docs/erd.md`; before UI work, `docs/design.md`; before code, this file. A developer can `@`-attach any doc. Reviewers check against the same files.
@@ -299,7 +299,7 @@ On localhost, until Figma, Code Connect, or Storybook is in the app, tokens stil
 
 A change is ready when a reviewer can check every line below. A line that names a system this prototype does not run yet is met by leaving the contract and the file layout, not by inventing that system.
 
-- An approved `/plan` in `docs/plans/` accompanies the change. The plan is the spec this change followed. For a merge, someone other than the author approved it.
+- An approved `/plan` in `docs/{project-name}-plan/` accompanies the change. The plan is the spec this change followed. For a merge, someone other than the author approved it.
 - The contract changed first. Zod validates in and out. Paths are nouns. Methods are verbs. Errors share one shape and a catalog code.
 - Every write takes `Idempotency-Key`. Status changes are legal transitions. `schema.sql` can run again.
 - Tokens are imported into `client/src/tokens.css`. Components use them. A value is not typed by hand in a component. A Figma component with code uses Code Connect.
@@ -315,7 +315,7 @@ A change is ready when a reviewer can check every line below. A line that names 
 
 No gate, no merge. These are the checks CI turns the definition of done into. A prototype adopts them as the suite comes up. It does not skip the ones it can already run (plan, ESLint, Prettier, Jest, secret scan).
 
-- **Plan gate.** The PR names an approved plan in `docs/plans/`, approved by someone other than the author. No plan, no merge.
+- **Plan gate.** The PR names an approved plan in `docs/{project-name}-plan/`, approved by someone other than the author. No plan, no merge.
 - **Code standard gate.** ESLint with zero warnings: components under 50 lines, no mutation, `===` only, legal status transitions, pure domain layer, and `eslint-plugin-react-hooks` recommended (Rules of Hooks and the compiler rules). Prettier, and `tsc --checkJs` for JavaScript.
 - **Proof gate.** Jest with coverage thresholds, Playwright user flows, a Storybook story for every changed component.
 - **Contracts and data gate.** `oasdiff` and `buf` block breaking contract changes. Migrations run twice. A stale ERD fails the build.

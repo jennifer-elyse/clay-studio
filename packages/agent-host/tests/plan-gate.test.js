@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { approvalEvents } from "../src/plan-offer.js";
-import { assertBuildAllowed, commandDone, markPlanBuilt, PlanGateError, planReadyForApproval, setPlanStatus, writePlan } from "../src/plan-gate.js";
+import { assertBuildAllowed, commandDone, ensureDraftPlan, markPlanBuilt, PlanGateError, planReadyForApproval, planRelativePath, setPlanStatus, writePlan } from "../src/plan-gate.js";
 
 async function tmpApp() {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-plan-"));
@@ -40,6 +40,7 @@ describe("plan gate", () => {
       title: "Other",
       body: "## Goal\n\nTrack requests.",
     });
+    expect(written.path).toBe(path.join(appDir, planRelativePath(appDir, "009-other", "plan.md")));
     const offered = await planReadyForApproval(appDir, "docs/plans/001-tracker/plan.md", started);
     expect(offered.ok).toBe(true);
     if (!offered.ok) return;
@@ -73,5 +74,23 @@ describe("plan gate", () => {
     const raw = await fs.readFile(plan.path, "utf8");
     expect(raw).toContain("status: approved");
     expect(raw).toContain("built: true");
+  });
+
+  test("a chat draft is saved once so the person can approve it", async () => {
+    const appDir = await tmpApp();
+    const saved = await ensureDraftPlan({
+      appDir,
+      slug: "001-tracker",
+      title: "Tracker",
+      body: "## Goal\n\nShip a tracker.",
+    });
+    expect(saved?.path).toContain(`${path.basename(appDir)}-plan`);
+    const again = await ensureDraftPlan({
+      appDir,
+      slug: "001-tracker",
+      title: "Tracker",
+      body: "## Goal\n\nA different draft.",
+    });
+    expect(again?.body).toContain("Ship a tracker.");
   });
 });

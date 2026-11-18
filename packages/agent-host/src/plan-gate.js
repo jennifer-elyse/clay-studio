@@ -7,8 +7,31 @@ const FRONTMATTER = /^---\n([\s\S]*?)\n---\n?/;
  * @param {string} appDir
  * @returns {string}
  */
+/**
+ * Plans for a project live under docs/{project-name}-plan.
+ * @param {string} appDir
+ * @returns {string}
+ */
+export function planFolderName(appDir) {
+  return `${slugify(path.basename(appDir))}-plan`;
+}
+
+/**
+ * @param {string} appDir
+ * @param {string} slug
+ * @param {string} file
+ * @returns {string}
+ */
+export function planRelativePath(appDir, slug, file) {
+  return ["docs", planFolderName(appDir), slug, file].join("/");
+}
+
+/**
+ * @param {string} appDir
+ * @returns {string}
+ */
 export function plansDir(appDir) {
-  return path.join(appDir, "docs", "plans");
+  return path.join(appDir, "docs", planFolderName(appDir));
 }
 
 /**
@@ -104,6 +127,23 @@ export async function assertBuildAllowed(appDir) {
     throw new PlanGateError("Approve a /plan before building. Nothing is implemented until a person says so.");
   }
   return approved;
+}
+
+/**
+ * Keep a plan the model already saved. Otherwise store its draft so approval can be asked.
+ * @param {object} input
+ * @param {string} input.appDir
+ * @param {string} input.slug
+ * @param {string} input.title
+ * @param {string} input.body
+ */
+export async function ensureDraftPlan({ appDir, slug, title, body }) {
+  const relative = planRelativePath(appDir, slug, "plan.md");
+  const existing = await readPlanIfPresent(path.resolve(appDir, relative));
+  if (existing) return existing;
+  const text = String(body ?? "").trim().replace(/^---\n[\s\S]*?\n---\n?/, "").trim();
+  if (!text) return null;
+  return writePlan({ appDir, slug, title, body: text });
 }
 
 /**

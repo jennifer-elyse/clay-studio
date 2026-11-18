@@ -27,6 +27,7 @@ describe("mock host", () => {
     const planned = await collect(host.send("/plan request tracker"));
     const planEvent = planned.find((e) => e.type === "plan");
     expect(planEvent?.plan?.status).toBe("draft");
+    expect(planEvent?.plan?.path).toContain(`${path.sep}demo-plan${path.sep}`);
 
     expect(host.snapshot().done).toEqual({ plan: false, build: false });
     await host.approvePlan(planEvent.plan.path);
@@ -57,7 +58,7 @@ describe("mock host", () => {
     expect(help.some((e) => e.text?.includes("/plan"))).toBe(true);
     const spec = await collect(host.send("/spec intake form"));
     const said = spec.find((event) => event.text?.includes("spec.md"));
-    const match = said?.text?.match(/docs\/plans\/\S+?spec\.md/);
+    const match = said?.text?.match(/docs\/\S+?spec\.md/);
     expect(match?.[0]).toMatch(/spec\.md$/);
     const raw = await fs.readFile(path.join(host.appDir, match[0]), "utf8");
     expect(raw).toContain("status: draft");

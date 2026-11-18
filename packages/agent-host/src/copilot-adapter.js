@@ -10,7 +10,9 @@ import {
 } from "./models.js";
 import {
   assertBuildAllowed,
+  ensureDraftPlan,
   nextPlanSlug,
+  planRelativePath,
   setPlanStatus,
 } from "./plan-gate.js";
 import {
@@ -47,6 +49,10 @@ export function createCopilotAdapter(ctx) {
   let sessionHasTools = false;
   let chosenModel = "";
   let requestedModel = "";
+  /** @type {{ slug: string, title: string } | null} */
+  let pendingPlan = null;
+  let planDraft = "";
+  let spoken = "";
   /** @type {import("./models.js").CatalogModel[] | null} */
   let listedModels = null;
 
@@ -170,14 +176,23 @@ export function createCopilotAdapter(ctx) {
     if (session) return session;
     const gitHubToken = token();
     const sessionId = `clay-${ctx.slug}-${sessionGeneration}`;
+    const defined = previewTools(() => ctx.appDir);
     session = await openSession({
       sessionId,
       model: modelId,
       gitHubToken: gitHubToken || undefined,
       workingDirectory: ctx.appDir,
-      availableTools: needsTools
-        ? Object.keys(previewTools(() => ctx.appDir))
-        : [],
+      onExitPlanModeRequest: (request) => acceptPlanDraft(request),
+      ...(needsTools
+        ? {
+            tools: Object.entries(defined).map(([name, tool]) => ({
+              name,
+              description: tool.description,
+              parameters: tool.inputSchema,
+              handler: () => tool.execute(),
+            })),
+          }
+        : {}),
     });
     sessionHasTools = needsTools;
     requestedModel = modelId;
@@ -208,11 +223,15 @@ export function createCopilotAdapter(ctx) {
     const data = response?.data ?? response ?? {};
     const content = data.content ?? data.text ?? data.message;
     if (typeof content === "string" && content) {
+      spoken += `${content}\n`;
       yield makeEvent("assistant_text", { text: content, agentId });
     } else if (Array.isArray(content)) {
       for (const part of content) {
         const text = typeof part === "string" ? part : part?.text;
-        if (text) yield makeEvent("assistant_text", { text, agentId });
+        if (text) {
+          spoken += `${text}\n`;
+          yield makeEvent("assistant_text", { text, agentId });
+        }
       }
     }
   }
@@ -236,6 +255,27 @@ export function createCopilotAdapter(ctx) {
       }
     }
     activeModel = key;
+  }
+
+  /**
+   * Copilot's plan mode asks to leave the plan. Clay keeps the draft and asks the person instead.
+   * @param {{ planContent?: string }} request
+   */
+  async function acceptPlanDraft(request) {
+    const content = typeof request?.planContent === "string" ? request.planContent.trim() : "";
+    if (content) planDraft = content;
+    if (pendingPlan && content) {
+      await ensureDraftPlan({
+        appDir: ctx.appDir,
+        slug: pendingPlan.slug,
+        title: pendingPlan.title,
+        body: content,
+      });
+    }
+    return {
+      approved: false,
+      feedback: "Clay asks the person to approve this plan before anything is built.",
+    };
   }
 
   return {
@@ -293,7 +333,7 @@ export function createCopilotAdapter(ctx) {
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
-        const target = { slug, path: `docs/plans/${slug}/${file}`, title };
+        const target = { slug, path: planRelativePath(ctx.appDir, slug, file), title };
         if (command === "spec") specPath = target.path;
         else planMeta = target;
       }
@@ -311,6 +351,9 @@ export function createCopilotAdapter(ctx) {
         thinkFirst: options.thinkFirst === true,
       });
 
+      pendingPlan = command === "plan" && planMeta ? { slug: planMeta.slug, title: planMeta.title } : null;
+      planDraft = "";
+      spoken = "";
       const handle = await ensureSession(
         command,
         phase,
@@ -328,7 +371,7 @@ export function createCopilotAdapter(ctx) {
         });
       }
       await useModel(handle, usedModel, copilotEffort(phase));
-      const payload = { prompt: fullPrompt };
+      const payload = command === "plan" ? { prompt: fullPrompt, agentMode: "plan" } : { prompt: fullPrompt };
       if (typeof handle.sendAndWait === "function") {
         const response = await handle.sendAndWait(payload);
         if (!cancelled) yield* fromResponse(response);
@@ -377,6 +420,12 @@ export function createCopilotAdapter(ctx) {
       }
       if (!cancelled) await noteTurn(phase);
       if (command === "plan" && planMeta) {
+        await ensureDraftPlan({
+          appDir: ctx.appDir,
+          slug: planMeta.slug,
+          title: planMeta.title,
+          body: planDraft || spoken,
+        });
         const events = await approvalEvents({
           appDir: ctx.appDir,
           relativePath: planMeta.path,

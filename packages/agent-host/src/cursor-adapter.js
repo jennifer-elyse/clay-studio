@@ -13,6 +13,7 @@ import {
 import {
   assertBuildAllowed,
   nextPlanSlug,
+  planRelativePath,
   setPlanStatus,
 } from "./plan-gate.js";
 import {
@@ -294,7 +295,7 @@ export function createCursorAdapter(ctx) {
         const title = rest || "Studio change";
         const slug = await nextPlanSlug(ctx.appDir, title);
         const file = command === "spec" ? "spec.md" : "plan.md";
-        const target = { slug, path: `docs/plans/${slug}/${file}`, title };
+        const target = { slug, path: planRelativePath(ctx.appDir, slug, file), title };
         if (command === "spec") specPath = target.path;
         else planMeta = target;
       }

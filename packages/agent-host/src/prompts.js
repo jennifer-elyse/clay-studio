@@ -1,3 +1,4 @@
+import { planFolderName } from "./plan-gate.js";
 import { MAX_SUBTASKS } from "./subtasks.js";
 
 export const DATA_REMINDER =
@@ -41,7 +42,7 @@ export function specPrompt({ appDir, rest, specPath, seat }) {
     "Keep file names, libraries, and schemas out of the spec.",
     "State the outcome, what is in and out of scope, observable behavior, and acceptance criteria with stable ids (AC-1, AC-2).",
     "Write Markdown with YAML frontmatter `status: draft`, `title:`, and `slug:`.",
-    specPath ? `Save it at ${specPath}.` : "Save it under docs/plans/NNN-short-name/spec.md (pick the next NNN).",
+    specPath ? `Save it at ${specPath}.` : `Save it under docs/${planFolderName(appDir)}/.`,
     "Do not change any other file.",
     rest ? `The person asked: ${rest}` : "Specify the next useful slice of this internal app.",
     `Workspace: ${appDir}`,
@@ -63,8 +64,9 @@ export function planPrompt({ appDir, rest, planPath, seat }) {
     "Read docs/vision.md and docs/erd.md. Read the definition of done in docs/code.md. Read docs/design.md only if this slice has a screen.",
     "The plan states the outcome, the contract or route change, the status transitions, the data change, the docs that move with it, and which definition-of-done lines this slice will meet.",
     "Write a single Markdown plan with YAML frontmatter `status: draft` and `title:`.",
-    planPath ? `Save it at ${planPath}.` : "Save it under docs/plans/NNN-short-name/plan.md (pick the next NNN).",
-    "Do not change files outside docs/plans/.",
+    planPath ? `Save it at ${planPath}.` : `Save it under docs/${planFolderName(appDir)}/.`,
+    `Do not change files outside docs/${planFolderName(appDir)}/.`,
+    "Stop after the plan file is saved. Clay asks the person to approve it. Do not build.",
     rest ? `The person asked: ${rest}` : "Plan the next useful slice of this internal app.",
     `Workspace: ${appDir}`,
   ]);
