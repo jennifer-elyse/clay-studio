@@ -71,3 +71,26 @@ export const WithProjectsFolder = {
     />
   ),
 };
+
+export const ChatLayout = {
+  render: () => <ClayChat events={finishedEvents} onSend={() => undefined} seat={{ provider: "mock" }} previewStatus="" />,
+};
+
+export const PreviewLayoutWhenReady = {
+  render: () => (
+    <ClayChat
+      events={finishedEvents}
+      onSend={() => undefined}
+      seat={{ provider: "mock" }}
+      previewStatus="ready"
+      previewUrl="http://127.0.0.1:4312"
+    />
+  ),
+};
+
+export const ReadyWhileInChatLayout = {
+  render: PreviewLayoutWhenReady.render,
+  play: async ({ canvasElement }) => {
+    canvasElement.querySelector(".clay-layout-option")?.click();
+  },
+};

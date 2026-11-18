@@ -357,6 +357,71 @@
   white-space: nowrap;
 }
 
+.clay-layout-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1.5px solid var(--clay-stroke);
+  border-radius: var(--clay-pill);
+  background: var(--clay-paper);
+}
+
+.clay-layout-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 0;
+  border-radius: var(--clay-pill);
+  background: transparent;
+  color: var(--clay-ink);
+  padding: 4px 12px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clay-layout-option:hover {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-layout-option[aria-pressed="true"] {
+  font-weight: 800;
+  background: color-mix(in srgb, var(--clay-stroke) 70%, var(--clay-surface));
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.clay-layout-option:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.clay-layout-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clay-run);
+}
+
+.clay-shell[data-layout="chat"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.clay-shell[data-layout="chat"] .clay-chat {
+  grid-column: 1;
+  justify-self: center;
+  width: min(100% - 48px, 960px);
+  margin: 16px 0;
+}
+
+.clay-shell[data-layout="chat"] .clay-bubble,
+.clay-shell[data-layout="chat"] .clay-turn {
+  max-width: min(92%, 75ch);
+}
+
 .clay-chat {
   grid-column: 1;
   grid-row: 2;
@@ -1389,6 +1454,9 @@
     grid-row: 3;
     min-height: 0;
     margin: 12px;
+  }
+  .clay-shell[data-layout="chat"] {
+    grid-template-rows: auto minmax(0, 1fr);
   }
 }
 

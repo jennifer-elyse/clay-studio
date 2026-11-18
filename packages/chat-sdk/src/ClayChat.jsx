@@ -5,6 +5,7 @@ import { planNeedsProject } from "./project-gate.js";
 import { KeepShell } from "./KeepShell.jsx";
 import { PreviewPane } from "./PreviewPane.jsx";
 import { SettingsModal } from "./SettingsModal.jsx";
+import { initialLayout, pickLayout, previewReadyKey, syncLayout } from "./layout-state.js";
 import { previewActivity } from "./map-events.js";
 import { useClaySession } from "./use-clay-session.js";
 import "./tokens.css";
@@ -14,6 +15,11 @@ export function ClayChat(props) {
   const [projectDraft, setProjectDraft] = useState({ name: "", folder: "", open: false });
   const [projectNotice, setProjectNotice] = useState("");
   const [projectOpenSignal, setProjectOpenSignal] = useState(0);
+  const [layoutState, setLayoutState] = useState(initialLayout);
+  const readyKey = previewReadyKey(props.previewStatus, props.previewUrl);
+  const synced = syncLayout(layoutState, { readyKey, projectId: props.project?.id ?? "" });
+  if (synced !== layoutState) setLayoutState(synced);
+  const layout = synced.layout;
   const session = useClaySession({
     ...props,
     preparePlan: () => {
@@ -33,10 +39,13 @@ export function ClayChat(props) {
   });
   return (
     <div className="clay-root">
-      <div className="clay-shell">
+      <div className="clay-shell" data-layout={layout}>
         <ClayHeader
           clip={session.clip}
           minimized={session.minimized}
+          layout={layout}
+          onLayout={(next) => setLayoutState((state) => pickLayout(state, next === "chat" ? "pickChat" : "pickPreview"))}
+          previewReady={readyKey !== ""}
           seat={props.seat}
           seatSettings={props.seatSettings}
           onLoadModels={props.onLoadModels}
@@ -72,9 +81,11 @@ export function ClayChat(props) {
           onAdjust={() => session.adjust()}
           done={props.done}
         />
-        <KeepShell>
-          <PreviewPane url={props.previewUrl} status={props.previewStatus} message={props.previewMessage} activity={previewActivity(session.run)} debug={session.debug} log={props.log} onOpen={props.onOpenPreview} />
-        </KeepShell>
+        {layout === "preview" ? (
+          <KeepShell>
+            <PreviewPane url={props.previewUrl} status={props.previewStatus} message={props.previewMessage} activity={previewActivity(session.run)} debug={session.debug} log={props.log} onOpen={props.onOpenPreview} />
+          </KeepShell>
+        ) : null}
         <SettingsModal
           open={session.settingsOpen}
           section={session.settingsSection}
