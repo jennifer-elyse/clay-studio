@@ -1,0 +1,31 @@
+:root {
+  --clay-sand: #f7e4c8;
+  --clay-surface: #fff7ec;
+  --clay-paper: #fffdf8;
+  --clay-ink: #3d2c24;
+  --clay-muted: #7a6458;
+  --clay-blob: #e86a4a;
+  --clay-sun: #f2c14e;
+  --clay-pink: #f08aad;
+  --clay-mint: #7dce9a;
+  --clay-sky: #5cb8d4;
+  --clay-plan: #3b7cc0;
+  --clay-run: #2f9e6b;
+  --clay-fix: #ef8a3d;
+  --clay-seat: #c084fc;
+  --clay-danger: #8a2f1c;
+  --clay-log: #2b211c;
+  --clay-log-ink: #f4e6d4;
+  --clay-stroke: #ead3b5;
+  --clay-radius: 16px;
+  --clay-pill: 999px;
+  --clay-focus: #3b7cc0;
+  --focus-ring: 0 0 0 3px rgb(0 102 204 / 28%);
+  --clay-shadow: 0 10px 28px color-mix(in srgb, var(--clay-ink) 8%, transparent);
+  --clay-shadow-sm: 0 2px 8px color-mix(in srgb, var(--clay-ink) 7%, transparent);
+  --clay-font: "Nunito", "Helvetica Neue", Calibri, sans-serif;
+  --clay-display: "Fraunces", Georgia, serif;
+  --clay-mono: "Courier New", ui-monospace, monospace;
+  --clay-bot-stage: 96px;
+  --clay-bot-stage-lg: 148px;
+}

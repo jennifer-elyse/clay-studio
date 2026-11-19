@@ -1,0 +1,41 @@
+.clay-chat-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 14px 0;
+}
+
+.clay-tool {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--clay-pill);
+  border: 1.5px solid transparent;
+  padding: 6px 12px;
+  box-shadow: var(--clay-shadow-sm);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clay-tool.is-clear {
+  background: var(--clay-sun);
+  color: var(--clay-ink);
+  border-color: var(--clay-sun);
+}
+
+.clay-tool.is-reset {
+  background: var(--clay-danger);
+  color: var(--clay-paper);
+  border-color: var(--clay-danger);
+}
+
+.clay-tool:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  color: var(--clay-ink);
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-tool:disabled {
+  cursor: default;
+  opacity: 0.55;
+}

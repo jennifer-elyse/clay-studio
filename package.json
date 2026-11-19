@@ -10,7 +10,7 @@
     "dev": "node scripts/stack-versions.js; CLAY_STACK_CHECKED=1 npm run dev -w @cswg/clay-studio",
     "build": "npm run build -w @cswg/clay-chat && npm run build -w @cswg/clay-studio",
     "start": "node scripts/stack-versions.js; CLAY_STACK_CHECKED=1 npm run start -w @cswg/clay-studio",
-    "test": "npm run test -w @cswg/agent-host && npm run test -w @cswg/clay-chat && npm run test -w @cswg/clay-studio && node --test scripts/launch-plan.test.js scripts/stack-versions.test.js && node scripts/stack-versions.js",
+    "test": "npm run test -w @cswg/agent-host && npm run test -w @cswg/clay-chat && npm run test -w @cswg/clay-studio && node --test scripts/launch-plan.test.js scripts/stack-versions.test.js scripts/npm-watch.test.js templates/web-app/server/status.test.js && node scripts/stack-versions.js",
     "test:e2e": "playwright test",
     "storybook": "npm run storybook -w @cswg/clay-chat",
     "lint": "eslint apps packages --ext js,jsx && npm run lint --prefix templates/web-app"

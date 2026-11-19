@@ -5,6 +5,7 @@ import express from "express";
 import { createHost } from "@cswg/agent-host";
 import { browseDirectories, DirectoryQuery } from "@cswg/agent-host/directories";
 import { SettingsInput } from "@cswg/agent-host/settings";
+import { startNpmWatch } from "../../../scripts/npm-watch.js";
 import { warnStack } from "../../../scripts/stack-versions.js";
 import { openRunningApp } from "./open-preview.js";
 import { attachSocket } from "./ws.js";
@@ -151,7 +152,9 @@ if (process.env.CLAY_SERVE_UI === "1") {
   });
 }
 
-if (process.env.CLAY_STACK_CHECKED !== "1") await warnStack(path.resolve(here, "../../.."));
+const repoRoot = path.resolve(here, "../../..");
+if (process.env.CLAY_STACK_CHECKED !== "1") await warnStack(repoRoot);
+startNpmWatch(repoRoot);
 
 const server = http.createServer(app);
 attachSocket(server, host);

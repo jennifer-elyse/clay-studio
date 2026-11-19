@@ -1,0 +1,12 @@
+.clay-shell {
+  display: grid;
+  grid-template-columns: minmax(440px, 440px) 1fr;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 46% 38% at 0% 0%, color-mix(in srgb, var(--clay-sun) 48%, transparent), transparent 72%),
+    radial-gradient(ellipse 36% 32% at 100% 100%, color-mix(in srgb, var(--clay-sky) 28%, transparent), transparent 70%),
+    var(--clay-sand);
+}

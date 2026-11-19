@@ -1,7 +1,4 @@
 import { PlanCard } from "../src/PlanCard.jsx";
-import "../src/tokens.css";
-import "../src/ClayChat.css";
-
 const plan = {
   title: "Request tracker",
   path: "docs/tracker-plan/001-tracker/plan.md",

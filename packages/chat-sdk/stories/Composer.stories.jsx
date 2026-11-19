@@ -1,7 +1,4 @@
 import { Composer } from "../src/Composer.jsx";
-import "../src/tokens.css";
-import "../src/ClayChat.css";
-
 const meta = { title: "Clay/Composer", component: Composer };
 export default meta;
 

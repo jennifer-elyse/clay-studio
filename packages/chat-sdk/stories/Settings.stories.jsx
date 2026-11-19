@@ -1,7 +1,6 @@
 import { ProjectsRootSection } from "../src/ProjectsRootSection.jsx";
 import { SeatModelForm } from "../src/SeatModelForm.jsx";
 import { ThemeSection } from "../src/ThemeSection.jsx";
-import "../src/tokens.css";
 import "../src/ClayChat.css";
 
 const settings = {

@@ -9,7 +9,7 @@ import { previewActivity } from "./map-events.js";
 import { useClaySession } from "./use-clay-session.js";
 import { useLayout } from "./use-layout.js";
 import { ThemeContext, useStudioTheme } from "./use-theme.js";
-import "./tokens.css";
+import "./styles/main.scss";
 import "./ClayChat.css";
 /** @param {import("./use-clay-session.js").ClayChatProps} props */
 export function ClayChat(props) {

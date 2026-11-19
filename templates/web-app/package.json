@@ -6,12 +6,14 @@
     "dev": "node scripts/stack-versions.js; CLAY_STACK_CHECKED=1 concurrently -k \"node server/index.js\" \"vite --config client/vite.config.js\"",
     "build": "vite build --config client/vite.config.js",
     "start": "node scripts/stack-versions.js; CLAY_STACK_CHECKED=1 node server/index.js",
-    "lint": "eslint client server"
+    "lint": "eslint client server",
+    "test": "node --test server/status.test.js"
   },
   "dependencies": {
     "express": "^4.21.2",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "xstate": "^5.33.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
@@ -21,6 +23,7 @@
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^15.12.0",
+    "sass": "^1.108.2",
     "vite": "^6.0.3"
   }
 }

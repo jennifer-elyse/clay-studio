@@ -1,0 +1,345 @@
+.clay-header {
+  grid-column: 1 / -1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 56px 12px 20px;
+  background: color-mix(in srgb, var(--clay-paper) 86%, var(--clay-surface));
+  border-bottom: 1px solid var(--clay-stroke);
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--clay-blob),
+    var(--clay-sun) 28%,
+    var(--clay-pink) 52%,
+    var(--clay-sky) 76%,
+    var(--clay-mint)
+  );
+}
+
+.clay-wordmark {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex: 1;
+}
+
+.clay-wordmark strong {
+  font-family: var(--clay-display);
+  font-size: 26px;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+}
+
+.clay-wordmark span {
+  color: var(--clay-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.clay-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.clay-project {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clay-project-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clay-project-caption {
+  color: var(--clay-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.clay-project select,
+.clay-project-form input {
+  font: inherit;
+  color: var(--clay-ink);
+  background: var(--clay-paper);
+  border: 1.5px solid var(--clay-stroke);
+  border-radius: var(--clay-pill);
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.clay-project select {
+  max-width: 180px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 40px 6px 12px;
+  appearance: none;
+}
+
+.clay-select .clay-chevron {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+}
+
+.clay-project-dir {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 6;
+  max-width: 360px;
+  margin: 0;
+  padding: 8px 10px 6px;
+  overflow: hidden;
+  color: var(--clay-muted);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--clay-paper);
+  border: 1px solid var(--clay-stroke);
+  border-radius: 12px;
+  box-shadow: var(--clay-shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.clay-select:hover .clay-project-dir,
+.clay-select:focus-within .clay-project-dir {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.clay-project:has(.clay-project-form) .clay-project-dir {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.clay-header-tool.is-project {
+  border-color: var(--clay-plan);
+  background: color-mix(in srgb, var(--clay-plan) 16%, var(--clay-paper));
+}
+
+.clay-project-form {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 6;
+  display: grid;
+  gap: 10px;
+  width: min(100cqi, 340px);
+  padding: 14px;
+  border: 1px solid var(--clay-stroke);
+  border-radius: 16px;
+  background: var(--clay-paper);
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-project-form-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.clay-project-form-head strong {
+  font-size: 14px;
+}
+
+.clay-project-switch {
+  border: 0;
+  background: transparent;
+  color: var(--clay-plan);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+}
+
+.clay-project-form label {
+  display: grid;
+  gap: 4px;
+  color: var(--clay-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.clay-project-form input {
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.clay-project-notice {
+  margin: 0;
+  color: var(--clay-danger);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.clay-folder-browser {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.clay-folder-label {
+  color: var(--clay-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.clay-folder-path {
+  margin: 0;
+  overflow: hidden;
+  color: var(--clay-ink);
+  font-family: var(--clay-mono);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clay-folder-list {
+  display: grid;
+  max-height: 180px;
+  overflow: auto;
+  background: var(--clay-paper);
+  border: 1.5px solid var(--clay-stroke);
+  border-radius: 10px;
+}
+
+.clay-folder-row,
+.clay-folder-pending {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.clay-folder-row {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.clay-folder-row:hover {
+  background: color-mix(in srgb, var(--clay-ink) 6%, var(--clay-paper));
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-folder-row.is-current,
+.clay-folder-pending {
+  background: color-mix(in srgb, var(--clay-plan) 16%, var(--clay-paper));
+}
+
+.clay-chevron {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.clay-minimize,
+.clay-header-tool {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--clay-pill);
+  border: 1.5px solid var(--clay-stroke);
+  background: var(--clay-paper);
+  color: var(--clay-ink);
+  padding: 6px 12px;
+  box-shadow: var(--clay-shadow-sm);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clay-minimize {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.clay-header-tool.is-settings {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clay-minimize:hover,
+.clay-header-tool:hover {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  color: var(--clay-ink);
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-header.is-minimized {
+  justify-content: space-between;
+  min-height: 0;
+  padding: 8px 56px 8px 16px;
+}
+
+.clay-header > .clay-minimize {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.clay-header.is-minimized > .clay-minimize {
+  position: static;
+}
+
+.clay-header-title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--clay-ink);
+  font-family: var(--clay-display);
+  font-size: 20px;
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

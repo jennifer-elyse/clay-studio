@@ -1,0 +1,10 @@
+// 7-1 entry for the Studio page shell.
+// Chat chrome lives in @cswg/clay-chat. The previewed app loads its own sheet.
+
+@use "vendors";
+@use "abstracts";
+@use "base";
+@use "layout";
+@use "components";
+@use "pages";
+@use "themes";

@@ -1,0 +1,40 @@
+@container clay (max-width: 860px) {
+  .clay-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(280px, 1fr) minmax(220px, 1fr);
+  }
+  .clay-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 12px;
+    align-items: center;
+  }
+  .clay-header.is-minimized {
+    display: flex;
+  }
+  .clay-bot-stage {
+    grid-row: 1 / span 2;
+  }
+  .clay-wordmark {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .clay-header-actions {
+    grid-column: 2;
+    margin-left: 0;
+    justify-self: start;
+    flex-wrap: wrap;
+  }
+  .clay-chat {
+    grid-column: 1;
+    grid-row: 2;
+    margin: 12px 12px 0;
+  }
+  .clay-preview {
+    grid-column: 1;
+    grid-row: 3;
+    min-height: 0;
+    margin: 12px;
+  }
+}

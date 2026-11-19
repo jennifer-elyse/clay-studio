@@ -1,6 +1,5 @@
 import { ANIMATION_BASE, BLUE_ANIMATION_BASE, animationSrc } from "./animations.js";
 import { useTheme } from "./use-theme.js";
-import "./ClayBot.css";
 
 /**
  * @param {object} props

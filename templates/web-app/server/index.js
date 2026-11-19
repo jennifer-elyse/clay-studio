@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
+import { startNpmWatch } from "../scripts/npm-watch.js";
 import { warnStack } from "../scripts/stack-versions.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -30,7 +31,9 @@ app.use((_req, res) => {
   res.status(404).json({ code: "NOT_FOUND", message: "Nothing here.", requestId: "local" });
 });
 
-if (process.env.CLAY_STACK_CHECKED !== "1") await warnStack(path.resolve(here, ".."));
+const appRoot = path.resolve(here, "..");
+if (process.env.CLAY_STACK_CHECKED !== "1") await warnStack(appRoot);
+startNpmWatch(appRoot);
 
 app.listen(port, host, () => {
   process.stdout.write(`Clay app on http://${host}:${port}\n`);

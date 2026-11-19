@@ -1,0 +1,93 @@
+.clay-badge-menu {
+  position: relative;
+}
+
+.clay-badge {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+  appearance: none;
+  border-radius: var(--clay-pill);
+  padding: 5px 12px;
+  border: 1.5px solid var(--clay-sun);
+  background: color-mix(in srgb, var(--clay-sun) 35%, var(--clay-paper));
+}
+
+.clay-badge:hover,
+.clay-badge[aria-expanded="true"] {
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-badge:focus-visible,
+.clay-model-item:focus-visible {
+  outline: 2px solid var(--clay-ink);
+  outline-offset: 2px;
+}
+
+.clay-model-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 6;
+  display: grid;
+  gap: 4px;
+  width: max-content;
+  min-width: 220px;
+  max-width: min(320px, 70vw);
+  max-height: min(320px, 50vh);
+  overflow: auto;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--clay-stroke);
+  border-radius: var(--clay-radius);
+  background: var(--clay-paper);
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-model-note {
+  margin: 0;
+  padding: 6px 10px;
+  color: var(--clay-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.clay-model-item {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  border-radius: var(--clay-pill);
+  padding: 8px 12px;
+  background: var(--clay-surface);
+  color: var(--clay-ink);
+}
+
+.clay-model-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-model-item.is-selected {
+  border-color: var(--clay-plan);
+  background: color-mix(in srgb, var(--clay-sky) 18%, var(--clay-paper));
+}
+
+.clay-model-item:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.clay-badge.is-copilot {
+  border-color: var(--clay-plan);
+  background: color-mix(in srgb, var(--clay-sky) 30%, var(--clay-paper));
+}
+
+.clay-badge.is-codex {
+  border-color: var(--clay-ink);
+  background: color-mix(in srgb, var(--clay-sand) 70%, var(--clay-paper));
+}

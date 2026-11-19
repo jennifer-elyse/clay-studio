@@ -1,7 +1,5 @@
 import { AMBIENT_CLIPS, COMMAND_CLIPS } from "../src/animations.js";
 import { ClayBot } from "../src/ClayBot.jsx";
-import "../src/tokens.css";
-
 const meta = { title: "Clay/ClayBot", component: ClayBot };
 export default meta;
 

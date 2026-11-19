@@ -1,6 +1,4 @@
 import { FolderBrowser } from "../src/FolderBrowser.jsx";
-import "../src/ClayChat.css";
-
 const meta = { title: "Clay/FolderBrowser", component: FolderBrowser };
 export default meta;
 

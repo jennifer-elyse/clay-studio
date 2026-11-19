@@ -1,0 +1,13 @@
+// 7-1 entry for the Studio document.
+// The font import has to stay above other rules, so vendors load before abstracts.
+// Reduced motion loads last so a component transition cannot turn motion back on.
+// This sheet styles Studio, including the preview frame. The app inside that frame loads its own sheet.
+
+@use "vendors";
+@use "abstracts";
+@use "base";
+@use "layout";
+@use "components";
+@use "pages";
+@use "themes";
+@use "base/motion";

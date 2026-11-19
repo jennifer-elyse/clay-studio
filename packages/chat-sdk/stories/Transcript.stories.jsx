@@ -1,6 +1,4 @@
 import { Transcript } from "../src/Transcript.jsx";
-import "../src/tokens.css";
-import "../src/ClayChat.css";
 import { finishedEvents } from "./chat-fixtures.js";
 import { applyEvent } from "../src/map-events.js";
 

@@ -1,0 +1,17 @@
+.clay-root {
+  container-type: inline-size;
+  container-name: clay;
+  font-family: var(--clay-font);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--clay-ink);
+  background: var(--clay-sand);
+  min-height: 100%;
+  -webkit-font-smoothing: antialiased;
+}
+
+.clay-root :focus-visible {
+  outline: 2px solid var(--clay-ink);
+  outline-offset: 3px;
+  box-shadow: var(--focus-ring);
+}

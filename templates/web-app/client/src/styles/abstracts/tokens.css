@@ -1,0 +1,15 @@
+:root {
+  --clay-sand: #f4e6d4;
+  --clay-surface: #fffaf5;
+  --clay-ink: #3d2c24;
+  --clay-muted: #7a6458;
+  --clay-blob: #e86a4a;
+  --clay-plan: #1e5a8a;
+  --clay-run: #2f9e6b;
+  --clay-stroke: #ead9c8;
+  --clay-radius: 16px;
+  --clay-pill: 999px;
+  --clay-font: "Helvetica Neue", Calibri, sans-serif;
+  --clay-on-fill: #fff;
+  --focus-ring: 0 0 0 3px rgb(0 102 204 / 28%);
+}

@@ -1,0 +1,39 @@
+.clay-plan {
+  border: 1px solid color-mix(in srgb, var(--clay-plan) 55%, var(--clay-stroke));
+  border-radius: var(--clay-radius);
+  padding: 14px;
+  background: var(--clay-paper);
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-plan h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.clay-plan pre {
+  white-space: pre-wrap;
+  font-family: var(--clay-mono);
+  font-size: 12px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.clay-plan-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.clay-plan button {
+  border-radius: var(--clay-pill);
+  border: 1px solid var(--clay-plan);
+  background: var(--clay-plan);
+  color: #fff;
+  padding: 6px 14px;
+}
+
+.clay-plan button.secondary {
+  background: var(--clay-paper);
+  color: var(--clay-plan);
+}

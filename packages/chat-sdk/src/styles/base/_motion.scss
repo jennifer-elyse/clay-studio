@@ -1,0 +1,20 @@
+@media (prefers-reduced-motion: reduce) {
+  .clay-bot,
+  .clay-bot *,
+  .clay-bot-stage {
+    animation: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clay-pill,
+  .clay-send,
+  .clay-minimize,
+  .clay-header-tool,
+  .clay-tool,
+  .clay-help-item,
+  .clay-message-actions button,
+  .clay-quiet {
+    transition: none;
+  }
+}

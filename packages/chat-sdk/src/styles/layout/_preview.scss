@@ -1,0 +1,97 @@
+// Frame chrome in the Studio document. The app inside the iframe has its own stylesheet.
+.clay-preview {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 14px;
+  border: 1px solid var(--clay-stroke);
+  border-radius: 22px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--clay-mint) 12%, var(--clay-sand));
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-preview header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 12px 4px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--clay-muted);
+}
+
+.clay-preview header span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clay-preview-open {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--clay-pill);
+  border: 1.5px solid var(--clay-run);
+  background: color-mix(in srgb, var(--clay-mint) 40%, var(--clay-paper));
+  color: var(--clay-ink);
+  cursor: pointer;
+  box-shadow: var(--clay-shadow-sm);
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clay-preview-open:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  box-shadow: var(--clay-shadow);
+}
+
+.clay-preview-open:disabled {
+  cursor: default;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+.clay-preview-open-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.clay-preview iframe,
+.clay-preview .clay-preview-empty {
+  flex: 1;
+  border: 1px solid var(--clay-stroke);
+  margin: 8px 12px 12px;
+  border-radius: 16px;
+  background: var(--clay-paper);
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-preview-empty {
+  display: grid;
+  place-items: center;
+  color: var(--clay-muted);
+}
+
+.clay-debug {
+  font-family: var(--clay-mono);
+  font-size: 11px;
+  padding: 8px 16px;
+  max-height: 120px;
+  overflow: auto;
+  background: var(--clay-log);
+  color: var(--clay-log-ink);
+}

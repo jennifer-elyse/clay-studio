@@ -1,5 +1,4 @@
-import "../src/tokens.css";
-import "../src/ClayChat.css";
+import "../src/styles/main.scss";
 
 /** @type {import("@storybook/react").Preview} */
 const preview = {
