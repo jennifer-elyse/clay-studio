@@ -1,4 +1,4 @@
-"""Regression-check transparent backgrounds on Blue Gumby Clay WebP clips.
+"""Regression-check transparent backgrounds on Clay WebP clips.
 
 Called after asset generation in CI. Every frame must have an actual alpha
 channel with entirely transparent outer borders; no opaque matte backgrounds.

@@ -1,7 +1,7 @@
-# Blue Gumby Clay reference artwork (branch `7-1`)
+# Clay reference artwork (branch `7-1`)
 
 `apps/studio/public/assets/animations/blue/reference-atlas.webp` is cropped from the
-user-supplied *Blue Gumby Clay Mascot Showcase* (19 Nov 2026). The original
+user-supplied mascot showcase (19 Nov 2026). The original
 artwork defines both the facial design and the blue/unicorn material appearance.
 Do **not** replace it with the old synthetic SVG face, the historic stock
 `source-ball.webp` or arbitrary overpainted eyelids.
@@ -22,3 +22,16 @@ and commits them. Preserve source and output as project-local assets.
 
 To rebuild: `python3 -m pip install Pillow==11.3.0 && python3 scripts/render-blue-from-art.py`.
 To inspect individual clips: `CLAY_BLUE_CLIPS=idle,blink,image python3 scripts/render-blue-from-art.py`.
+
+## Runtime color and edge handling
+
+The public theme identifier remains `blue` for compatibility, but the user-facing
+mascot name is **Clay**. The Clay color selector persists independently in
+`clay-studio-clay-color`, and `ClayCanvas.jsx` composites the authored animated
+WebPs frame-by-frame without flattening them onto a dark CSS background.
+Saturated cobalt body pixels are recolored while non-blue face and unicorn
+pixels remain unchanged. The same WebP paths and all command mappings are retained.
+
+Do not mistake transparent file corners for clean alpha: validate perimeter
+matte colors against contrasting backgrounds. The renderer cleans dark edge
+pixels before resizing and exporting animated WebPs.

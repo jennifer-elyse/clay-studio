@@ -13,13 +13,13 @@ import { ThemeSection } from "./ThemeSection.jsx";
  * @param {import("react").ComponentProps<typeof SeatSection>} props.seat
  * @param {(input: object) => Promise<{ ok: boolean, message?: string }>} [props.onSaveSettings]
  */
-export function SettingsPanel({ section, theme = "classic", onTheme, projectsRoot, onClose, seat, onSaveSettings }) {
+export function SettingsPanel({ section, theme = "classic", onTheme, clayColor, onClayColor, projectsRoot, onClose, seat, onSaveSettings }) {
   return (
     <div id="clay-settings-panel" className="clay-settings-panel" role="tabpanel" aria-labelledby={`clay-tab-${section}`}>
       {section === "projects" ? (
         <ProjectsRootSection root={projectsRoot} onSave={onSaveSettings} onClose={onClose} />
       ) : section === "theme" ? (
-        <ThemeSection theme={theme} onTheme={onTheme} />
+        <ThemeSection theme={theme} onTheme={onTheme} clayColor={clayColor} onClayColor={onClayColor} />
       ) : (
         <SeatSection {...seat} onSaveSettings={onSaveSettings} />
       )}

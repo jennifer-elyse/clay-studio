@@ -31,6 +31,7 @@ import { SettingsButton } from "./SettingsButton.jsx";
 export function ClayHeader({
   clip,
   theme = "classic",
+  clayColor,
   minimized,
   onToggle,
   layout = "preview",
@@ -64,7 +65,7 @@ export function ClayHeader({
   }
   return (
     <header className="clay-header" id="clay-header">
-      <ClayBot clip={clip} theme={theme} />
+      <ClayBot clip={clip} theme={theme} clayColor={clayColor} />
       <div className="clay-wordmark">
         <strong>Clay</strong>
         <span>Mold freely. Ship safely.</span>

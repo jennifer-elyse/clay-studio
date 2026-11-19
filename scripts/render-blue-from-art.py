@@ -1,4 +1,4 @@
-"""Render Blue Gumby Clay animations from the approved mascot reference atlas.
+"""Render Clay animations from the approved mascot reference atlas.
 
 The atlas contains the original sculpted blue-ball appearance, ten expressions,
 five photographed blink states, and the white unicorn from the supplied showcase.

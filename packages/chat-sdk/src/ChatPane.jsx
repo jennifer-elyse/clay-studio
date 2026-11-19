@@ -17,6 +17,7 @@ export function ChatPane(props) {
           busy={working}
           clip={clip}
           theme={theme}
+          clayColor={props.clayColor}
           onApprove={onApprove}
           onAdjust={onAdjust}
           onEdit={props.onEdit}

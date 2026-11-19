@@ -9,10 +9,12 @@ import { previewActivity } from "./map-events.js";
 import { useClaySession } from "./use-clay-session.js";
 import { useLayout } from "./use-layout.js";
 import { readTheme, saveTheme } from "./theme.js";
+import { readClayColor, saveClayColor } from "./clay-color.js";
 import "./styles/main.scss";
 /** @param {import("./use-clay-session.js").ClayChatProps} props */
 export function ClayChat(props) {
   const [theme, setTheme] = useState(readTheme);
+  const [clayColor, setClayColor] = useState(readClayColor);
   const [projectDraft, setProjectDraft] = useState({ name: "", folder: "", open: false });
   const [projectNotice, setProjectNotice] = useState("");
   const [projectOpenSignal, setProjectOpenSignal] = useState(0);
@@ -38,12 +40,16 @@ export function ClayChat(props) {
     setTheme(value);
     saveTheme(value);
   }
+  function chooseClayColor(value) {
+    if (saveClayColor(value)) setClayColor(value.toUpperCase());
+  }
   return (
     <div className={`clay-root${theme === "blue" ? " is-blue" : ""}`}>
       <div className="clay-shell" data-layout={layout}>
         <ClayHeader
           clip={session.clip}
           theme={theme}
+          clayColor={clayColor}
           minimized={session.minimized}
           layout={layout}
           onLayout={pick}
@@ -72,6 +78,7 @@ export function ClayChat(props) {
           working={session.working}
           clip={session.clip}
           theme={theme}
+          clayColor={clayColor}
           run={session.run}
           draft={session.draft}
           onDraft={session.setDraft}
@@ -91,6 +98,8 @@ export function ClayChat(props) {
           open={session.settingsOpen}
           theme={theme}
           onTheme={chooseTheme}
+          clayColor={clayColor}
+          onClayColor={chooseClayColor}
           section={session.settingsSection}
           onSection={session.setSettingsSection}
           product={session.seatProduct}

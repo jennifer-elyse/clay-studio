@@ -39,7 +39,7 @@ export function SettingsModal(props) {
         <SettingsHeader onClose={props.onClose} />
         <div className="clay-settings-body">
           <SettingsTabs section={props.section} onSection={props.onSection} />
-          <SettingsPanel section={props.section} theme={props.theme ?? "classic"} onTheme={props.onTheme} projectsRoot={props.projectsRoot ?? ""} onClose={props.onClose} seat={seat} onSaveSettings={props.onSaveSettings} />
+          <SettingsPanel section={props.section} theme={props.theme ?? "classic"} onTheme={props.onTheme} clayColor={props.clayColor} onClayColor={props.onClayColor} projectsRoot={props.projectsRoot ?? ""} onClose={props.onClose} seat={seat} onSaveSettings={props.onSaveSettings} />
         </div>
       </div>
     </div>

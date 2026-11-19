@@ -10,6 +10,10 @@ on:
       - 'packages/chat-sdk/tests/animations.test.js'
       - 'apps/studio/public/assets/animations/blue/reference-atlas.webp'
       - 'packages/chat-sdk/src/ClayBot.jsx'
+      - 'packages/chat-sdk/src/ClayCanvas.jsx'
+      - 'packages/chat-sdk/src/clay-color.js'
+      - 'packages/chat-sdk/src/ThemeSection.jsx'
+      - 'packages/chat-sdk/tests/clay-color.test.js'
       - 'packages/chat-sdk/src/styles/components/_bot.scss'
   workflow_dispatch:
 permissions:

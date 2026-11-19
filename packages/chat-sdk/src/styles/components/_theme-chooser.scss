@@ -5,3 +5,22 @@
 .clay-theme-choice:hover { background: var(--clay-surface); box-shadow: var(--clay-shadow-sm); }
 .clay-theme-choice small { color: var(--clay-muted); }
 .clay-theme-state { font-weight: 700; }
+
+.clay-colors { border-top: 1px solid var(--clay-stroke); margin-top: 14px; padding-top: 16px; }
+.clay-colors h3 { font-size: 16px; margin: 0 0 6px; }
+.clay-color-presets { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.clay-color-choice {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 10px;
+  text-align: left; font: inherit; font-size: 13px; font-weight: 600;
+  background: var(--clay-paper); color: var(--clay-ink);
+  border: 1px solid var(--clay-stroke); border-radius: 12px; cursor: pointer;
+}
+.clay-color-choice[aria-pressed="true"] { outline: 2px solid var(--clay-focus); outline-offset: 1px; }
+.clay-color-swatch { flex: 0 0 27px; height: 27px; border-radius: 50%;
+  background: var(--clay-choice-color); border: 1px solid rgba(0,0,0,.18); }
+.clay-color-custom { margin-top: 13px; display: flex; align-items: center; gap: 12px; font-size: 13px; font-weight: 700; }
+.clay-color-custom input { inline-size: 44px; block-size: 36px; cursor: pointer; }
+.clay-color-custom output { font-family: var(--clay-mono); font-size: 12px; }
+.clay-color-choice:focus-visible, .clay-color-custom input:focus-visible {
+  outline: 2px solid var(--clay-focus); outline-offset: 2px;
+}
