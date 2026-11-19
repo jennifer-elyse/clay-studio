@@ -40,3 +40,18 @@
   .clay-blue-animated { display: none; }
   .clay-blue-reduced { display: block; }
 }
+
+/* Use the same approved atlas for reduced-motion stills, not the legacy SVG face.
+   Each character fills a 256px tile in a 640px square atlas. */
+.clay-bot-stage.is-blue .clay-blue-reduced { position: relative; overflow: hidden; }
+.clay-bot-stage.is-blue .clay-blue-reduced > img {
+  position: absolute;
+  display: block;
+  width: 250%;
+  height: 250%;
+  max-width: none;
+  top: 0;
+  left: 0;
+  object-fit: fill;
+}
+.clay-bot-stage.is-blue .clay-blue-reduced.is-unicorn > img { left: -100%; }
