@@ -33,15 +33,26 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "Blue Clay is animated directly from the generated blue-ball and white-unicorn illustration assets. Smoother 10fps clay movement, eased eyelid motion, and a non-ghosting unicorn transformation preserve the sculpted surfaces throughout every clip.",
+  "note": "Blue Clay is rendered from the approved Blue Gumby Clay Mascot Showcase atlas with ten real expressions, a five-step blink cycle and the illustrated unicorn; no synthetic eyeball/lid overlays.",
   "generator": "python3 scripts/render-blue-from-art.py",
   "resolution": "320x320",
   "frames_per_clip": 16,
   "frame_duration_ms": 100,
   "source_art": [
-    "source-ball.webp",
-    "source-unicorn.webp"
+    "reference-atlas.webp"
   ],
   "sampled_frames_per_clip": 32,
-  "render_version": "7-1-smooth-rig-v2"
+  "render_version": "7-1-showcase-v3",
+  "expressions": [
+    "neutral",
+    "happy",
+    "excited",
+    "curious",
+    "thinking",
+    "focused",
+    "playful",
+    "surprised",
+    "proud",
+    "sleepy"
+  ]
 }

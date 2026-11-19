@@ -12,7 +12,7 @@ import "./styles/main.scss";
 export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE, theme = "classic" }) {
   const [failedAsset, setFailedAsset] = useState("");
   const src = animationSrc(clip, theme === "blue" ? BLUE_ANIMATION_BASE : base);
-  const assetSrc = theme === "blue" ? `${src}?v=7-1-blue-smooth-v2` : src;
+  const assetSrc = theme === "blue" ? `${src}?v=7-1-showcase-v3` : src;
   return (
     <div className={`clay-bot-stage is-${size} is-${theme}`} aria-hidden="true" data-clip={clip}>
       {theme === "blue" ? (

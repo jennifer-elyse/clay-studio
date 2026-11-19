@@ -1,10 +1,11 @@
-"""Build blue clay animation WebPs from the two generated Clay Studio images.
+"""Render Blue Gumby Clay animations from the approved mascot reference atlas.
 
-Source files: public/assets/animations/blue/source-ball.webp and source-unicorn.webp.
-Uses a single imported raster for each character across every frame so sculpted
-features cannot drift, change topology, or lose registration between frames.
+The atlas contains the original sculpted blue-ball appearance, ten expressions,
+five photographed blink states, and the white unicorn from the supplied showcase.
+No synthetic SVG eyes, overlaid lids or replacement facial artwork are used.
 
-Requirements: Pillow >= 10. `python scripts/render-blue-from-art.py`
+Run: python3 scripts/render-blue-from-art.py
+Dependencies: Pillow >= 10; works with the existing 7-1 asset workflow.
 """
 from __future__ import annotations
 
@@ -13,10 +14,11 @@ import math
 import os
 import sys
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "apps/studio/public/assets/animations/blue"
+ATLAS = ASSETS / "reference-atlas.webp"
 FRAME_COUNT = 32
 FRAME_MS = 100
 SIDE = 320
@@ -28,171 +30,156 @@ COMMANDS = [
 ]
 AMBIENT = ["idle", "blink", "rolling", "pop-shape", "interested", "judging", "concerned"]
 
-MOTIONS = {
-    "image": "morph", "pop-shape": "morph", "rolling": "roll", "run": "roll",
-    "plan": "think", "think": "think", "spec": "think", "summarize": "think",
-    "build": "focus", "code": "focus", "write": "focus", "fix": "focus", "debug": "focus", "docs": "focus",
-    "help": "bounce", "settings": "bounce", "new": "bounce", "seats": "bounce",
-    "interested": "interested", "search": "interested", "upload": "interested",
-    "judging": "judging", "concerned": "concerned", "clear": "settle", "stop": "settle",
-    "idle": "idle", "blink": "blink",
+# Match each slash-command's intent to one of the ten real expressions.
+POSES = {
+    "spec": "curious", "plan": "thinking", "build": "focused", "run": "excited",
+    "fix": "focused", "docs": "thinking", "help": "happy", "clear": "neutral",
+    "search": "curious", "think": "thinking", "summarize": "thinking", "write": "happy",
+    "code": "focused", "image": "morph", "upload": "excited", "settings": "neutral",
+    "new": "happy", "seats": "curious", "stop": "sleepy", "debug": "focused",
+    "idle": "neutral", "blink": "neutral", "rolling": "playful", "pop-shape": "morph",
+    "interested": "curious", "judging": "focused", "concerned": "surprised",
 }
 
 
-def composed_character(source: Image.Image, scale: float, angle: float, dx: float, dy: float) -> Image.Image:
-    width = max(1, round(SIDE * scale))
-    character = source.resize((width, width), Image.Resampling.LANCZOS)
-    if abs(angle) > 0.02:
-        character = character.rotate(angle, resample=Image.Resampling.BICUBIC, expand=True)
-    frame = Image.new("RGBA", (SIDE, SIDE), (0, 0, 0, 0))
-    x = round((SIDE - character.width) / 2 + dx)
-    y = round((SIDE - character.height) / 2 + dy)
-    frame.alpha_composite(character, (x, y))
+def load_art():
+    with Image.open(ATLAS) as sheet:
+        atlas = sheet.convert("RGBA")
+    if atlas.size != (640, 640):
+        raise ValueError(f"Expected 640x640 reference atlas, got {atlas.size}")
+    art = {
+        "blue": atlas.crop((0, 0, 256, 256)),
+        "unicorn": atlas.crop((256, 0, 512, 256)),
+    }
+    names = ["neutral", "happy", "excited", "curious", "thinking", "focused", "playful", "surprised", "proud", "sleepy"]
+    for index, name in enumerate(names):
+        x = (index % 5) * 128
+        y = 256 + (index // 5) * 128
+        art[name] = atlas.crop((x, y, x + 128, y + 128))
+    art["blinks"] = [atlas.crop((i * 128, 512, (i + 1) * 128, 640)) for i in range(5)]
+    return art
+
+
+def display_character(source, *, scale=1.0, angle=0.0, dx=0.0, dy=0.0):
+    """Transform the entire clay image as one rigid material layer."""
+    base = source.resize((286, 286), Image.Resampling.LANCZOS)
+    size = max(1, round(286 * scale))
+    if size != 286:
+        base = base.resize((size, size), Image.Resampling.LANCZOS)
+    if abs(angle) > 0.01:
+        base = base.rotate(angle, Image.Resampling.BICUBIC, expand=True)
+    frame = Image.new("RGBA", (SIDE, SIDE))
+    frame.alpha_composite(base, (round((SIDE - base.width) / 2 + dx), round((SIDE - base.height) / 2 + dy)))
     return frame
 
 
-def closed_eye_version(source: Image.Image) -> Image.Image:
-    """Use existing cheek material for the blink rather than synthetic flat eye art."""
-    closed = source.copy()
-    for x, y, radius_x, radius_y in [(118, 144, 37, 33), (204, 146, 36, 32)]:
-        # Borrow adjacent blue clay texture, but feather into the original blue
-        # eyelids. This keeps material continuous and avoids a cutout seam.
-        sampled = source.crop((x - 40, 201, x + 40, 269)).resize((radius_x * 2 + 8, radius_y * 2 + 8), Image.Resampling.LANCZOS)
-        mask = Image.new("L", sampled.size, 0)
-        d = ImageDraw.Draw(mask)
-        d.ellipse((4, 4, sampled.width - 5, sampled.height - 5), fill=255)
-        mask = mask.filter(ImageFilter.GaussianBlur(4))
-        closed.paste(sampled, (x - sampled.width // 2, y - sampled.height // 2), mask)
-        draw = ImageDraw.Draw(closed)
-        # Rounded, upper eyelid fold in shades found in the blue ball itself.
-        draw.arc((x - 29, y - 6, x + 29, y + 15), 5, 174, fill=(19, 92, 159, 232), width=3)
-        draw.arc((x - 27, y - 10, x + 26, y + 12), 15, 165, fill=(94, 171, 225, 162), width=2)
-    return closed
+def natural_motion(name, index):
+    t = 2 * math.pi * index / FRAME_COUNT
+    speed = 1 if name not in ("rolling", "run") else 1.4
+    wave = math.sin(t * speed)
+    wobble = math.cos(t * speed)
+    kind = POSES[name]
+    if name in ("rolling", "run"):
+        return 0.966, 3.2 * wave, 2.8 * wave, -0.8 * abs(wobble)
+    if kind in ("excited", "happy", "playful"):
+        return .964 + .004 * wobble, 1.0 * wave, 1.6 * wave, -2.0 * (1 + wobble)
+    if kind in ("focused", "thinking"):
+        return .967 + .002 * wobble, 1.0 * wave, 1.3 * wave, -0.8 * abs(wobble)
+    return .966 + .002 * wobble, .6 * wave, 1.0 * wave, -1.0 * abs(wobble)
 
 
-def motion(name: str, i: int) -> tuple[float, float, float, float]:
-    """Subtle periodic clay motion sampled at 10 fps without hard seams."""
-    kind = MOTIONS[name]
-    t = 2 * math.pi * i / FRAME_COUNT
-    phase = (COMMANDS + AMBIENT).index(name) * .12
-    s, c = math.sin(t + phase), math.cos(t + phase)
-    if kind == "roll":
-        return .955 + .004 * c, 5.6 * s, 4.4 * s, -1.0 * abs(c)
-    if kind == "bounce":
-        return .959 + .009 * c, 1.2 * s, 1.2 * s, -3.8 * (1 + c)
-    if kind == "think":
-        return .965 + .004 * c, 2.4 * s, 1.4 * s, -1.0 * abs(s)
-    if kind == "focus":
-        return .966 + .006 * c, 1.2 * s, .8 * s, 1.4 * c
-    if kind == "interested":
-        return .965 + .006 * c, 1.5 * s, 1.8 * c, -1.9 * (1 + s)
-    if kind == "judging":
-        return .969 + .004 * c, -2.2 + .7 * s, .7 * s, -.8 * c
-    if kind == "concerned":
-        return .966 + .005 * c, 1.3 * s, .9 * s, .8 * c
-    if kind == "settle":
-        return .967 + .003 * c, .5 * s, .5 * s, 1.5 * c
-    return .966 + .003 * c, .6 * s, .65 * s, -.7 * c
+def blink_sprite(art, name, index):
+    # Keyed photos from the supplied blink cycle: open, half, shut, half, open.
+    if name == "blink":
+        phase = index % 16
+        if 7 <= phase <= 11:
+            return art["blinks"][phase - 7]
+        return art["blinks"][0]
+    if name == "idle" and 17 <= index <= 21:
+        return art["blinks"][index - 17]
+    return art["neutral"]
 
 
-def smoothstep(value: float) -> float:
-    v = min(1., max(0., value))
-    return v * v * (3 - 2 * v)
-
-
-def blink_opacity(name: str, i: int) -> float:
-    """Ramp eyelids across several frames, not a single-frame texture swap."""
-    if name in ("rolling", "run", "judging"):
-        return 0.
-    centers = (9, 23) if name == "blink" else (19,)
-    return max(smoothstep(1 - abs(i - center) / 3.) for center in centers)
-
-
-def smooth_image(blue: Image.Image, closed: Image.Image, name: str, i: int) -> Image.Image:
-    amount = blink_opacity(name, i)
-    return blue if amount < .0001 else (closed if amount > .9999 else Image.blend(blue, closed, amount))
-
-
-def sparkle_cloud(frame: Image.Image, progress: float, seed: int) -> Image.Image:
-    """Small glitter during the two shape swaps."""
-    over = Image.new("RGBA", (SIDE, SIDE), (0, 0, 0, 0))
-    d = ImageDraw.Draw(over)
-    tone = ((251, 200, 239), (183, 234, 230), (255, 219, 151), (218, 195, 250))
-    radius = 29 + 79 * smoothstep(progress)
-    for k in range(12):
-        theta = k * math.pi / 6 + seed * .29
-        x = 160 + radius * math.cos(theta)
-        y = 156 + radius * .81 * math.sin(theta)
-        size = 2.7 + (k % 3) * .8
-        d.ellipse((x - size, y - size, x + size, y + size), fill=(*tone[k % 4], 160))
-    frame.alpha_composite(over)
+def sparkle_overlay(frame, progress, seed):
+    """Sparkles frame the transformation without obscuring the character."""
+    layer = Image.new("RGBA", (SIDE, SIDE))
+    draw = ImageDraw.Draw(layer)
+    colors = [(255, 201, 144, 210), (255, 182, 224, 185), (159, 236, 248, 190)]
+    radius = 53 + 70 * progress
+    for j in range(11):
+        radians = j * math.tau / 11 + .11 * seed
+        cx = 160 + radius * math.cos(radians)
+        cy = 160 + radius * .83 * math.sin(radians)
+        size = 1.4 + j % 3
+        draw.ellipse((cx - size, cy - size, cx + size, cy + size), fill=colors[j % 3])
+    frame.alpha_composite(layer)
     return frame
 
 
-def morph_frame(blue: Image.Image, unicorn: Image.Image, i: int, name: str) -> Image.Image:
-    """Pop-and-reveal: no ghosted double-character crossfade."""
-    t = i / FRAME_COUNT
-    if t < .26:
-        img = composed_character(blue, .966, 1.3 * math.sin(2 * math.pi * t), 0., 0.)
-    elif t < .38:
-        amount = smoothstep((t - .26) / .12)
-        img = composed_character(blue, .966 * (1 - amount) + .12 * amount, 7 * amount, 0., 2 * amount)
-        img = sparkle_cloud(img, amount, i)
-    elif t < .53:
-        amount = smoothstep((t - .38) / .15)
-        img = composed_character(unicorn, .12 + .84 * amount, -5 * (1 - amount), 0., 2 * (1 - amount))
-        img = sparkle_cloud(img, 1 - amount, i)
-    elif t < .78:
-        img = composed_character(unicorn, .96 + .008 * math.sin((t - .53) * 8), 0., 0., 0.)
-    elif t < .87:
-        amount = smoothstep((t - .78) / .09)
-        img = composed_character(unicorn, .96 * (1 - amount) + .12 * amount, 4 * amount, 0., 2 * amount)
-        img = sparkle_cloud(img, amount, i)
-    else:
-        amount = smoothstep((t - .87) / .13)
-        img = composed_character(blue, .12 + .846 * amount, -4 * (1 - amount), 0., 2 * (1 - amount))
-        img = sparkle_cloud(img, 1 - amount, i)
-    return img
+def morph_frame(art, index):
+    # Disjoint intervals: no overlapping transparent ghosts or alternate faces.
+    if index < 8:
+        return display_character(art["blue"], scale=.966 + .003 * math.cos(index*.8), angle=.7 * math.sin(index*.8), dy=-.5 + 1.0 * math.cos(index*.8))
+    if index < 12:
+        p = (index - 8) / 4
+        frame = display_character(art["blue"], scale=.966 - .82 * p, angle=3 * p)
+        return sparkle_overlay(frame, p, index)
+    if index < 16:
+        p = (index - 12) / 4
+        frame = display_character(art["unicorn"], scale=.20 + .76 * p, angle=-3 * (1 - p))
+        return sparkle_overlay(frame, 1 - p, index)
+    if index < 24:
+        return display_character(art["unicorn"], scale=.965 + .002 * math.cos(index*.9), angle=.6 * math.sin(index*.9), dy=1.0 * math.cos(index*.9))
+    if index < 28:
+        p = (index - 24) / 4
+        return sparkle_overlay(display_character(art["unicorn"], scale=.966 - .82 * p), p, index)
+    p = (index - 28) / 4
+    return sparkle_overlay(display_character(art["blue"], scale=.20 + .75 * p), 1 - p, index)
 
 
-def generate() -> None:
-    blue = Image.open(ASSETS / "source-ball.webp").convert("RGBA")
-    unicorn = Image.open(ASSETS / "source-unicorn.webp").convert("RGBA")
-    assert blue.size == unicorn.size == (SIDE, SIDE), "source images must be 320x320"
-    closed = closed_eye_version(blue)
-    names = [item.strip() for item in os.getenv("CLAY_BLUE_CLIPS", "").split(",") if item.strip()] or COMMANDS + AMBIENT
-    for name in names:
-        frames = []
-        for i in range(FRAME_COUNT):
-            if MOTIONS[name] == "morph":
-                frame = morph_frame(blue, unicorn, i, name)
-            else:
-                scale, angle, dx, dy = motion(name, i)
-                frame = composed_character(smooth_image(blue, closed, name, i), scale, angle, dx, dy)
-            frames.append(frame)
-        dest = ASSETS / f"{name}.webp"
-        frames[0].save(dest, "WEBP", save_all=True, append_images=frames[1:], duration=FRAME_MS,
-                       loop=0, quality=82, method=3, exact=True)
-        with Image.open(dest) as output:
-            assert output.size == (SIDE, SIDE) and output.n_frames >= FRAME_COUNT - 8, (dest, output.n_frames, output.size)
-        print(f"{dest.name}: {FRAME_COUNT} frames, {dest.stat().st_size} bytes")
+def frames_for(art, name):
+    for index in range(FRAME_COUNT):
+        pose = POSES[name]
+        if pose == "morph":
+            yield morph_frame(art, index)
+            continue
+        source = blink_sprite(art, name, index) if name in ("idle", "blink") else art[pose]
+        scale, angle, dx, dy = natural_motion(name, index)
+        yield display_character(source, scale=scale, angle=angle, dx=dx, dy=dy)
+
+
+def generate():
+    art = load_art()
+    selected = [entry.strip() for entry in os.getenv("CLAY_BLUE_CLIPS", "").split(",") if entry.strip()] or COMMANDS + AMBIENT
+    for name in selected:
+        if name not in POSES:
+            raise ValueError(f"Unknown clip: {name}")
+        frames = list(frames_for(art, name))
+        out = ASSETS / f"{name}.webp"
+        frames[0].save(out, "WEBP", save_all=True, append_images=frames[1:],
+                       duration=FRAME_MS, loop=0, quality=83, method=3, exact=True)
+        with Image.open(out) as check:
+            assert check.size == (SIDE, SIDE) and check.n_frames >= 24, (name, check.n_frames)
+        print(f"{name}: {out.stat().st_size:,} bytes, {FRAME_COUNT} sampled frames")
     if os.getenv("CLAY_BLUE_CLIPS"):
         return
-    manifest = json.loads((ASSETS / "manifest.json").read_text())
-    manifest.update({"format": "animated WebP", "theme": "blue",
-                     "command_files": [f"{name}.webp" for name in COMMANDS],
-                     "ambient_files": [f"{name}.webp" for name in AMBIENT],
-                     "source_art": ["source-ball.webp", "source-unicorn.webp"],
-                     "generator": "python3 scripts/render-blue-from-art.py",
-                     "resolution": "320x320", "sampled_frames_per_clip": FRAME_COUNT,
-                     "frame_duration_ms": FRAME_MS, "render_version": "7-1-smooth-rig-v2",
-                     "note": "Blue Clay is animated directly from the generated blue-ball and white-unicorn illustration assets. Smoother 10fps clay movement, eased eyelid motion, and a non-ghosting unicorn transformation preserve the sculpted surfaces throughout every clip."})
-    (ASSETS / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-
+    manifest = json.loads((ASSETS / "manifest.json").read_text(encoding="utf-8"))
+    manifest.update({
+        "format": "animated WebP", "theme": "blue",
+        "command_files": [f"{name}.webp" for name in COMMANDS],
+        "ambient_files": [f"{name}.webp" for name in AMBIENT],
+        "source_art": ["reference-atlas.webp"],
+        "generator": "python3 scripts/render-blue-from-art.py",
+        "resolution": "320x320", "sampled_frames_per_clip": FRAME_COUNT,
+        "frame_duration_ms": FRAME_MS, "render_version": "7-1-showcase-v3",
+        "expressions": ["neutral", "happy", "excited", "curious", "thinking", "focused", "playful", "surprised", "proud", "sleepy"],
+        "note": "Frames originate from the approved Clay Studio Blue Gumby Clay mascot showcase. The 10 expressions, 5-step blink, and unicorn are preserved as matching artwork from a single atlas; transitions operate on the whole clay character, never independent eye overlays.",
+    })
+    (ASSETS / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 if __name__ == "__main__":
     try:
         generate()
-    except Exception as error:
-        print(f"render-blue-from-art failed: {error}", file=sys.stderr)
+    except Exception as exc:
+        print(f"Blue Clay renderer failed: {exc}", file=sys.stderr)
         raise
