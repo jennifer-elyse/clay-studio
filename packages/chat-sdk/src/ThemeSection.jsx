@@ -1,8 +1,8 @@
 /** @param {{ theme: "classic" | "blue", onTheme?: (value: "classic" | "blue") => void }} props */
 export function ThemeSection({ theme, onTheme }) {
   const choices = [
-    { id: "classic", label: "Classic Clay", detail: "Original coral mascot and warm palette" },
-    { id: "blue", label: "Blue Gumby Clay", detail: "A textured blue clay ball; /image morphs into a white unicorn with a rainbow spiral horn" },
+    { id: "classic", label: "Purple Clay", detail: "Default Clay appearance" },
+    { id: "blue", label: "Blue Clay", detail: "A textured blue clay ball; /image morphs into a white unicorn with a rainbow spiral horn" },
   ];
   return (
     <div className="clay-theme-options" role="group" aria-label="Clay appearance">
