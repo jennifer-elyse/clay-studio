@@ -33,7 +33,7 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "Frames originate from the approved Clay Studio Blue Gumby Clay mascot showcase. The 10 expressions, 5-step blink, and unicorn are preserved as matching artwork from a single atlas; transitions operate on the whole clay character, never independent eye overlays.",
+  "note": "Blue Clay transitions into the pastel unicorn through a continuous sculpted material reveal and an orbiting glitter ribbon, without shrinking or ghosting. Low-alpha edges are scrubbed to prevent dark halos.",
   "generator": "python3 scripts/render-blue-from-art.py",
   "resolution": "320x320",
   "frames_per_clip": 16,
@@ -42,7 +42,7 @@
     "reference-atlas.webp"
   ],
   "sampled_frames_per_clip": 32,
-  "render_version": "7-1-showcase-v3",
+  "render_version": "7-1-metamorph-v4",
   "expressions": [
     "neutral",
     "happy",
