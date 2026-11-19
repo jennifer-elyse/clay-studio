@@ -6,6 +6,7 @@ import { frameSrc } from "./preview-frame.js";
 
 /**
  * @param {object} props
+ * @param {"classic" | "blue"} [props.theme]
  * @param {string} [props.url]
  * @param {string} [props.status]
  * @param {string} [props.message]
@@ -14,7 +15,7 @@ import { frameSrc } from "./preview-frame.js";
  * @param {string} [props.activity]
  * @param {(url: string) => void} [props.onOpen]
  */
-export function PreviewPane({ url, status, message = "", debug = false, log = "", activity = "", onOpen }) {
+export function PreviewPane({ theme = "classic", url, status, message = "", debug = false, log = "", activity = "", onOpen }) {
   const pageOrigin = typeof window === "undefined" ? "" : window.location.origin;
   const src = frameSrc(url, pageOrigin);
   const failed = status === "error" || Boolean(url && !src);
@@ -34,7 +35,7 @@ export function PreviewPane({ url, status, message = "", debug = false, log = ""
           <span>{label}</span>
         </header>
         {src ? <PreviewFrame src={src} loaded={loaded} onLoad={setLoadedSrc} /> : null}
-        {starting ? <PreviewLoading label="Starting your app…" /> : null}
+        {starting ? <PreviewLoading theme={theme} label="Starting your app…" /> : null}
         {!src && !starting ? <div className="clay-preview-empty">{failed ? notice : waiting}</div> : null}
         {debug ? <pre className="clay-debug">{log || "No process log yet."}</pre> : null}
       </aside>

@@ -35,3 +35,16 @@ export const BlueClay = {
 export const UnicornMorph = {
   render: () => <div className="clay-root is-blue" style={{ padding: 24 }}><ClayBot theme="blue" clip="image.webp" size="lg" /></div>,
 };
+
+export const BlueExpressions = {
+  render: () => (
+    <div className="clay-root is-blue" style={{ padding: 24, display: "flex", gap: 16, flexWrap: "wrap" }}>
+      {["idle.webp", "blink.webp", "interested.webp", "judging.webp", "concerned.webp", "rolling.webp", "image.webp"].map((clip) => (
+        <div key={clip} style={{ textAlign: "center" }}>
+          <ClayBot theme="blue" clip={clip} size="lg" />
+          <span>{clip.replace(".webp", "")}</span>
+        </div>
+      ))}
+    </div>
+  ),
+};

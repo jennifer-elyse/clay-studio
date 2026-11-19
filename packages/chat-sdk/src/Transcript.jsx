@@ -9,17 +9,18 @@ import { TranscriptBubble } from "./TranscriptBubble.jsx";
  * @param {{ label: string, status: string }[]} [props.steps]
  * @param {boolean} [props.busy]
  * @param {string} [props.clip]
+ * @param {"classic" | "blue"} [props.theme]
  * @param {(path: string) => void} [props.onApprove]
  * @param {() => void} [props.onAdjust]
  * @param {(item: import("./map-events.js").TranscriptItem) => void} [props.onEdit]
  * @param {(item: import("./map-events.js").TranscriptItem) => void} [props.onResend]
  */
-export function Transcript({ items, steps = [], busy = false, clip = "idle.webp", onApprove, onAdjust, onEdit, onResend }) {
+export function Transcript({ items, steps = [], busy = false, clip = "idle.webp", theme = "classic", onApprove, onAdjust, onEdit, onResend }) {
   if (items.length === 0) {
     return (
       <div className="clay-transcript">
         <div className="clay-empty">
-          <ClayBot clip={clip} size="lg" />
+          <ClayBot clip={clip} theme={theme} size="lg" />
           <h1>What should we mold?</h1>
           <p>Describe an internal app. We will write a plan first.</p>
         </div>

@@ -94,3 +94,26 @@ test("Advanced seat models save, survive a reload, and reset", async ({ page }) 
   await expect(reset).toHaveAttribute("placeholder", "gpt-5.4");
   await page.keyboard.press("Escape");
 });
+
+test("Blue Clay sculpted eyes and persisted theme", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await dialog.getByRole("tab", { name: "Theme" }).click();
+  await dialog.getByRole("button", { name: /Blue Clay/ }).click();
+  await expect(dialog.getByRole("button", { name: /Blue Clay/ })).toHaveAttribute("aria-pressed", "true");
+  await page.keyboard.press("Escape");
+  const mascot = page.locator(".clay-bot-stage.is-blue").first();
+  await expect(mascot.locator(".clay-blue-face")).toBeVisible();
+  await expect(mascot.locator(".clay-blue-eye")).toHaveCount(2);
+  await expect(mascot.locator("img")).toHaveAttribute("src", /blue/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("clay-studio-theme"))).toBe("blue");
+  await page.reload();
+  await expect(page.locator(".clay-bot-stage.is-blue").first().locator(".clay-blue-eye")).toHaveCount(2);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const reopened = page.getByRole("dialog", { name: "Settings" });
+  await reopened.getByRole("tab", { name: "Theme" }).click();
+  await reopened.getByRole("button", { name: /Purple Clay/ }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".clay-bot-stage.is-blue")).toHaveCount(0);
+});
