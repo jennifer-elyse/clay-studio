@@ -6,6 +6,8 @@ on:
       - '.github/workflows/blue-clay-assets.yml'
       - 'scripts/render-blue-from-art.py'
       - 'apps/studio/public/assets/animations/blue/reference-atlas.webp'
+      - 'packages/chat-sdk/src/ClayBot.jsx'
+      - 'packages/chat-sdk/src/styles/components/_bot.scss'
   workflow_dispatch:
 permissions:
   contents: write
@@ -35,5 +37,6 @@ jobs:
           git add apps/studio/public/assets/animations/blue/*.webp apps/studio/public/assets/animations/blue/manifest.json
           if ! git diff --cached --quiet; then
             git commit -m 'assets(blue-clay): render approved mascot expressions'
+            git pull --rebase origin 7-1
             git push origin HEAD:7-1
           fi
