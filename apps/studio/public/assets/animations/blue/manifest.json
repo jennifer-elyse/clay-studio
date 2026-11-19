@@ -33,5 +33,9 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "All 20 slash commands have distinct animated WebP files and motion timings. Their stop-motion source is a blue clay ball; /image has a separate white-unicorn and rainbow-spiral-horn morph. Ambient clips are reusable."
+  "note": "20 distinct slash-command animated WebPs and 7 ambient animated WebPs rendered at 320px from the same integrated clay rig. Blue eyes and lids stay synchronized; image.webp and pop-shape.webp contain the white unicorn with multicolored horn. Rebuilt and committed on feat-theme by the Blue Clay assets workflow.",
+  "generator": "node scripts/render-blue-webps.mjs (Playwright + Pillow; same SVG rig as runtime)",
+  "resolution": "320x320",
+  "frames_per_clip": 16,
+  "frame_duration_ms": 200
 }

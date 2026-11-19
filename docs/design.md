@@ -71,3 +71,20 @@ A disabled control shows why it cannot be used when the reason is not obvious. U
 Semantic landmarks (`banner`, `main`, `complementary`). Pills are buttons. The `--focus-ring` is always visible and is not color-only against the default surface. Keyboard: `/` opens command list, Enter sends, Esc stops a run, and Esc during an edit leaves the edit without sending.
 
 One design system feeds these tokens. Color, type, space, and radius are not typed into a component. A changed component has a Storybook story for its states. A Figma component with code uses Code Connect so design and React share a name. Status is a text label, not color alone.
+
+### Blue Clay animation assets and publishing
+
+The **Blue Clay** visible runtime uses real 320x320 animated WebPs in
+`apps/studio/public/assets/animations/blue/`, including every slash command,
+all ambient clips, and the blue-ball to white-unicorn morph. The animated image
+frames are captured directly from the shared `BlueClayFigure` SVG scene to
+avoid eye/body drift. The source of truth is the rig and the generator; no manual
+per-file sprite patching. Each clip contains 16 frames at 200ms per frame.
+
+To regenerate: install dependencies, start Vite from `apps/studio`, install
+Python Pillow, run `node scripts/render-blue-webps.mjs`, then run
+`npm run test -w @cswg/clay-chat`. The
+`.github/workflows/blue-clay-assets.yml` workflow performs those steps on
+`feat-theme` and commits updated **WebP image binaries**, not just source
+code. A CSS reduced-motion fallback uses a static SVG pose instead of playing
+an animated WebP.

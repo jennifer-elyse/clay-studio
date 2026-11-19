@@ -108,3 +108,15 @@
   .clay-blue-figure[data-motion="morph"] .clay-blue-body { opacity: 0; }
   .clay-blue-figure[data-motion="morph"] .clay-unicorn { opacity: 1; transform: none; }
 }
+
+/* All motion groups share a seamless 3.2s loop for WebP frame capture.
+ * Blink holds long enough to survive 200ms frame quantization. */
+.clay-blue-figure .clay-blue-body,
+.clay-blue-figure .clay-ground-shadow,
+.clay-blue-figure .clay-gaze,
+.clay-blue-figure .clay-eye-shutter,
+.clay-blue-figure .clay-unicorn { animation-duration: 3.2s; }
+@keyframes blue-clay-blink {
+  0%, 21%, 35%, 59%, 73%, 100% { transform: translateY(-90px); }
+  27%, 65% { transform: translateY(0); }
+}
