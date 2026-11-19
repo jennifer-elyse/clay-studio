@@ -71,7 +71,7 @@ export function ClayChat(props) {
           onPick={session.pick}
           onThink={session.think}
           thinkFirst={session.thinkFirst}
-          onSeats={() => session.openSettings()}
+          onSeats={() => session.send("/seats")}
           onApprove={props.onApprovePlan}
           onAdjust={() => session.adjust()}
           done={props.done}

@@ -1,6 +1,10 @@
 {
-  "format": "animated WebP RGBA",
+  "theme": "purple",
+  "internal_theme_id": "classic",
+  "default": true,
+  "format": "animated WebP",
   "loop": "infinite",
+  "asset_base": "../",
   "canvas_px": [
     315,
     311
@@ -9,14 +13,14 @@
     "idle": {
       "file": "idle.webp"
     },
+    "blink": {
+      "file": "blink.webp"
+    },
     "rolling": {
       "file": "rolling.webp"
     },
     "pop-shape": {
       "file": "pop-shape.webp"
-    },
-    "blink": {
-      "file": "blink.webp"
     },
     "interested": {
       "file": "interested.webp"
@@ -29,49 +33,95 @@
     }
   },
   "slash_commands": {
-    "/help": {
-      "file": "commands/help.webp",
-      "intent": "display available commands"
+    "/spec": {
+      "file": "spec.webp",
+      "intent": "Write what the change must do before a plan"
     },
-    "/new": {
-      "file": "commands/new.webp",
-      "intent": "start a new conversation"
+    "/plan": {
+      "file": "plan.webp",
+      "intent": "Write a spec before anything is built"
+    },
+    "/build": {
+      "file": "build.webp",
+      "intent": "Implement the approved plan"
+    },
+    "/run": {
+      "file": "run.webp",
+      "intent": "Start the local preview"
+    },
+    "/fix": {
+      "file": "fix.webp",
+      "intent": "Tell the agent what looks wrong"
+    },
+    "/docs": {
+      "file": "docs.webp",
+      "intent": "Open vision, design, and the ERD"
+    },
+    "/help": {
+      "file": "help.webp",
+      "intent": "List every Clay command"
     },
     "/clear": {
-      "file": "commands/clear.webp",
-      "intent": "clear or reset the current context"
+      "file": "clear.webp",
+      "intent": "Wipe the chat, keep the agent"
     },
     "/search": {
-      "file": "commands/search.webp",
-      "intent": "search for information"
+      "file": "search.webp",
+      "intent": "Find something in the app and docs"
     },
     "/think": {
-      "file": "commands/think.webp",
-      "intent": "reason through a task"
+      "file": "think.webp",
+      "intent": "Reason first, then answer"
     },
     "/summarize": {
-      "file": "commands/summarize.webp",
-      "intent": "summarize selected content"
+      "file": "summarize.webp",
+      "intent": "Compress this thread to free context"
     },
     "/write": {
-      "file": "commands/write.webp",
-      "intent": "draft or rewrite text"
+      "file": "write.webp",
+      "intent": "Draft docs or copy, not application code"
     },
     "/code": {
-      "file": "commands/code.webp",
-      "intent": "generate or review code"
+      "file": "code.webp",
+      "intent": "Open this project in the IDE with the change ready to review"
     },
     "/image": {
-      "file": "commands/image.webp",
-      "intent": "create or examine images"
+      "file": "image.webp",
+      "intent": "Sketch a screen or illustration in words"
+    },
+    "/upload": {
+      "file": "upload.webp",
+      "intent": "Add files to this project"
     },
     "/settings": {
-      "file": "commands/settings.webp",
-      "intent": "open preferences"
+      "file": "settings.webp",
+      "intent": "Show seat, model, and workspace"
+    },
+    "/reset": {
+      "file": "new.webp",
+      "intent": "Start a fresh agent"
+    },
+    "/seats": {
+      "file": "seats.webp",
+      "intent": "Choose Cursor, Codex, or Copilot"
+    },
+    "/seat": {
+      "file": "seats.webp",
+      "intent": "Choose Cursor, Codex, or Copilot",
+      "alias_of": "/seats"
+    },
+    "/stop": {
+      "file": "stop.webp",
+      "intent": "Cancel the run in flight"
+    },
+    "/debug": {
+      "file": "debug.webp",
+      "intent": "Show the process log"
     }
   },
-  "command_canvas_px": [
-    315,
-    311
-  ]
+  "coverage": {
+    "registered_commands": 20,
+    "slash_spellings": 21
+  },
+  "note": "Every registered command and alias has a working animated WebP. Some clips share original motion frames but have distinct command file paths."
 }

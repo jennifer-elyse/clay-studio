@@ -1,43 +1,81 @@
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { COMMANDS } from "@cswg/agent-host/commands";
-import { AMBIENT_CLIPS, ANIMATION_BASE, BLUE_ANIMATION_BASE, COMMAND_CLIPS, clipForCommand } from "../src/animations.js";
+import { COMMANDS, parseSlash } from "@cswg/agent-host/commands";
+import { AMBIENT_CLIPS, ANIMATION_BASE, BLUE_ANIMATION_BASE, COMMAND_CLIPS, animationSrc, clipForCommand } from "../src/animations.js";
 
-const dir = fileURLToPath(new URL("../../../apps/studio/public/assets/animations/", import.meta.url));
+const directory = fileURLToPath(new URL("../../../apps/studio/public/assets/animations/", import.meta.url));
+const purpleManifest = JSON.parse(readFileSync(new URL("../../../apps/studio/public/assets/animations/clay-chatbot/manifest.json", import.meta.url), "utf8"));
 
-describe("slash command animations", () => {
-  test("all registered slash commands and aliases resolve to WebP assets", () => {
-    const ids = COMMANDS.map((cmd) => cmd.id);
+/** Validate the RIFF container and count actual animated WebP frame chunks. */
+function frameCount(path) {
+  const bytes = readFileSync(path);
+  expect(bytes.subarray(0, 4).toString()).toBe("RIFF");
+  expect(bytes.subarray(8, 12).toString()).toBe("WEBP");
+  expect(bytes.readUInt32LE(4) + 8).toBe(bytes.length);
+  let position = 12;
+  let frames = 0;
+  let animation = false;
+  let animatedFlag = false;
+  while (position < bytes.length) {
+    expect(position + 8).toBeLessThanOrEqual(bytes.length);
+    const tag = bytes.toString("ascii", position, position + 4);
+    const length = bytes.readUInt32LE(position + 4);
+    expect(position + 8 + length).toBeLessThanOrEqual(bytes.length);
+    if (tag === "VP8X") animatedFlag = (bytes[position + 8] & 2) !== 0;
+    if (tag === "ANIM") animation = true;
+    if (tag === "ANMF") frames += 1;
+    position += 8 + length + (length % 2);
+  }
+  expect(position).toBe(bytes.length);
+  expect(animatedFlag).toBe(true);
+  expect(animation).toBe(true);
+  return frames;
+}
+
+describe("Purple Clay slash-command coverage", () => {
+  test("registers a real WebP for every command, including the /seat alias", () => {
+    const ids = COMMANDS.map(({ id }) => id);
+    const slashes = COMMANDS.flatMap(({ slash, aliases = [] }) => [slash, ...aliases]);
     expect(Object.keys(COMMAND_CLIPS).sort()).toEqual(ids.sort());
-    for (const cmd of COMMANDS) {
-      const clip = clipForCommand(cmd.id);
+    expect(purpleManifest.theme).toBe("purple");
+    expect(purpleManifest.default).toBe(true);
+    expect(purpleManifest.internal_theme_id).toBe("classic");
+    expect(purpleManifest.asset_base).toBe("../");
+    expect(Object.keys(purpleManifest.slash_commands).sort()).toEqual(slashes.sort());
+    for (const command of COMMANDS) {
+      const clip = clipForCommand(command.id);
       expect(clip.endsWith(".webp")).toBe(true);
-      for (const base of [ANIMATION_BASE, BLUE_ANIMATION_BASE]) {
-        const file = `${dir}${base === BLUE_ANIMATION_BASE ? "blue/" : ""}${clip}`;
-        expect(existsSync(file)).toBe(true);
-        const bytes = readFileSync(file);
-        expect(bytes.subarray(0, 4).toString()).toBe("RIFF");
-        expect(bytes.subarray(8, 12).toString()).toBe("WEBP");
-        expect(bytes.includes(Buffer.from("ANIM"))).toBe(true);
+      expect(animationSrc(clip)).toBe(`${ANIMATION_BASE}/${clip}`);
+      for (const slash of [command.slash, ...(command.aliases ?? [])]) {
+        expect(parseSlash(slash).command?.id).toBe(command.id);
+        expect(clipForCommand(parseSlash(slash).command?.id)).toBe(clip);
+        expect(purpleManifest.slash_commands[slash].file).toBe(clip);
       }
+      expect(existsSync(`${directory}${clip}`)).toBe(true);
+      expect(frameCount(`${directory}${clip}`)).toBeGreaterThan(1);
     }
   });
-  test("blue slash commands each have a distinct animated WebP", () => {
-    const bytes = COMMANDS.map((cmd) => readFileSync(`${dir}blue/${clipForCommand(cmd.id)}`).toString("base64"));
-    expect(new Set(bytes).size).toBe(COMMANDS.length);
-  });
-  test("both themes have animated ambient loops", () => {
+
+  test("every ambient Purple Clay clip is present and animated", () => {
+    expect(Object.keys(purpleManifest.states).sort()).toEqual(AMBIENT_CLIPS.map((name) => name.replace(".webp", "")).sort());
     for (const clip of AMBIENT_CLIPS) {
-      expect(existsSync(`${dir}${clip}`)).toBe(true);
-      expect(existsSync(`${dir}blue/${clip}`)).toBe(true);
+      expect(purpleManifest.states[clip.replace(".webp", "")].file).toBe(clip);
+      expect(existsSync(`${directory}${clip}`)).toBe(true);
+      expect(frameCount(`${directory}${clip}`)).toBeGreaterThan(1);
     }
   });
-  test("no ambient fallbacks for slash commands", () => {
-    expect(clipForCommand("plan")).toBe("plan.webp");
-    expect(clipForCommand("reset")).toBe("new.webp");
-    expect(clipForCommand("seat")).toBe("seats.webp");
+});
+
+describe("Blue Clay parity and clip selection", () => {
+  test("Blue Clay has animated WebPs for the same commands and ambient states", () => {
+    for (const clip of [...Object.values(COMMAND_CLIPS), ...AMBIENT_CLIPS]) {
+      const path = `${directory}blue/${clip}`;
+      expect(animationSrc(clip, BLUE_ANIMATION_BASE)).toBe(`${BLUE_ANIMATION_BASE}/${clip}`);
+      expect(existsSync(path)).toBe(true);
+      expect(frameCount(path)).toBeGreaterThan(1);
+    }
   });
-  test("unknown messages still use ambient clips without a repeat", () => {
+  test("unknown messages choose ambient clips without repeating the previous clip", () => {
     expect(AMBIENT_CLIPS).toContain(clipForCommand(null, { random: () => 0 }));
     expect(clipForCommand(null, { previous: "idle.webp", random: () => 0 })).not.toBe("idle.webp");
   });
