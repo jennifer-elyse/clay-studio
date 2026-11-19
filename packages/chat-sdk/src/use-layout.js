@@ -2,7 +2,7 @@ import { useState } from "react";
 import { initialLayout, pickLayout, previewReadyKey, previewShownKey, syncLayout } from "./layout-state.js";
 
 /**
- * Chat or Preview layout, switched to Preview when the preview has something to show or debug turns on.
+ * Chat or Preview layout. Preview is the start, and the layout returns there when the preview has something to show or debug turns on.
  * @param {{ previewStatus?: string, previewUrl?: string, previewMessage?: string, debug: boolean, projectId: string }} input
  */
 export function useLayout({ previewStatus, previewUrl, previewMessage, debug, projectId }) {

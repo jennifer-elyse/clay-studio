@@ -8,6 +8,7 @@ import { SettingsModal } from "./SettingsModal.jsx";
 import { previewActivity } from "./map-events.js";
 import { useClaySession } from "./use-clay-session.js";
 import { useLayout } from "./use-layout.js";
+import { ThemeContext, useStudioTheme } from "./use-theme.js";
 import "./tokens.css";
 import "./ClayChat.css";
 /** @param {import("./use-clay-session.js").ClayChatProps} props */
@@ -33,11 +34,15 @@ export function ClayChat(props) {
     },
   });
   const { layout, previewReady, pick } = useLayout({ ...props, debug: session.debug, projectId: props.project?.id ?? "" });
+  const { theme, chooseTheme } = useStudioTheme();
+  const rootClass = theme === "blue" ? "clay-root is-blue" : "clay-root";
   return (
-    <div className="clay-root">
+    <ThemeContext.Provider value={theme}>
+    <div className={rootClass}>
       <div className="clay-shell" data-layout={layout}>
         <ClayHeader
           clip={session.clip}
+          theme={theme}
           minimized={session.minimized}
           layout={layout}
           onLayout={pick}
@@ -82,6 +87,8 @@ export function ClayChat(props) {
         </KeepShell>
         <SettingsModal
           open={session.settingsOpen}
+          theme={theme}
+          onTheme={chooseTheme}
           section={session.settingsSection}
           onSection={session.setSettingsSection}
           product={session.seatProduct}
@@ -96,5 +103,6 @@ export function ClayChat(props) {
         />
       </div>
     </div>
+    </ThemeContext.Provider>
   );
 }

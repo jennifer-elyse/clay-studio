@@ -1,5 +1,6 @@
 import { ProjectsRootSection } from "../src/ProjectsRootSection.jsx";
 import { SeatModelForm } from "../src/SeatModelForm.jsx";
+import { ThemeSection } from "../src/ThemeSection.jsx";
 import "../src/tokens.css";
 import "../src/ClayChat.css";
 
@@ -24,6 +25,14 @@ export const ModelsLoading = {
 
 export const ModelsSaved = {
   render: () => <SeatModelForm seat="codex" settings={settings} onSave={async () => ({ ok: true })} />,
+};
+
+export const PurpleClay = {
+  render: () => <ThemeSection theme="classic" onTheme={() => undefined} />,
+};
+
+export const BlueClay = {
+  render: () => <ThemeSection theme="blue" onTheme={() => undefined} />,
 };
 
 export const ProjectsFolder = {

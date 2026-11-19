@@ -46,12 +46,12 @@ test("Plan, approve, build, and run", async ({ page }) => {
   await page.getByLabel("Message").press("Enter");
   await expect(page.getByText(/Built against/)).toBeVisible({ timeout: 15000 });
 
-  await expect(page.getByRole("button", { name: "Chat", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Preview", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTitle("App preview")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await page.getByLabel("Message").press("Enter");
-  // The layout switches to Preview by itself when the app is ready.
+  // Preview stays selected, and the frame appears when the app is ready.
   await expect(page.getByTitle("App preview")).toBeVisible({ timeout: 20000 });
   await expect(page.getByTitle("App preview")).toHaveAttribute("src", /127\.0\.0\.1/);
   await expect(page.getByRole("button", { name: "Preview", exact: true })).toHaveAttribute("aria-pressed", "true");

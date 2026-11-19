@@ -18,13 +18,17 @@ describe("layout state", () => {
     expect(nextLayout("chat", "debugOn")).toBe("preview");
     expect(nextLayout("preview", "pickChat")).toBe("chat");
     expect(nextLayout("preview", "previewShown")).toBe("preview");
-    expect(nextLayout("preview", "projectChanged")).toBe("chat");
-    expect(nextLayout("chat", "projectChanged")).toBe("chat");
+    expect(nextLayout("preview", "projectChanged")).toBe("preview");
+    expect(nextLayout("chat", "projectChanged")).toBe("preview");
   });
 
   test("every layout declares projectChanged", () => {
-    expect(LAYOUT_TRANSITIONS.chat.projectChanged).toBe("chat");
-    expect(LAYOUT_TRANSITIONS.preview.projectChanged).toBe("chat");
+    expect(LAYOUT_TRANSITIONS.chat.projectChanged).toBe("preview");
+    expect(LAYOUT_TRANSITIONS.preview.projectChanged).toBe("preview");
+  });
+
+  test("starts in preview", () => {
+    expect(initialLayout().layout).toBe("preview");
   });
 
   test("ready key needs ready status and a url", () => {
@@ -48,7 +52,7 @@ describe("layout state", () => {
     expect(syncLayout(state, input({ previewKey: "u1" })).layout).toBe("preview");
   });
 
-  test("starts in chat and switches each time a preview becomes ready", () => {
+  test("stays in preview and switches back each time a preview becomes ready", () => {
     let state = initialLayout();
     expect(syncLayout(state, input())).toBe(state);
     state = syncLayout(state, input({ previewKey: "u1" }));
@@ -74,11 +78,12 @@ describe("layout state", () => {
     expect(syncLayout(state, input({ debug: true })).layout).toBe("preview");
   });
 
-  test("a project change returns to chat without auto-switching", () => {
+  test("a project change starts in preview without auto-switching", () => {
     /** @type {import("../src/layout-state.js").LayoutState} */
-    const state = { layout: "preview", seenPreview: "u1", debug: true, projectId: "a" };
+    const state = { layout: "chat", seenPreview: "u1", debug: true, projectId: "a" };
     const next = syncLayout(state, input({ previewKey: "u1", debug: true, projectId: "b" }));
-    expect(next).toEqual({ layout: "chat", seenPreview: "u1", debug: true, projectId: "b" });
-    expect(state.layout).toBe("preview");
+    expect(next).toEqual({ layout: "preview", seenPreview: "u1", debug: true, projectId: "b" });
+    expect(state.layout).toBe("chat");
+    expect(syncLayout(next, input({ previewKey: "u1", debug: true, projectId: "b" }))).toBe(next);
   });
 });

@@ -7,8 +7,8 @@
  * @type {Readonly<Record<Layout, Readonly<Partial<Record<LayoutEvent, Layout>>>>>}
  */
 export const LAYOUT_TRANSITIONS = Object.freeze({
-  chat: Object.freeze({ pickPreview: "preview", previewShown: "preview", debugOn: "preview", projectChanged: "chat" }),
-  preview: Object.freeze({ pickChat: "chat", projectChanged: "chat" }),
+  chat: Object.freeze({ pickPreview: "preview", previewShown: "preview", debugOn: "preview", projectChanged: "preview" }),
+  preview: Object.freeze({ pickChat: "chat", projectChanged: "preview" }),
 });
 
 /**
@@ -43,7 +43,7 @@ export function previewShownKey(status, url, message = "") {
 
 /** @returns {LayoutState} */
 export function initialLayout() {
-  return { layout: "chat", seenPreview: "", debug: false, projectId: "" };
+  return { layout: "preview", seenPreview: "", debug: false, projectId: "" };
 }
 
 /**

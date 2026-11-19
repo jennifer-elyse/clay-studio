@@ -33,7 +33,7 @@ export function ClayHeader({
   theme = "classic",
   minimized,
   onToggle,
-  layout = "chat",
+  layout = "preview",
   onLayout = () => {},
   previewReady = false,
   seat,
