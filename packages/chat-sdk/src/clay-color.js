@@ -46,7 +46,7 @@ export function recolorClayPixels(pixels, color) {
     const saturation = max ? (max - min) / max : 0;
     // Material key: the original clay's cobalt/royal blue, excluding white sclera,
     // black pupils, pink tongues and pastel unicorn material.
-    const blue = b > r * 1.32 && b > g * 1.09 && g >= r * .83 && saturation > .24;
+    const blue = max >= 56 && b > r * 1.32 && b > g * 1.09 && g >= r * .83 && saturation > .24;
     if (!blue) continue;
     const sourceLuma = .2126 * r + .7152 * g + .0722 * b;
     // Preserve local surface relief; avoid clipped flat highlights.

@@ -33,5 +33,6 @@ Saturated cobalt body pixels are recolored while non-blue face and unicorn
 pixels remain unchanged. The same WebP paths and all command mappings are retained.
 
 Do not mistake transparent file corners for clean alpha: validate perimeter
-matte colors against contrasting backgrounds. The renderer cleans dark edge
-pixels before resizing and exporting animated WebPs.
+matte colors against contrasting backgrounds. The renderer repairs dark, nearly opaque silhouette-edge RGB pixels from
+nearby inner clay and cleans the alpha *before* resizing or exporting animated
+WebPs. Transparent outer borders are necessary but are not sufficient.

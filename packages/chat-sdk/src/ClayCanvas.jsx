@@ -11,7 +11,9 @@ const SIDE = 320;
 export function ClayCanvas({ clip = "idle.webp", color, onError }) {
   const canvasRef = useRef(null);
   const onErrorRef = useRef(onError);
+  const colorRef = useRef(color);
   onErrorRef.current = onError;
+  colorRef.current = color;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,7 +35,7 @@ export function ClayCanvas({ clip = "idle.webp", color, onError }) {
         bctx.clearRect(0, 0, SIDE, SIDE);
         bctx.drawImage(image, 0, 0, SIDE, SIDE);
         const frame = bctx.getImageData(0, 0, SIDE, SIDE);
-        recolorClayPixels(frame.data, color);
+        recolorClayPixels(frame.data, colorRef.current);
         ctx.clearRect(0, 0, SIDE, SIDE);
         ctx.putImageData(frame, 0, 0);
       } catch {
@@ -54,7 +56,7 @@ export function ClayCanvas({ clip = "idle.webp", color, onError }) {
       image.onload = image.onerror = null;
       if (animationId !== null) cancelAnimationFrame(animationId);
     };
-  }, [clip, color]);
+  }, [clip]);
 
   return <canvas ref={canvasRef} width={SIDE} height={SIDE}
     className="clay-bot-clip clay-bot-canvas" aria-hidden="true" />;

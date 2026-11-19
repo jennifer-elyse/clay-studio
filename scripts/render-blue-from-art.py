@@ -70,12 +70,47 @@ def load_art():
 
 
 def clean_cutout(source):
-    """Eliminate low-alpha fringe pixels that produce dark halos on light themes."""
-    source = source.convert("RGBA")
-    original = source.getchannel("A")
-    alpha = original.point(lambda a: 0 if a < 20 else min(255, round((a - 20) * 255 / 235)))
-    source.putalpha(alpha)
-    return source
+    """Repair dark, nearly-opaque matte pixels at the silhouette edge.
+
+    The approved atlas contains a dark circular fringe baked into RGB even where
+    alpha is nonzero. Transparent corners alone do not catch this. Borrow local
+    blue clay color from a few pixels INSIDE the silhouette before resampling.
+    Face features and the unicorn are left intact away from the alpha boundary.
+    """
+    original = source.convert("RGBA")
+    fixed = original.copy()
+    alpha = original.getchannel("A")
+    # Detect the interior band around the actual silhouette, not a hard circle.
+    inner = alpha.filter(ImageFilter.MinFilter(9))
+    px = fixed.load()
+    in_alpha = inner.load()
+    width, height = fixed.size
+    mid_x, mid_y = width / 2, height / 2
+    for y in range(height):
+        for x in range(width):
+            red, green, blue, a = original.getpixel((x, y))
+            if a < 15:
+                px[x, y] = (0, 0, 0, 0)
+                continue
+            out_alpha = max(0, min(255, round((a - 14) * 255 / 241)))
+            if in_alpha[x, y] < 250:
+                inward_x, inward_y = mid_x - x, mid_y - y
+                length = max(1, math.hypot(inward_x, inward_y))
+                sx = min(width - 1, max(0, round(x + inward_x / length * 7)))
+                sy = min(height - 1, max(0, round(y + inward_y / length * 7)))
+                sr, sg, sb, sa = original.getpixel((sx, sy))
+                if (sa >= 210 and sb > sg * 1.15 and sb > sr * 1.28
+                        and blue > green * 1.05):
+                    brightness = (red + green + blue) / 3
+                    sample_brightness = (sr + sg + sb) / 3
+                    if brightness < sample_brightness * .87:
+                        weight = min(.93, max(0., (sample_brightness - brightness)
+                                              / max(1, sample_brightness)) * .95 + .19)
+                        red = round(red * (1 - weight) + sr * weight)
+                        green = round(green * (1 - weight) + sg * weight)
+                        blue = round(blue * (1 - weight) + sb * weight)
+            px[x, y] = (red, green, blue, out_alpha)
+    return fixed
 
 
 def display_character(source, *, scale=1.0, angle=0.0, dx=0.0, dy=0.0):
