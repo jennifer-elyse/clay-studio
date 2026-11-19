@@ -33,7 +33,7 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "Blue Clay is rendered from the approved Blue Gumby Clay Mascot Showcase atlas with ten real expressions, a five-step blink cycle and the illustrated unicorn; no synthetic eyeball/lid overlays.",
+  "note": "Frames originate from the approved Clay Studio Blue Gumby Clay mascot showcase. The 10 expressions, 5-step blink, and unicorn are preserved as matching artwork from a single atlas; transitions operate on the whole clay character, never independent eye overlays.",
   "generator": "python3 scripts/render-blue-from-art.py",
   "resolution": "320x320",
   "frames_per_clip": 16,
