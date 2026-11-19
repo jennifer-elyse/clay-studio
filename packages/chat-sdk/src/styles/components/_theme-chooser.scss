@@ -1,0 +1,7 @@
+/* Keep the theme chooser within the shared settings layout. */
+.clay-theme-options { display: grid; gap: 12px; padding: 10px 0; }
+.clay-theme-choice { display: grid; gap: 5px; text-align: left; padding: 16px; border: 1px solid var(--clay-stroke); border-radius: var(--clay-radius); background: var(--clay-paper); color: var(--clay-ink); cursor: pointer; font: inherit; }
+.clay-theme-choice[aria-pressed="true"] { outline: 2px solid var(--clay-focus); outline-offset: 2px; }
+.clay-theme-choice:hover { background: var(--clay-surface); box-shadow: var(--clay-shadow-sm); }
+.clay-theme-choice small { color: var(--clay-muted); }
+.clay-theme-state { font-weight: 700; }

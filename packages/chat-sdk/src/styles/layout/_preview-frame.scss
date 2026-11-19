@@ -1,0 +1,87 @@
+// Restore the frame, overlay, loading bar and screen-reader status styles.
+.clay-preview .clay-preview-frame,
+.clay-preview .clay-preview-empty,
+.clay-preview > .clay-preview-loading {
+  flex: 1;
+  border: 1px solid var(--clay-stroke);
+  margin: 8px 12px 12px;
+  border-radius: 16px;
+  background: var(--clay-paper);
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-preview-empty {
+  display: grid;
+  place-items: center;
+  color: var(--clay-muted);
+}
+
+.clay-preview-frame {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.clay-preview-frame iframe {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+}
+
+.clay-preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--clay-muted);
+}
+
+.clay-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.clay-preview-loading.is-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--clay-paper);
+}
+
+.clay-preview-loading-bar {
+  position: relative;
+  width: 160px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--clay-pill);
+  background: color-mix(in srgb, var(--clay-mint) 25%, var(--clay-surface));
+}
+
+.clay-preview-loading-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--clay-run);
+  animation: clay-preview-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes clay-preview-loading {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}

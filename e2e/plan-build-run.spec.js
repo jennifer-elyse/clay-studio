@@ -105,7 +105,7 @@ test("Blue Clay unified sculpted eye rig and persisted theme", async ({ page }) 
   await page.keyboard.press("Escape");
   const mascot = page.locator(".clay-bot-stage.is-blue").first();
   await expect(mascot.locator("img.clay-bot-clip")).toBeVisible();
-  await expect(mascot.locator("img.clay-bot-clip")).toHaveAttribute("src", /assets\\/animations\\/blue/);
+  await expect(mascot.locator("img.clay-bot-clip")).toHaveAttribute("src", new RegExp("assets/animations/blue/"));
   await expect.poll(() => mascot.locator("img.clay-bot-clip").evaluate(img => img.naturalWidth)).toBe(320);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("clay-studio-theme"))).toBe("blue");
   await page.reload();
@@ -116,4 +116,31 @@ test("Blue Clay unified sculpted eye rig and persisted theme", async ({ page }) 
   await reopened.getByRole("button", { name: /Purple Clay/ }).click();
   await page.keyboard.press("Escape");
   await expect(page.locator(".clay-bot-stage.is-blue")).toHaveCount(0);
+});
+
+test("Layout styling from feature-layouts survives the Sass 7-1 migration", async ({ page }) => {
+  await page.goto("/");
+  const layout = page.getByRole("group", { name: "Layout" });
+  const shell = page.locator(".clay-shell");
+  const preview = page.locator(".clay-preview");
+  const chat = page.locator(".clay-chat");
+
+  await expect(layout).toHaveCSS("display", "inline-flex");
+  await expect(shell).toHaveAttribute("data-layout", "preview");
+  await expect(preview).toBeVisible();
+  await layout.getByRole("button", { name: "Chat", exact: true }).click();
+  await expect(shell).toHaveAttribute("data-layout", "chat");
+  await expect(preview).toBeHidden();
+  await expect(chat).toBeVisible();
+  await expect(chat).toHaveCSS("justify-self", "center");
+  await expect.poll(() => chat.evaluate((node) => node.getBoundingClientRect().width)).toBeLessThanOrEqual(960);
+
+  await layout.getByRole("button", { name: "Preview", exact: true }).click();
+  await expect(shell).toHaveAttribute("data-layout", "preview");
+  await expect(preview).toBeVisible();
+
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Settings" });
+  await dialog.getByRole("tab", { name: "Theme" }).click();
+  await expect(dialog.locator(".clay-theme-options")).toHaveCSS("display", "grid");
 });

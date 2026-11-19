@@ -70,8 +70,9 @@
   stroke-linejoin: round;
 }
 
-.clay-preview iframe,
-.clay-preview .clay-preview-empty {
+.clay-preview .clay-preview-frame,
+.clay-preview .clay-preview-empty,
+.clay-preview > .clay-preview-loading {
   flex: 1;
   border: 1px solid var(--clay-stroke);
   margin: 8px 12px 12px;

@@ -1,0 +1,21 @@
+// Chat-only mode hides the preview without unmounting its running iframe.
+.clay-shell[data-layout="chat"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.clay-shell[data-layout="chat"] .clay-chat {
+  grid-column: 1;
+  justify-self: center;
+  width: min(100% - 48px, 960px);
+  margin: 16px 0;
+}
+
+/* Hidden, not removed, so the running app keeps its page and state. */
+.clay-shell[data-layout="chat"] .clay-preview {
+  display: none;
+}
+
+.clay-shell[data-layout="chat"] .clay-bubble,
+.clay-shell[data-layout="chat"] .clay-turn {
+  max-width: min(92%, 75ch);
+}

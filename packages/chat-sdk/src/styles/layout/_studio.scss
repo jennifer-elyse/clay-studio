@@ -37,4 +37,7 @@
     min-height: 0;
     margin: 12px;
   }
+  .clay-shell[data-layout="chat"] {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
 }

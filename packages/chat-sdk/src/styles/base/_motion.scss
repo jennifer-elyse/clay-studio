@@ -13,8 +13,15 @@
   .clay-header-tool,
   .clay-tool,
   .clay-help-item,
+  .clay-layout-option,
   .clay-message-actions button,
   .clay-quiet {
     transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clay-preview-loading-bar::after {
+    animation: none;
   }
 }

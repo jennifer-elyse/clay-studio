@@ -1,0 +1,30 @@
+name: Verify 7-1 layout styling
+on:
+  push:
+    branches: [7-1]
+    paths:
+      - '.github/workflows/layout-style-integration.yml'
+      - 'packages/chat-sdk/src/styles/**'
+      - 'packages/chat-sdk/src/LayoutSwitch.jsx'
+      - 'packages/chat-sdk/src/layout-state.js'
+      - 'packages/chat-sdk/src/use-layout.js'
+      - 'e2e/plan-build-run.spec.js'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Build Studio with compiled Sass
+        run: npm run build
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Verify layout switch, chat centering, and theme styling
+        run: npx playwright test -g "Layout styling from feature-layouts"

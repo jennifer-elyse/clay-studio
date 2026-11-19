@@ -1,0 +1,44 @@
+// Original Chat/Preview segmented control from feature-layouts.
+.clay-layout-switch {
+  display: inline-flex;
+  padding: 2px;
+  border: 1.5px solid var(--clay-stroke);
+  border-radius: var(--clay-pill);
+  background: var(--clay-paper);
+}
+
+.clay-layout-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 0;
+  border-radius: var(--clay-pill);
+  background: transparent;
+  color: var(--clay-ink);
+  padding: 4px 12px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clay-layout-option:not([aria-pressed="true"]):hover {
+  background: color-mix(in srgb, var(--clay-stroke) 45%, var(--clay-surface));
+  box-shadow: var(--clay-shadow-sm);
+}
+
+.clay-layout-option[aria-pressed="true"] {
+  font-weight: 800;
+  background: color-mix(in srgb, var(--clay-stroke) 70%, var(--clay-surface));
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.clay-layout-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clay-run);
+}
