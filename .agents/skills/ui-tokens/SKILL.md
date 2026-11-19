@@ -7,7 +7,7 @@ description: Style Clay Studio with the same token, layout, hover, and focus rul
 
 Studio uses the same rules as `templates/web-app/.agents/skills/ui-tokens/SKILL.md`.
 
-1. Use `var(--clay-*)` only. Studio tokens live in `packages/chat-sdk/src/tokens.css`. A generated app uses `client/src/tokens.css`. Do not type hex, a raw radius, or a new font in a component. Numbers use `font-variant-numeric: tabular-nums`. A table column and its header use the same alignment. Strings align left. Numbers align right. Actions (buttons) align center.
+1. Use `var(--clay-*)` only. Studio tokens live in `packages/chat-sdk/src/styles/abstracts/_tokens.scss`. A generated app uses `client/src/styles/abstracts/tokens.css`. Both stylesheets use the 7-1 folders and load through `main.scss`. Studio's sheet styles the Studio document and the preview frame. The app inside the frame loads its own `main.scss`. Do not type hex, a raw radius, or a new font in a component. Numbers use `font-variant-numeric: tabular-nums`. A table column and its header use the same alignment. Strings align left. Numbers align right. Actions (buttons) align center.
 2. Lay out with intrinsic sizing and `@container` queries. Do not use viewport breakpoint media queries for layout. The only media query is `@media (prefers-reduced-motion: reduce)`. It may reduce or remove motion only, and must not change layout, color, or input-capacity.
 3. Keep each screen under 50 lines by composing smaller pieces.
 4. Every status has a visible text label. Do not rely on color alone.

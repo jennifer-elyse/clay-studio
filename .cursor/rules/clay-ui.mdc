@@ -1,6 +1,6 @@
 ---
 description: Clay UI rules from the generated app, including tokens, layout, hover, and focus
-globs: "**/*.{jsx,css}"
+globs: "**/*.{jsx,css,scss}"
 alwaysApply: true
 ---
 
@@ -8,7 +8,7 @@ alwaysApply: true
 
 Follow `docs/design.md`. A generated app follows the same rules in its `docs/design.md`.
 
-- Tokens only, from `packages/chat-sdk/src/tokens.css` in Studio and `client/src/tokens.css` in a generated app. Do not type a hex, a raw radius, or a new font in a component.
+- Tokens only. Studio tokens live in `packages/chat-sdk/src/styles/abstracts/_tokens.scss`. A generated app uses `client/src/styles/abstracts/tokens.css`. Styles follow the 7-1 pattern, and `main.scss` is the only entry file. Studio's sheet styles the Studio document and the preview frame. The app inside the frame loads its own `main.scss`. Do not type a hex, a raw radius, or a new font in a component.
 - Numbers use `font-variant-numeric: tabular-nums`.
 - A table column and its header use the same alignment. Strings align left. Numbers align right. Actions (buttons) align center.
 - Layout is intrinsic. Use `@container`. Do not use a viewport `@media` breakpoint for layout.
