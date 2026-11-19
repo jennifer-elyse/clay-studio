@@ -12,7 +12,7 @@ import "./styles/main.scss";
 export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE, theme = "classic" }) {
   const [failedAsset, setFailedAsset] = useState("");
   const src = animationSrc(clip, theme === "blue" ? BLUE_ANIMATION_BASE : base);
-  const assetSrc = theme === "blue" ? `${src}?v=7-1-showcase-v3` : src;
+  const assetSrc = theme === "blue" ? `${src}?v=7-1-metamorph-v4` : src;
   return (
     <div className={`clay-bot-stage is-${size} is-${theme}`} aria-hidden="true" data-clip={clip}>
       {theme === "blue" ? (
@@ -22,11 +22,9 @@ export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE
               src={failedAsset === assetSrc ? animationSrc("source-ball.webp", BLUE_ANIMATION_BASE) : assetSrc}
               alt="" width="320" height="320" onError={() => setFailedAsset(assetSrc)} />
           </div>
-          <div className="clay-blue-reduced">
-            <img className="clay-bot-clip" src={animationSrc(
-              ["image.webp", "pop-shape.webp"].includes(clip) ? "source-unicorn.webp" : "source-ball.webp",
-              BLUE_ANIMATION_BASE
-            )} alt="" width="320" height="320" />
+          <div className={`clay-blue-reduced${["image.webp", "pop-shape.webp"].includes(clip) ? " is-unicorn" : " is-ball"}`}>
+            <img src={animationSrc("reference-atlas.webp", BLUE_ANIMATION_BASE)}
+              alt="" width="640" height="640" />
           </div>
         </>
       ) : <img key={src} className="clay-bot-clip" src={src} alt="" width="315" height="311" />}
