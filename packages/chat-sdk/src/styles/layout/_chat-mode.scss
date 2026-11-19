@@ -7,6 +7,7 @@
   grid-column: 1;
   justify-self: center;
   width: min(100% - 48px, 960px);
+  box-sizing: border-box; // Include the 2px border in the 960px cap.
   margin: 16px 0;
 }
 
