@@ -14,7 +14,7 @@ import math
 import os
 import sys
 from pathlib import Path
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "apps/studio/public/assets/animations/blue"
@@ -57,7 +57,22 @@ def load_art():
         y = 256 + (index // 5) * 128
         art[name] = atlas.crop((x, y, x + 128, y + 128))
     art["blinks"] = [atlas.crop((i * 128, 512, (i + 1) * 128, 640)) for i in range(5)]
+    # Trim near-transparent matte contamination before resampling.
+    for name, sprite in list(art.items()):
+        if name == "blinks":
+            art[name] = [clean_cutout(frame) for frame in sprite]
+        else:
+            art[name] = clean_cutout(sprite)
     return art
+
+
+def clean_cutout(source):
+    """Eliminate low-alpha fringe pixels that produce dark halos on light themes."""
+    source = source.convert("RGBA")
+    original = source.getchannel("A")
+    alpha = original.point(lambda a: 0 if a < 20 else min(255, round((a - 20) * 255 / 235)))
+    source.putalpha(alpha)
+    return source
 
 
 def display_character(source, *, scale=1.0, angle=0.0, dx=0.0, dy=0.0):
@@ -116,25 +131,78 @@ def sparkle_overlay(frame, progress, seed):
     return frame
 
 
+def eased(value):
+    x = min(1.0, max(0.0, value))
+    return x * x * (3 - 2 * x)
+
+
+def clay_metamorphosis(art, amount, index):
+    """Re-form the body in place without shrinking either character to a dot.
+
+    A curling material boundary reveals new clay across the same silhouette.
+    Eyes, lids and mouth always stay registered to their parent illustration.
+    """
+    amount = eased(amount)
+    blue = display_character(art["blue"], scale=.963 + .01 * math.sin(math.pi * amount),
+                             angle=-1.8 * math.sin(math.pi * amount), dy=0)
+    unicorn = display_character(art["unicorn"], scale=.965, dy=0)
+    if amount <= .002:
+        return blue
+    if amount >= .998:
+        return unicorn
+
+    mask = Image.new("L", (SIDE, SIDE))
+    pixels = mask.load()
+    sweep = -220 + amount * 760
+    for y in range(SIDE):
+        curve = 23 * math.sin(y / 38.0 + amount * math.pi * 1.3) + 12 * math.sin(y / 71.0 - amount * math.pi)
+        for xx in range(SIDE):
+            pixels[xx, y] = 255 if xx + curve < sweep else 0
+    mask = mask.filter(ImageFilter.GaussianBlur(13))
+    return Image.composite(unicorn, blue, mask)
+
+
+def spell_ribbon(frame, index, intensity):
+    """Soft orbital glitter follows the transformation without hiding the face."""
+    if intensity <= 0:
+        return frame
+    ring = Image.new("RGBA", (SIDE, SIDE))
+    draw = ImageDraw.Draw(ring, "RGBA")
+    phase = index * .18
+    for k in range(42):
+        t = phase + k * .145
+        x = 160 + (117 + 6 * math.sin(k * 1.8)) * math.cos(t)
+        y = 163 + (93 + 4 * math.cos(k * 2.1)) * math.sin(t)
+        strength = .6 + .4 * math.sin(k * .4 + phase)
+        alpha = round(intensity * strength * 180)
+        if alpha < 3:
+            continue
+        color = [(255, 213, 148), (255, 165, 224), (184, 242, 255)][k % 3]
+        radius = .85 + (k % 6 == 0) * 2.1
+        draw.ellipse((x-radius, y-radius, x+radius, y+radius), fill=(*color, alpha))
+    glow = ring.filter(ImageFilter.GaussianBlur(3.3))
+    glow.putalpha(glow.getchannel("A").point(lambda a: round(a * .50)))
+    frame.alpha_composite(glow)
+    frame.alpha_composite(ring)
+    return frame
+
+
 def morph_frame(art, index):
-    # Disjoint intervals: no overlapping transparent ghosts or alternate faces.
-    if index < 8:
-        return display_character(art["blue"], scale=.966 + .003 * math.cos(index*.8), angle=.7 * math.sin(index*.8), dy=-.5 + 1.0 * math.cos(index*.8))
-    if index < 12:
-        p = (index - 8) / 4
-        frame = display_character(art["blue"], scale=.966 - .82 * p, angle=3 * p)
-        return sparkle_overlay(frame, p, index)
-    if index < 16:
-        p = (index - 12) / 4
-        frame = display_character(art["unicorn"], scale=.20 + .76 * p, angle=-3 * (1 - p))
-        return sparkle_overlay(frame, 1 - p, index)
-    if index < 24:
-        return display_character(art["unicorn"], scale=.965 + .002 * math.cos(index*.9), angle=.6 * math.sin(index*.9), dy=1.0 * math.cos(index*.9))
-    if index < 28:
-        p = (index - 24) / 4
-        return sparkle_overlay(display_character(art["unicorn"], scale=.966 - .82 * p), p, index)
-    p = (index - 28) / 4
-    return sparkle_overlay(display_character(art["blue"], scale=.20 + .75 * p), 1 - p, index)
+    """Continuous blue -> unicorn -> blue loop with visible intermediate poses."""
+    t = index / FRAME_COUNT
+    if t < .16:
+        progress, energy = 0.0, 0.0
+    elif t < .46:
+        progress = eased((t - .16) / .30)
+        energy = math.sin(math.pi * progress) * .9 + .2
+    elif t < .65:
+        progress, energy = 1.0, .2 if t < .55 else 0.0
+    elif t < .95:
+        progress = 1 - eased((t - .65) / .30)
+        energy = math.sin(math.pi * progress) * .9 + .2
+    else:
+        progress, energy = 0.0, 0.0
+    return spell_ribbon(clay_metamorphosis(art, progress, index), index, min(1.0, energy))
 
 
 def frames_for(art, name):
@@ -171,9 +239,9 @@ def generate():
         "source_art": ["reference-atlas.webp"],
         "generator": "python3 scripts/render-blue-from-art.py",
         "resolution": "320x320", "sampled_frames_per_clip": FRAME_COUNT,
-        "frame_duration_ms": FRAME_MS, "render_version": "7-1-showcase-v3",
+        "frame_duration_ms": FRAME_MS, "render_version": "7-1-metamorph-v4",
         "expressions": ["neutral", "happy", "excited", "curious", "thinking", "focused", "playful", "surprised", "proud", "sleepy"],
-        "note": "Frames originate from the approved Clay Studio Blue Gumby Clay mascot showcase. The 10 expressions, 5-step blink, and unicorn are preserved as matching artwork from a single atlas; transitions operate on the whole clay character, never independent eye overlays.",
+        "note": "Blue Clay transitions into the pastel unicorn through a continuous sculpted material reveal and an orbiting glitter ribbon, without shrinking or ghosting. Low-alpha edges are scrubbed to prevent dark halos.",
     })
     (ASSETS / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
