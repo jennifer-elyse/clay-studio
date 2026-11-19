@@ -33,7 +33,7 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "Source art is the exact generated blue clay ball and white rainbow-horn unicorn from this conversation, converted to 320x320 transparent WebP. All command and ambient animated WebPs are generated from these images, preserving sculpted detail and synchronized eye/body motion.",
+  "note": "Blue Clay is animated directly from the generated blue-ball and white-unicorn illustration assets. Both characters retain their sculpted clay material throughout; all 20 slash-command and 7 ambient clips are actual animated WebPs.",
   "generator": "python3 scripts/render-blue-from-art.py",
   "resolution": "320x320",
   "frames_per_clip": 16,
