@@ -1,0 +1,122 @@
+/* One rig, one coordinate space: eyes and lids cannot lag behind the clay. */
+.clay-bot-stage.is-blue {
+  background: radial-gradient(circle at 45% 32%, var(--clay-paper), var(--clay-sand) 85%);
+  border-color: var(--clay-stroke);
+}
+.clay-blue-figure {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--clay-ink) 16%, transparent));
+}
+.clay-blue-body {
+  transform-origin: 120px 124px;
+  animation: blue-clay-breathe 3.4s ease-in-out infinite;
+}
+.clay-gaze {
+  transform-origin: center;
+  animation: blue-clay-glance 7.1s ease-in-out infinite;
+}
+.clay-eye-shutter {
+  transform: translateY(-90px);
+  animation: blue-clay-blink 6.4s ease-in-out infinite;
+}
+.clay-ground-shadow {
+  transform-origin: 120px 215px;
+  animation: blue-clay-shadow 3.4s ease-in-out infinite;
+}
+.clay-unicorn { opacity: 0; transform-origin: 120px 120px; transform: scale(.6); }
+.clay-blue-figure[data-motion="roll"] .clay-blue-body { animation: blue-clay-roll 2.3s ease-in-out infinite; }
+.clay-blue-figure[data-motion="roll"] .clay-ground-shadow { animation: blue-clay-roll-shadow 2.3s ease-in-out infinite; }
+.clay-blue-figure[data-motion="think"] .clay-blue-body { animation: blue-clay-ponder 3.3s ease-in-out infinite; }
+.clay-blue-figure[data-motion="focus"] .clay-blue-body { animation: blue-clay-focus 3.3s ease-in-out infinite; }
+.clay-blue-figure[data-motion="bounce"] .clay-blue-body,
+.clay-blue-figure[data-motion="interested"] .clay-blue-body { animation: blue-clay-bounce 2.6s ease-in-out infinite; }
+.clay-blue-figure[data-motion="judging"] .clay-gaze { animation: blue-clay-side-eye 4s ease-in-out infinite; }
+.clay-blue-figure[data-motion="concerned"] .clay-blue-body { animation: blue-clay-concerned 3.5s ease-in-out infinite; }
+.clay-blue-figure[data-motion="settle"] .clay-blue-body { animation: blue-clay-settle 3.5s ease-in-out infinite; }
+.clay-blue-figure[data-motion="interested"] .clay-gaze { animation-duration: 4.3s; }
+.clay-blue-figure[data-motion="judging"] .clay-eye-shutter { animation-duration: 5.1s; }
+.clay-blue-figure[data-motion="morph"] .clay-blue-body { animation: blue-clay-disappear 3.8s ease-in-out infinite; }
+.clay-blue-figure[data-motion="morph"] .clay-unicorn { animation: blue-clay-appear 3.8s ease-in-out infinite; }
+.clay-blue-figure[data-motion="morph"] .clay-ground-shadow { animation: none; }
+
+@keyframes blue-clay-breathe {
+  0%,100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.012,.989); }
+}
+@keyframes blue-clay-shadow {
+  0%,100% { transform: scale(1); opacity: .13; }
+  50% { transform: scale(.94); opacity: .09; }
+}
+@keyframes blue-clay-glance {
+  0%,16%,58%,100% { transform: translate(0,0); }
+  23%,37% { transform: translate(-4px,-2px); }
+  68%,82% { transform: translate(4px,1px); }
+}
+@keyframes blue-clay-blink {
+  0%,34%,37%,72%,75%,100% { transform: translateY(-90px); }
+  35%,73% { transform: translateY(0); }
+  36%,74% { transform: translateY(-90px); }
+}
+@keyframes blue-clay-roll {
+  0%,100% { transform: translateX(-4px) rotate(-9deg); }
+  50% { transform: translateX(4px) rotate(9deg); }
+}
+@keyframes blue-clay-roll-shadow {
+  0%,100% { transform: translateX(-4px) scale(1); }
+  50% { transform: translateX(4px) scale(.93); }
+}
+@keyframes blue-clay-ponder {
+  0%,100% { transform: rotate(-2deg) translateY(1px); }
+  50% { transform: rotate(4deg) translateY(-3px); }
+}
+@keyframes blue-clay-focus {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.025,.98); }
+}
+@keyframes blue-clay-bounce {
+  0%,100% { transform: translateY(2px) scale(1.01,.98); }
+  50% { transform: translateY(-9px) scale(.98,1.02); }
+}
+@keyframes blue-clay-side-eye {
+  0%,100% { transform: translate(-5px,2px); }
+  50% { transform: translate(-6px,1px); }
+}
+@keyframes blue-clay-concerned {
+  0%,100% { transform: rotate(-3deg); }
+  50% { transform: rotate(2deg); }
+}
+@keyframes blue-clay-settle {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(2px) scale(1.015,.984); }
+}
+@keyframes blue-clay-disappear {
+  0%,24% { opacity: 1; transform: scale(1); }
+  40%,82% { opacity: 0; transform: scale(.64) rotate(-8deg); }
+  92%,100% { opacity: 1; transform: scale(1); }
+}
+@keyframes blue-clay-appear {
+  0%,26% { opacity: 0; transform: scale(.6) rotate(8deg); }
+  43%,79% { opacity: 1; transform: scale(1) rotate(0); }
+  93%,100% { opacity: 0; transform: scale(.7); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clay-blue-figure *,
+  .clay-blue-figure { animation: none !important; }
+  .clay-blue-figure[data-motion="morph"] .clay-blue-body { opacity: 0; }
+  .clay-blue-figure[data-motion="morph"] .clay-unicorn { opacity: 1; transform: none; }
+}
+
+/* All motion groups share a seamless 3.2s loop for WebP frame capture.
+ * Blink holds long enough to survive 200ms frame quantization. */
+.clay-blue-figure .clay-blue-body,
+.clay-blue-figure .clay-ground-shadow,
+.clay-blue-figure .clay-gaze,
+.clay-blue-figure .clay-eye-shutter,
+.clay-blue-figure .clay-unicorn { animation-duration: 3.2s; }
+@keyframes blue-clay-blink {
+  0%, 21%, 35%, 59%, 73%, 100% { transform: translateY(-90px); }
+  27%, 65% { transform: translateY(0); }
+}

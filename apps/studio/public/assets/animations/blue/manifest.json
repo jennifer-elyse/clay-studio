@@ -33,5 +33,13 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "All 20 slash commands have distinct animated WebP files and motion timings. Their stop-motion source is a blue clay ball; /image has a separate white-unicorn and rainbow-spiral-horn morph. Ambient clips are reusable."
+  "note": "Source art is the exact generated blue clay ball and white rainbow-horn unicorn from this conversation, converted to 320x320 transparent WebP. All command and ambient animated WebPs are generated from these images, preserving sculpted detail and synchronized eye/body motion.",
+  "generator": "python3 scripts/render-blue-from-art.py",
+  "resolution": "320x320",
+  "frames_per_clip": 16,
+  "frame_duration_ms": 200,
+  "source_art": [
+    "source-ball.webp",
+    "source-unicorn.webp"
+  ]
 }

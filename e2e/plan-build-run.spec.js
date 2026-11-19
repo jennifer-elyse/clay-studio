@@ -95,7 +95,7 @@ test("Advanced seat models save, survive a reload, and reset", async ({ page }) 
   await page.keyboard.press("Escape");
 });
 
-test("Blue Clay sculpted eyes and persisted theme", async ({ page }) => {
+test("Blue Clay unified sculpted eye rig and persisted theme", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Settings" });
@@ -104,12 +104,12 @@ test("Blue Clay sculpted eyes and persisted theme", async ({ page }) => {
   await expect(dialog.getByRole("button", { name: /Blue Clay/ })).toHaveAttribute("aria-pressed", "true");
   await page.keyboard.press("Escape");
   const mascot = page.locator(".clay-bot-stage.is-blue").first();
-  await expect(mascot.locator(".clay-blue-face")).toBeVisible();
-  await expect(mascot.locator(".clay-blue-eye")).toHaveCount(2);
-  await expect(mascot.locator("img")).toHaveAttribute("src", /blue/);
+  await expect(mascot.locator("img.clay-bot-clip")).toBeVisible();
+  await expect(mascot.locator("img.clay-bot-clip")).toHaveAttribute("src", /assets\\/animations\\/blue/);
+  await expect.poll(() => mascot.locator("img.clay-bot-clip").evaluate(img => img.naturalWidth)).toBe(320);
   await expect.poll(() => page.evaluate(() => localStorage.getItem("clay-studio-theme"))).toBe("blue");
   await page.reload();
-  await expect(page.locator(".clay-bot-stage.is-blue").first().locator(".clay-blue-eye")).toHaveCount(2);
+  await expect(page.locator(".clay-bot-stage.is-blue").first().locator("img.clay-bot-clip")).toBeVisible();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   const reopened = page.getByRole("dialog", { name: "Settings" });
   await reopened.getByRole("tab", { name: "Theme" }).click();
