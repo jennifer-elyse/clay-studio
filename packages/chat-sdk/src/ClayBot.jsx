@@ -1,6 +1,6 @@
 import { ANIMATION_BASE, BLUE_ANIMATION_BASE, animationSrc } from "./animations.js";
 import { useState } from "react";
-import "./ClayBot.css";
+import "./styles/main.scss";
 
 /**
  * @param {object} props
