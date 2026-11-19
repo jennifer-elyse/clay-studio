@@ -33,7 +33,7 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "The /image and pop-shape clips copy the exact 12-frame animated WebP created from the approved generated GIF. All other clips use the reference atlas. Transparent edges are checked in CI.",
+  "note": "The /image and pop-shape clips copy the exact 12-frame animated WebP created from the user-approved generated GIF. All other clips use the reference atlas. Transparent edges are checked in CI.",
   "generator": "python3 scripts/render-blue-from-art.py",
   "resolution": "320x320",
   "frames_per_clip": 16,
