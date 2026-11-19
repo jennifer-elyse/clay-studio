@@ -125,7 +125,8 @@ test("Layout styling from feature-layouts survives the Sass 7-1 migration", asyn
   const preview = page.locator(".clay-preview");
   const chat = page.locator(".clay-chat");
 
-  await expect(layout).toHaveCSS("display", "inline-flex");
+  // Flex items compute inline-flex as flex (CSS blockification in the header).
+  await expect(layout).toHaveCSS("display", "flex");
   await expect(shell).toHaveAttribute("data-layout", "preview");
   await expect(preview).toBeVisible();
   await layout.getByRole("button", { name: "Chat", exact: true }).click();
