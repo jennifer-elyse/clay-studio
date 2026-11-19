@@ -6,7 +6,7 @@ import { Transcript } from "./Transcript.jsx";
 
 /** @param {object} props */
 export function ChatPane(props) {
-  const { items, steps, working, clip, run, draft, onDraft, onSend, onPick, onThink, thinkFirst, onSeats, onApprove, onAdjust, done } = props;
+  const { items, steps, working, clip, theme = "classic", run, draft, onDraft, onSend, onPick, onThink, thinkFirst, onSeats, onApprove, onAdjust, done } = props;
   return (
     <section className="clay-chat" id="clay-chat">
       <ChatTools onSend={onSend} busy={working} />
@@ -16,6 +16,7 @@ export function ChatPane(props) {
           steps={steps}
           busy={working}
           clip={clip}
+          theme={theme}
           onApprove={onApprove}
           onAdjust={onAdjust}
           onEdit={props.onEdit}

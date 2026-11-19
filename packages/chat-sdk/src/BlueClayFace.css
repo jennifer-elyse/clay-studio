@@ -1,0 +1,107 @@
+/* Face coordinates are registered to the WebP's 100x100 sphere canvas. */
+.clay-blue-face {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 116%;
+  height: 116%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.clay-blue-eye {
+  position: absolute;
+  top: 40%;
+  width: 17%;
+  height: 18%;
+  border-radius: 49% 48% 45% 52%;
+  background: radial-gradient(ellipse at 50% 36%, var(--clay-eye-socket), var(--clay-eye-shadow) 84%);
+  box-shadow: inset 1px 2px 4px var(--clay-eye-shadow), 0 0 0 1px var(--clay-eye-rim);
+}
+.clay-blue-eye.is-left { left: 31%; transform: rotate(-5deg); }
+.clay-blue-eye.is-right { right: 31%; transform: rotate(5deg); }
+.clay-blue-eye-inner {
+  position: absolute;
+  inset: 12% 13% 13%;
+  border-radius: 47% 53% 48% 52%;
+  background: radial-gradient(ellipse at 33% 28%, var(--clay-eye-sclera), var(--clay-eye-sclera-shadow) 76%, var(--clay-eye-rim));
+  box-shadow: inset -2px -2px 3px color-mix(in srgb, var(--clay-eye-shadow) 36%, transparent), 0 1px 2px var(--clay-eye-shadow);
+  transform-origin: 50% 50%;
+  animation: clay-blue-eye-blink 5.6s ease-in-out infinite;
+}
+.clay-blue-eye-iris {
+  position: absolute;
+  top: 35%;
+  left: 40%;
+  width: 44%;
+  height: 48%;
+  border-radius: 52% 48% 53% 47%;
+  background: radial-gradient(circle at 32% 28%, var(--clay-eye-rim), var(--clay-eye-iris) 63%, var(--clay-eye-shadow));
+  box-shadow: inset -1px -1px 2px var(--clay-eye-shadow), 0 0 1px var(--clay-eye-shadow);
+  animation: clay-blue-eye-look 7.3s ease-in-out infinite;
+}
+.clay-blue-eye-iris::after {
+  content: "";
+  position: absolute;
+  top: 16%;
+  left: 20%;
+  width: 24%;
+  height: 24%;
+  border-radius: 50%;
+  background: var(--clay-eye-glint);
+  opacity: 0.86;
+}
+.clay-blue-eye-lid {
+  position: absolute;
+  z-index: 3;
+  left: -8%;
+  width: 116%;
+  background:
+    radial-gradient(ellipse at 29% 14%, color-mix(in srgb, var(--clay-eye-lit) 55%, var(--clay-eye-clay)), transparent 57%),
+    linear-gradient(160deg, var(--clay-eye-clay), var(--clay-eye-rim) 68%, var(--clay-eye-socket));
+}
+.clay-blue-eye-lid.is-upper {
+  top: -7%;
+  height: 38%;
+  border-radius: 68% 68% 35% 40% / 85% 85% 28% 28%;
+  box-shadow: 0 2px 2px color-mix(in srgb, var(--clay-eye-shadow) 55%, transparent), inset 0 -1px 1px var(--clay-eye-socket);
+  animation: clay-blue-upper-blink 5.6s ease-in-out infinite;
+}
+.clay-blue-eye-lid.is-lower {
+  bottom: -5%;
+  height: 24%;
+  border-radius: 34% 35% 85% 85% / 30% 29% 80% 80%;
+  box-shadow: 0 -1px 2px color-mix(in srgb, var(--clay-eye-shadow) 45%, transparent);
+}
+@keyframes clay-blue-eye-blink {
+  0%, 37%, 42%, 75%, 79%, 100% { transform: scaleY(1); }
+  39%, 77% { transform: scaleY(0.09); }
+}
+@keyframes clay-blue-upper-blink {
+  0%, 37%, 42%, 75%, 79%, 100% { transform: translateY(0) scaleY(1); }
+  39%, 77% { transform: translateY(58%) scaleY(1.7); }
+}
+@keyframes clay-blue-eye-look {
+  0%, 16%, 61%, 100% { transform: translate(0, 0); }
+  25%, 41% { transform: translate(-18%, 3%); }
+  73%, 84% { transform: translate(13%, -8%); }
+}
+.clay-bot-stage.is-blue[data-clip="judging.webp"] .clay-blue-eye-lid.is-upper { height: 57%; }
+.clay-bot-stage.is-blue[data-clip="interested.webp"] .clay-blue-eye-iris { animation-duration: 4.2s; }
+.clay-bot-stage.is-blue[data-clip="concerned.webp"] .clay-blue-eye.is-left { transform: rotate(9deg); }
+.clay-bot-stage.is-blue[data-clip="concerned.webp"] .clay-blue-eye.is-right { transform: rotate(-9deg); }
+/* Hide face as the existing white-unicorn transformation starts. */
+.clay-bot-stage.is-blue[data-clip="image.webp"] .clay-blue-face,
+.clay-bot-stage.is-blue[data-clip="pop-shape.webp"] .clay-blue-face {
+  animation: clay-blue-face-morph 2.1s linear infinite;
+}
+@keyframes clay-blue-face-morph {
+  0%, 10% { opacity: 1; }
+  17%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clay-blue-eye-inner, .clay-blue-eye-iris, .clay-blue-eye-lid.is-upper,
+  .clay-bot-stage.is-blue .clay-blue-face { animation: none; }
+  .clay-bot-stage.is-blue[data-clip="image.webp"] .clay-blue-face,
+  .clay-bot-stage.is-blue[data-clip="pop-shape.webp"] .clay-blue-face { display: none; }
+}

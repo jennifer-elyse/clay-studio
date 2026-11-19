@@ -69,5 +69,14 @@
   --clay-stroke: #bad2e5;
   --clay-sky: #388fcc;
   --clay-focus: #2167ae;
+  --clay-eye-socket: #1c5a90;
+  --clay-eye-shadow: #133e68;
+  --clay-eye-clay: #4d98d6;
+  --clay-eye-lit: #9bd3f3;
+  --clay-eye-rim: #2677b9;
+  --clay-eye-sclera: #e7f2f6;
+  --clay-eye-sclera-shadow: #92bbd7;
+  --clay-eye-iris: #193c60;
+  --clay-eye-glint: #ffffff;
   --focus-ring: 0 0 0 3px rgb(33 103 174 / 30%);
 }

@@ -24,6 +24,15 @@
   border-radius: 32px;
 }
 
+.clay-bot-figure {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
 .clay-bot-clip {
   width: 108%;
   height: 108%;
@@ -54,16 +63,16 @@
   object-fit: contain;
   mask-image: radial-gradient(ellipse at center, #000 47%, transparent 74%);
 }
-.clay-bot-stage.is-blue[data-clip="rolling.webp"] .clay-bot-clip,
-.clay-bot-stage.is-blue[data-clip="run.webp"] .clay-bot-clip {
+.clay-bot-stage.is-blue[data-clip="rolling.webp"] .clay-bot-figure,
+.clay-bot-stage.is-blue[data-clip="run.webp"] .clay-bot-figure {
   animation: clay-blue-roll 1.8s ease-in-out infinite;
 }
-.clay-bot-stage.is-blue[data-clip="plan.webp"] .clay-bot-clip,
-.clay-bot-stage.is-blue[data-clip="think.webp"] .clay-bot-clip {
+.clay-bot-stage.is-blue[data-clip="plan.webp"] .clay-bot-figure,
+.clay-bot-stage.is-blue[data-clip="think.webp"] .clay-bot-figure {
   animation: clay-blue-think 2.6s ease-in-out infinite;
 }
-.clay-bot-stage.is-blue[data-clip="help.webp"] .clay-bot-clip,
-.clay-bot-stage.is-blue[data-clip="settings.webp"] .clay-bot-clip {
+.clay-bot-stage.is-blue[data-clip="help.webp"] .clay-bot-figure,
+.clay-bot-stage.is-blue[data-clip="settings.webp"] .clay-bot-figure {
   animation: clay-blue-bounce 2s ease-in-out infinite;
 }
 @keyframes clay-blue-roll { 0%,100% { transform: translateX(-5%) rotate(-7deg); } 50% { transform: translateX(5%) rotate(7deg); } }
@@ -71,8 +80,11 @@
 @keyframes clay-blue-bounce { 0%,100% { transform: translateY(2%); } 50% { transform: translateY(-5%); } }
 @media (prefers-reduced-motion: reduce) {
   .clay-bot-stage.is-blue .clay-bot-clip { display: none; }
+  .clay-bot-stage.is-blue .clay-bot-figure { animation: none; }
   .clay-bot-stage.is-blue::after {
     content: "";
+    position: absolute;
+    z-index: 0;
     width: 66%;
     height: 66%;
     border-radius: 49% 51% 48% 52%;

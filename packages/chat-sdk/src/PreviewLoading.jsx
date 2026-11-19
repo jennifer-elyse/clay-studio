@@ -6,11 +6,12 @@ import { ClayBot } from "./ClayBot.jsx";
  * @param {object} props
  * @param {string} props.label
  * @param {boolean} [props.overlay]
+ * @param {"classic" | "blue"} [props.theme]
  */
-export function PreviewLoading({ label, overlay = false }) {
+export function PreviewLoading({ label, overlay = false, theme = "classic" }) {
   return (
     <div className={overlay ? "clay-preview-loading is-overlay" : "clay-preview-loading"} aria-hidden="true">
-      <ClayBot clip="rolling.webp" />
+      <ClayBot clip="rolling.webp" theme={theme} />
       <span>{label}</span>
       <span className="clay-preview-loading-bar" />
     </div>
