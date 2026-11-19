@@ -7,6 +7,7 @@ import { PreviewPane } from "./PreviewPane.jsx";
 import { SettingsModal } from "./SettingsModal.jsx";
 import { previewActivity } from "./map-events.js";
 import { useClaySession } from "./use-clay-session.js";
+import { useLayout } from "./use-layout.js";
 import "./tokens.css";
 import "./ClayChat.css";
 /** @param {import("./use-clay-session.js").ClayChatProps} props */
@@ -31,12 +32,16 @@ export function ClayChat(props) {
       return { ...ready, projectFolder: projectDraft.folder };
     },
   });
+  const { layout, previewReady, pick } = useLayout({ ...props, debug: session.debug, projectId: props.project?.id ?? "" });
   return (
     <div className="clay-root">
-      <div className="clay-shell">
+      <div className="clay-shell" data-layout={layout}>
         <ClayHeader
           clip={session.clip}
           minimized={session.minimized}
+          layout={layout}
+          onLayout={pick}
+          previewReady={previewReady}
           seat={props.seat}
           seatSettings={props.seatSettings}
           onLoadModels={props.onLoadModels}

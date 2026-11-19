@@ -1,1 +1,61 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Clay chatbot — command animations</title><style>body{font:16px system-ui,sans-serif;margin:0;background:#171421;color:#f7f2ff;min-height:100vh;display:grid;place-items:center}.wrap{max-width:820px;padding:25px;text-align:center}.stage{height:320px;width:min(100%,430px);margin:15px auto;background:radial-gradient(circle,#353043,#221d2e 70%);border-radius:24px;display:grid;place-items:center}.stage img{width:315px;height:311px;object-fit:contain}button{background:#353047;color:white;border:1px solid #666077;border-radius:100px;padding:10px 16px;margin:5px;cursor:pointer}button.active{background:#bc8add;color:#1b1025}p{color:#c7bdd2;line-height:1.5}code{color:#e8baff}</style><div class="wrap"><h1>Clay chatbot · slash commands</h1><p>Ten looping transparent animated WebP reactions. Select a slash command to preview its animation.</p><div class="stage"><img id="character" src="commands/help.webp" alt="Clay chatbot"></div><div id="controls"></div><p id="description"></p></div><script>const commands={"/help": {"file": "commands/help.webp", "intent": "display available commands"}, "/new": {"file": "commands/new.webp", "intent": "start a new conversation"}, "/clear": {"file": "commands/clear.webp", "intent": "clear or reset the current context"}, "/search": {"file": "commands/search.webp", "intent": "search for information"}, "/think": {"file": "commands/think.webp", "intent": "reason through a task"}, "/summarize": {"file": "commands/summarize.webp", "intent": "summarize selected content"}, "/write": {"file": "commands/write.webp", "intent": "draft or rewrite text"}, "/code": {"file": "commands/code.webp", "intent": "generate or review code"}, "/image": {"file": "commands/image.webp", "intent": "create or examine images"}, "/settings": {"file": "commands/settings.webp", "intent": "open preferences"}};const img=document.getElementById('character'),controls=document.getElementById('controls'),description=document.getElementById('description');for(const [command,entry] of Object.entries(commands)){const b=document.createElement('button');b.textContent=command;b.dataset.command=command;b.onclick=()=>{img.src=entry.file+'?restart='+Date.now();description.textContent=entry.intent;document.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x.dataset.command===command))};controls.appendChild(b)}controls.firstChild.click()</script>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Purple Clay — slash-command animations</title>
+  <style>
+    body { margin: 0; background: #171421; color: #f7f2ff; font: 16px system-ui, sans-serif; }
+    main { max-width: 900px; padding: 28px 18px 42px; margin: auto; text-align: center; }
+    h1 { margin-bottom: .25rem; }
+    p { color: #d0c6d9; line-height: 1.5; }
+    .stage { width: min(100%, 430px); height: 320px; margin: 20px auto; background: radial-gradient(circle, #353043, #221d2e 70%); border-radius: 24px; display: grid; place-items: center; }
+    .stage img { width: 315px; height: 311px; max-width: 100%; object-fit: contain; }
+    .buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 9px; }
+    button { background: #353047; color: #fff; border: 1px solid #77708b; border-radius: 100px; padding: 9px 13px; font: inherit; cursor: pointer; }
+    button[aria-pressed="true"] { background: #bc8add; color: #1b1025; border-color: #bc8add; }
+    button:focus-visible { outline: 3px solid #f4cdff; outline-offset: 3px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Purple Clay · slash commands</h1>
+    <p id="count">Loading slash-command animations…</p>
+    <div class="stage"><img id="character" alt="Purple Clay animation preview" width="315" height="311"></div>
+    <div id="controls" class="buttons" role="group" aria-label="Slash command animations"></div>
+    <p id="description" role="status" aria-live="polite"></p>
+  </main>
+  <script type="module">
+    const img = document.querySelector("#character");
+    const controls = document.querySelector("#controls");
+    const description = document.querySelector("#description");
+    const count = document.querySelector("#count");
+    try {
+      const response = await fetch("./manifest.json");
+      if (!response.ok) throw new Error("Could not load animation manifest.");
+      const manifest = await response.json();
+      const entries = Object.entries(manifest.slash_commands);
+      count.textContent = `${manifest.coverage.registered_commands} commands · ${entries.length} slash spellings · animated WebP`;
+      for (const [slash, entry] of entries) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = slash;
+        button.dataset.slash = slash;
+        button.setAttribute("aria-pressed", "false");
+        button.addEventListener("click", () => {
+          img.src = `${manifest.asset_base}${entry.file}?restart=${Date.now()}`;
+          description.textContent = `${slash} · ${entry.intent}${entry.alias_of ? ` (alias of ${entry.alias_of})` : ""}`;
+          for (const other of controls.querySelectorAll("button")) {
+            other.setAttribute("aria-pressed", String(other === button));
+          }
+        });
+        controls.appendChild(button);
+      }
+      controls.querySelector("button")?.click();
+    } catch (error) {
+      count.textContent = "Animation preview is unavailable.";
+      description.textContent = error instanceof Error ? error.message : "Could not read manifest.";
+    }
+  </script>
+</body>
+</html>

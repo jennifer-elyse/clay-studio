@@ -1,0 +1,37 @@
+{
+  "format": "animated WebP",
+  "theme": "blue",
+  "animation_source": "Generated clay ball motion, with a separate blue-ball to white-unicorn transformation for /image",
+  "command_files": [
+    "spec.webp",
+    "plan.webp",
+    "build.webp",
+    "run.webp",
+    "fix.webp",
+    "docs.webp",
+    "help.webp",
+    "clear.webp",
+    "search.webp",
+    "think.webp",
+    "summarize.webp",
+    "write.webp",
+    "code.webp",
+    "image.webp",
+    "upload.webp",
+    "settings.webp",
+    "new.webp",
+    "seats.webp",
+    "stop.webp",
+    "debug.webp"
+  ],
+  "ambient_files": [
+    "idle.webp",
+    "blink.webp",
+    "rolling.webp",
+    "pop-shape.webp",
+    "interested.webp",
+    "judging.webp",
+    "concerned.webp"
+  ],
+  "note": "All 20 slash commands have distinct animated WebP files and motion timings. Their stop-motion source is a blue clay ball; /image has a separate white-unicorn and rainbow-spiral-horn morph. Ambient clips are reusable."
+}

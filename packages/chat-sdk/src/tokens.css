@@ -57,3 +57,17 @@
     animation: none !important;
   }
 }
+
+/* Blue clay is opt-in. Classic keeps its original tokens and artwork. */
+.clay-root.is-blue {
+  --clay-sand: #e0ebf4;
+  --clay-surface: #f4f8fc;
+  --clay-paper: #ffffff;
+  --clay-ink: #1e354b;
+  --clay-muted: #486479;
+  --clay-blob: #3383d4;
+  --clay-stroke: #bad2e5;
+  --clay-sky: #388fcc;
+  --clay-focus: #2167ae;
+  --focus-ring: 0 0 0 3px rgb(33 103 174 / 30%);
+}

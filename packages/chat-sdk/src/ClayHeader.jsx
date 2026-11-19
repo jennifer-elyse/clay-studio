@@ -1,5 +1,6 @@
 import { Chevron } from "./Chevron.jsx";
 import { ClayBot } from "./ClayBot.jsx";
+import { LayoutSwitch } from "./LayoutSwitch.jsx";
 import { ProjectMenu } from "./ProjectMenu.jsx";
 import { SeatBadge } from "./SeatBadge.jsx";
 import { SettingsButton } from "./SettingsButton.jsx";
@@ -7,8 +8,12 @@ import { SettingsButton } from "./SettingsButton.jsx";
 /**
  * @param {object} props
  * @param {string} props.clip
+ * @param {"classic" | "blue"} [props.theme]
  * @param {boolean} props.minimized
  * @param {() => void} props.onToggle
+ * @param {"chat" | "preview"} [props.layout]
+ * @param {(layout: "chat" | "preview") => void} [props.onLayout]
+ * @param {boolean} [props.previewReady]
  * @param {{ provider?: string, model?: string, caption?: string } | null} [props.seat]
  * @param {import("./seat-model-form.js").SeatSettings | null} [props.seatSettings]
  * @param {() => Promise<{ ok?: boolean, models?: Array<{ id: string, label?: string }>, message?: string } | void>} [props.onLoadModels]
@@ -25,8 +30,12 @@ import { SettingsButton } from "./SettingsButton.jsx";
  */
 export function ClayHeader({
   clip,
+  theme = "classic",
   minimized,
   onToggle,
+  layout = "chat",
+  onLayout = () => {},
+  previewReady = false,
   seat,
   seatSettings = null,
   onLoadModels,
@@ -46,6 +55,7 @@ export function ClayHeader({
     return (
       <header className="clay-header is-minimized">
         <h1 className="clay-header-title">{title}</h1>
+        <LayoutSwitch layout={layout} onLayout={onLayout} previewReady={previewReady} />
         <button type="button" className="clay-minimize" aria-expanded="false" aria-label={`Show header, ${title}`} onClick={onToggle}>
           <Chevron direction="up" />
         </button>
@@ -54,7 +64,7 @@ export function ClayHeader({
   }
   return (
     <header className="clay-header" id="clay-header">
-      <ClayBot clip={clip} />
+      <ClayBot clip={clip} theme={theme} />
       <div className="clay-wordmark">
         <strong>Clay</strong>
         <span>Mold freely. Ship safely.</span>
@@ -70,6 +80,7 @@ export function ClayHeader({
           onSave={onSaveProject}
           onDraft={onProjectDraft}
         />
+        <LayoutSwitch layout={layout} onLayout={onLayout} previewReady={previewReady} />
         <SettingsButton onOpen={onOpenSettings} />
         <SeatBadge seat={seat} settings={seatSettings} onLoadModels={onLoadModels} onSelect={onSelectModel} />
       </div>

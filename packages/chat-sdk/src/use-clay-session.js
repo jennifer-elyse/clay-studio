@@ -76,6 +76,7 @@ export function useClaySession(props) {
    * @param {unknown} [product] a seat to preselect. Defaults to the current seat.
    */
   function openSettings(product) {
+    playClip("/settings");
     setSeatProduct(typeof product === "string" ? product : (props.seat?.provider ?? ""));
     setSettingsSection("seat");
     setSettingsOpen(true);
@@ -188,7 +189,7 @@ export function useClaySession(props) {
   function think(slash) {
     setThinkFirst(true);
     setDraft(slash);
-    playClip(slash);
+    playClip("/think");
   }
 
   function adjust() {
@@ -244,7 +245,7 @@ export function useClaySession(props) {
     steps,
     working,
     messageActions: {
-      onCancel: () => props.onCancel?.(),
+      onCancel: () => { playClip("/stop"); props.onCancel?.(); },
       editing: Boolean(editingId),
       onCancelEdit: cancelEdit,
       onEdit: editMessage,

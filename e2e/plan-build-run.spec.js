@@ -1,10 +1,42 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
+
+// The same folder playwright.config.js passes as CLAY_APPS_DIR.
+const appsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", ".clay-preview-apps");
+const projectName = `Request tracker ${Date.now()}`;
+
+/**
+ * Removes a project this file created: its folder and its entry in the e2e profile.
+ * @param {string} name
+ */
+async function removeProject(name) {
+  const file = path.join(appsDir, "profile", "projects.json");
+  const registry = JSON.parse(await fs.readFile(file, "utf8").catch(() => '{"projects":[]}'));
+  const project = registry.projects.find((item) => item.name === name);
+  if (!project?.folder) return;
+  await fs.rm(path.join(appsDir, project.folder), { recursive: true, force: true });
+  const projects = registry.projects.filter((item) => item.id !== project.id);
+  const activeId = registry.activeId === project.id ? null : registry.activeId;
+  await fs.writeFile(file, JSON.stringify({ ...registry, activeId, projects }, null, 2), "utf8");
+}
+
+test.afterAll(() => removeProject(projectName));
 
 test("Plan, approve, build, and run", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "What should we mold?" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Request tracker" }).click();
+  // A new project each run: Plan and Build stay off for a project once they finish.
+  await page.getByRole("combobox", { name: "Project" }).selectOption({ label: "New project…" });
+  await page.getByRole("textbox", { name: "Name" }).fill(projectName);
+  await page.getByRole("button", { name: "Add project" }).click();
+  await expect(page.getByRole("combobox", { name: "Project" }).locator("option:checked")).toHaveText(projectName);
+  await page.getByRole("button", { name: "Plan", exact: true }).click();
+  await page.getByLabel("Message").press("End");
+  await page.getByLabel("Message").pressSequentially("A request tracker");
+  await page.getByLabel("Message").press("Enter");
   await expect(page.getByText("Needs your approval")).toBeVisible({ timeout: 15000 });
 
   await page.getByRole("button", { name: "Approve" }).click();
@@ -14,10 +46,15 @@ test("Plan, approve, build, and run", async ({ page }) => {
   await page.getByLabel("Message").press("Enter");
   await expect(page.getByText(/Built against/)).toBeVisible({ timeout: 15000 });
 
+  await expect(page.getByRole("button", { name: "Chat", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByTitle("App preview")).toHaveCount(0);
+
   await page.getByRole("button", { name: "Run", exact: true }).click();
   await page.getByLabel("Message").press("Enter");
+  // The layout switches to Preview by itself when the app is ready.
   await expect(page.getByTitle("App preview")).toBeVisible({ timeout: 20000 });
   await expect(page.getByTitle("App preview")).toHaveAttribute("src", /127\.0\.0\.1/);
+  await expect(page.getByRole("button", { name: "Preview", exact: true })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("Settings opens from the header with Seat and Projects folder", async ({ page }) => {

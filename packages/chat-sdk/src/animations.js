@@ -1,5 +1,11 @@
-/** Slash commands whose filename matches the command name (reset → new). */
+/** Every registered slash command has a dedicated, stable WebP pathname. */
 export const COMMAND_CLIPS = {
+  spec: "spec.webp",
+  plan: "plan.webp",
+  build: "build.webp",
+  run: "run.webp",
+  fix: "fix.webp",
+  docs: "docs.webp",
   help: "help.webp",
   clear: "clear.webp",
   search: "search.webp",
@@ -8,8 +14,12 @@ export const COMMAND_CLIPS = {
   write: "write.webp",
   code: "code.webp",
   image: "image.webp",
+  upload: "upload.webp",
   settings: "settings.webp",
   reset: "new.webp",
+  seat: "seats.webp",
+  stop: "stop.webp",
+  debug: "debug.webp",
 };
 
 /** Clips without a slash-command name — used at random. */
@@ -24,6 +34,7 @@ export const AMBIENT_CLIPS = [
 ];
 
 export const ANIMATION_BASE = "/assets/animations";
+export const BLUE_ANIMATION_BASE = "/assets/animations/blue";
 
 /**
  * @param {string | null | undefined} commandId

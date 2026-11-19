@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { OpenPreview } from "./OpenPreview.jsx";
+import { PreviewFrame } from "./PreviewFrame.jsx";
+import { PreviewLoading } from "./PreviewLoading.jsx";
 import { frameSrc } from "./preview-frame.js";
 
 /**
@@ -16,20 +19,27 @@ export function PreviewPane({ url, status, message = "", debug = false, log = ""
   const src = frameSrc(url, pageOrigin);
   const failed = status === "error" || Boolean(url && !src);
   const notice = message || "The app didn't start.";
-  const waiting = activity || (status === "starting" ? "Starting…" : "Mold something, then press Run.");
+  const waiting = activity || "Mold something, then press Run.";
+  const starting = status === "starting" && !activity && !failed;
   const label = failed ? notice : activity || src || (status === "starting" ? "Starting…" : "Preview sleeps until you Run");
+  const [loadedSrc, setLoadedSrc] = useState("");
+  if (!src && loadedSrc) setLoadedSrc("");
+  const loaded = Boolean(src) && loadedSrc === src;
+  const announcement = failed ? notice : starting ? "Starting your app…" : src && !loaded ? "Opening your app…" : loaded ? "Your app is ready." : "";
   return (
-    <aside className="clay-preview" aria-label="Live preview">
-      <header>
-        {src && !activity ? <OpenPreview url={src} onOpen={onOpen} /> : null}
-        <span>{label}</span>
-      </header>
-      {src ? (
-        <iframe title="App preview" src={src} sandbox="allow-forms allow-scripts allow-same-origin" referrerPolicy="no-referrer" />
-      ) : (
-        <div className="clay-preview-empty">{failed ? notice : waiting}</div>
-      )}
-      {debug ? <pre className="clay-debug">{log || "No process log yet."}</pre> : null}
-    </aside>
+    <>
+      <aside className="clay-preview" aria-label="Live preview">
+        <header>
+          {src && !activity ? <OpenPreview url={src} onOpen={onOpen} /> : null}
+          <span>{label}</span>
+        </header>
+        {src ? <PreviewFrame src={src} loaded={loaded} onLoad={setLoadedSrc} /> : null}
+        {starting ? <PreviewLoading label="Starting your app…" /> : null}
+        {!src && !starting ? <div className="clay-preview-empty">{failed ? notice : waiting}</div> : null}
+        {debug ? <pre className="clay-debug">{log || "No process log yet."}</pre> : null}
+      </aside>
+      {/* Outside the pane, which Chat layout hides, so the status is still heard there. */}
+      <p className="clay-sr-only" role="status">{announcement}</p>
+    </>
   );
 }

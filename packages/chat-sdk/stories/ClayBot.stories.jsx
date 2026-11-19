@@ -30,3 +30,10 @@ export const Ambient = {
     </div>
   ),
 };
+
+export const BlueClay = {
+  render: () => <div className="clay-root is-blue" style={{ padding: 24 }}><ClayBot theme="blue" clip="idle.webp" size="lg" /></div>,
+};
+export const UnicornMorph = {
+  render: () => <div className="clay-root is-blue" style={{ padding: 24 }}><ClayBot theme="blue" clip="image.webp" size="lg" /></div>,
+};
