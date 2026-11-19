@@ -88,3 +88,8 @@ Python Pillow, run `node scripts/render-blue-webps.mjs`, then run
 `feat-theme` and commits updated **WebP image binaries**, not just source
 code. A CSS reduced-motion fallback uses a static SVG pose instead of playing
 an animated WebP.
+
+
+### Illustration source-of-truth (Blue Clay)
+
+**The two original, AI-rendered Clay Studio illustrations—not the earlier CSS/SVG reconstruction—are committed as `source-ball.webp` and `source-unicorn.webp`.** Runtime Blue Clay uses animated WebPs generated from those source assets, including real 320×320 alpha-transparent frames for 20 commands and seven ambient states. `python3 scripts/render-blue-from-art.py` is the reproducible Pillow generator. The workflow `.github/workflows/blue-clay-assets.yml` regenerates and verifies all 27 clips and publishes the image binaries to `feat-theme`. Reduced-motion visuals also use the corresponding original illustration. The legacy SVG rig remains available in source history but is not used by the Blue Clay UI.

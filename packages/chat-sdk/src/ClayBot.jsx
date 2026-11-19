@@ -1,5 +1,4 @@
 import { ANIMATION_BASE, BLUE_ANIMATION_BASE, animationSrc } from "./animations.js";
-import { BlueClayFigure } from "./BlueClayFigure.jsx";
 import { useState } from "react";
 import "./ClayBot.css";
 
@@ -18,12 +17,16 @@ export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE
       {theme === "blue" ? (
         <>
           <div className="clay-blue-animated">
-            {failedAsset === src
-              ? <BlueClayFigure clip={clip} />
-              : <img key={src} className="clay-bot-clip" src={src} alt="" width="320" height="320"
-                  onError={() => setFailedAsset(src)} />}
+            {<img key={src} className="clay-bot-clip"
+                  src={failedAsset === src ? animationSrc("source-ball.webp", BLUE_ANIMATION_BASE) : src}
+                  alt="" width="320" height="320" onError={() => setFailedAsset(src)} />}
           </div>
-          <div className="clay-blue-reduced"><BlueClayFigure clip={clip} /></div>
+          <div className="clay-blue-reduced">
+            <img className="clay-bot-clip" src={animationSrc(
+              ["image.webp", "pop-shape.webp"].includes(clip) ? "source-unicorn.webp" : "source-ball.webp",
+              BLUE_ANIMATION_BASE
+            )} alt="" width="320" height="320" />
+          </div>
         </>
       ) : <img key={src} className="clay-bot-clip" src={src} alt="" width="315" height="311" />}
     </div>

@@ -1,56 +1,40 @@
-name: Render and commit Blue Clay animations
+name: Verify Blue Clay illustrated animations
 on:
   push:
     branches: [feat-theme]
     paths:
       - '.github/workflows/blue-clay-assets.yml'
-      - 'scripts/render-blue-webps.mjs'
-      - 'scripts/encode-blue-webp.py'
-      - 'apps/studio/blue-render.html'
-      - 'apps/studio/src/blue-render.jsx'
-      - 'packages/chat-sdk/src/BlueClayFigure.jsx'
-      - 'packages/chat-sdk/src/BlueClayFigure.css'
-      - 'packages/chat-sdk/src/blue-motion.js'
+      - 'scripts/render-blue-from-art.py'
+      - 'apps/studio/public/assets/animations/blue/source-ball.webp'
+      - 'apps/studio/public/assets/animations/blue/source-unicorn.webp'
   workflow_dispatch:
 permissions:
   contents: write
 jobs:
-  render:
+  verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          persist-credentials: true
+          python-version: '3.12'
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - run: python3 -m pip install Pillow==11.3.0
-      - name: Start Vite for asset capture
-        run: |
-          (cd apps/studio && CLAY_STACK_CHECKED=1 ../../node_modules/.bin/vite) >/tmp/clay-blue-vite.log 2>&1 &
-          for i in {1..60}; do
-            curl -fsS http://127.0.0.1:5173/blue-render.html >/dev/null && exit 0
-            sleep 1
-          done
-          cat /tmp/clay-blue-vite.log
-          exit 1
-      - name: Render command and ambient WebPs
-        run: node scripts/render-blue-webps.mjs
-      - name: Verify animation frame count and resolution
+      - run: npm ci
+      - name: Rebuild from the generated Blue Clay and unicorn artwork
+        run: python3 scripts/render-blue-from-art.py
+      - name: Validate all 20 command and 7 ambient animations
         run: npm run test -w @cswg/clay-chat -- --runInBand
-      - name: Commit the actual generated image binaries
+      - name: Commit generated WebP files if rendering differs
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add apps/studio/public/assets/animations/blue/*.webp
+          git add apps/studio/public/assets/animations/blue/*.webp apps/studio/public/assets/animations/blue/manifest.json
           if ! git diff --cached --quiet; then
-            git commit -m 'assets(blue-clay): render full-resolution animated WebPs for every command'
+            git commit -m 'assets(blue-clay): update generated animated WebPs'
             git push origin HEAD:feat-theme
           fi

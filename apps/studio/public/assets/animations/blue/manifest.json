@@ -33,9 +33,13 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "20 distinct slash-command animated WebPs and 7 ambient animated WebPs rendered at 320px from the same integrated clay rig. Blue eyes and lids stay synchronized; image.webp and pop-shape.webp contain the white unicorn with multicolored horn. Rebuilt and committed on feat-theme by the Blue Clay assets workflow.",
-  "generator": "node scripts/render-blue-webps.mjs (Playwright + Pillow; same SVG rig as runtime)",
+  "note": "Source art is the exact generated blue clay ball and white rainbow-horn unicorn from this conversation, converted to 320x320 transparent WebP. All command and ambient animated WebPs are generated from these images, preserving sculpted detail and synchronized eye/body motion.",
+  "generator": "python3 scripts/render-blue-from-art.py",
   "resolution": "320x320",
   "frames_per_clip": 16,
-  "frame_duration_ms": 200
+  "frame_duration_ms": 200,
+  "source_art": [
+    "source-ball.webp",
+    "source-unicorn.webp"
+  ]
 }
