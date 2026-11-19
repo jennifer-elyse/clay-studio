@@ -13,7 +13,7 @@ Read the checklist at the end of `templates/web-app/docs/code.md`, and `docs/des
 4. Tokens are imported. Components use them. A Figma component with code uses Code Connect.
 5. A changed component has a Storybook story for its states. Jest covers the unit behavior. Playwright covers the user flow.
 6. Docs changed in the same change, including a regenerated ERD when data moved. Shared functions have JSDoc.
-7. Keyboard, semantic HTML, visible focus, text labels for status. Numbers are tabular. Layout uses container queries. Hover, focus, and disabled states match `docs/design.md`.
+7. Keyboard, semantic HTML, visible focus, text labels for status. Numbers are tabular. A table column and its header use the same alignment: strings left, numbers right, actions (buttons) center. Layout uses container queries. Hover, focus, and disabled states match `docs/design.md`.
 8. Pure functions, no shared mutation, components under 50 lines. React 19 function components: `ref` is a prop, a form submits through its `action`, `useActionState` holds a submit result and pending state, and the hooks recommended rules pass.
 9. No secrets or restricted data in code, prompts, logs, or seed data. New packages are real, established, approved, and on the license allowlist. Open npm security issues are fixed: upgrade to a newer patched release, and do not downgrade a package to clear an advisory.
 

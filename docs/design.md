@@ -24,6 +24,8 @@ Imported conceptually from the Clay 1.0 deck. Values live in `packages/chat-sdk/
 
 Numbers always use tabular figures: `font-variant-numeric: tabular-nums`. Counts, prices, times, and ids stay aligned.
 
+A table column and its header use the same alignment. Strings align left. Numbers align right. Actions (buttons) align center.
+
 ## Layout
 
 Layout is intrinsic. A component sizes from its content and adapts with container queries (`@container`). Viewport breakpoint media queries are not used for layout.

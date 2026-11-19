@@ -5,7 +5,7 @@ description: Style screens with Clay tokens from client/src/tokens.css. Use when
 
 # UI tokens
 
-1. Use `var(--clay-*)` only. Color, type, space, and radius come from `client/src/tokens.css`. Do not type hex, a raw radius, or a new font in a component. Brand differences override tokens. Numbers use `font-variant-numeric: tabular-nums`.
+1. Use `var(--clay-*)` only. Color, type, space, and radius come from `client/src/tokens.css`. Do not type hex, a raw radius, or a new font in a component. Brand differences override tokens. Numbers use `font-variant-numeric: tabular-nums`. A table column and its header use the same alignment. Strings align left. Numbers align right. Actions (buttons) align center.
 2. Lay out with intrinsic sizing and `@container` queries. Do not use viewport breakpoint media queries for layout. The only media query is `@media (prefers-reduced-motion: reduce)`. It may reduce or remove motion only, and must not change layout, color, or input-capacity.
 3. Keep each screen under 50 lines by composing smaller pieces.
 4. Every status has a visible text label. Do not rely on color alone.
