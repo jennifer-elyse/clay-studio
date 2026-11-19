@@ -1,5 +1,4 @@
 import { ANIMATION_BASE, BLUE_ANIMATION_BASE, animationSrc } from "./animations.js";
-import { UnicornMorph } from "./UnicornMorph.jsx";
 import "./ClayBot.css";
 
 /**
@@ -14,12 +13,6 @@ export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE
   return (
     <div className={`clay-bot-stage is-${size} is-${theme}`} aria-hidden="true" data-clip={clip}>
       <img key={src} className="clay-bot-clip" src={src} alt="" width="315" height="311" />
-      {theme === "blue" ? (
-        <div className={`clay-blue-mascot${clip === "image.webp" ? " is-unicorn" : ""}`}>
-          <span className="clay-blue-ball" />
-          {clip === "image.webp" ? <UnicornMorph /> : null}
-        </div>
-      ) : null}
     </div>
   );
 }

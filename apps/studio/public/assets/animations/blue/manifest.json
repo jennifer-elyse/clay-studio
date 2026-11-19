@@ -1,6 +1,7 @@
 {
-  "theme": "blue",
   "format": "animated WebP",
+  "theme": "blue",
+  "animation_source": "Generated clay ball motion, with a separate blue-ball to white-unicorn transformation for /image",
   "command_files": [
     "spec.webp",
     "plan.webp",
@@ -32,5 +33,5 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "WebPs are based on existing Clay motion assets; a blue CSS clay sphere and vector unicorn transformation layer over them."
+  "note": "Command-specific animation filenames exist for all commands. Non-image clips share a common blue-ball WebP motion source; /image has a distinct unicorn morph. CSS adds command-dependent gestures."
 }
