@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { readTheme, saveTheme } from "./theme.js";
+import { useState } from "react";
 import { ChatPane } from "./ChatPane.jsx";
 import { ClayHeader } from "./ClayHeader.jsx";
 import { planNeedsProject } from "./project-gate.js";
@@ -8,12 +7,11 @@ import { PreviewPane } from "./PreviewPane.jsx";
 import { SettingsModal } from "./SettingsModal.jsx";
 import { previewActivity } from "./map-events.js";
 import { useClaySession } from "./use-clay-session.js";
+import { useLayout } from "./use-layout.js";
 import "./tokens.css";
 import "./ClayChat.css";
 /** @param {import("./use-clay-session.js").ClayChatProps} props */
 export function ClayChat(props) {
-  const [theme, setTheme] = useState(readTheme);
-  useEffect(() => saveTheme(theme), [theme]);
   const [projectDraft, setProjectDraft] = useState({ name: "", folder: "", open: false });
   const [projectNotice, setProjectNotice] = useState("");
   const [projectOpenSignal, setProjectOpenSignal] = useState(0);
@@ -34,13 +32,16 @@ export function ClayChat(props) {
       return { ...ready, projectFolder: projectDraft.folder };
     },
   });
+  const { layout, previewReady, pick } = useLayout({ ...props, debug: session.debug, projectId: props.project?.id ?? "" });
   return (
-    <div className={`clay-root is-${theme}`}>
-      <div className="clay-shell">
+    <div className="clay-root">
+      <div className="clay-shell" data-layout={layout}>
         <ClayHeader
           clip={session.clip}
-          theme={theme}
           minimized={session.minimized}
+          layout={layout}
+          onLayout={pick}
+          previewReady={previewReady}
           seat={props.seat}
           seatSettings={props.seatSettings}
           onLoadModels={props.onLoadModels}
@@ -71,7 +72,7 @@ export function ClayChat(props) {
           onPick={session.pick}
           onThink={session.think}
           thinkFirst={session.thinkFirst}
-          onSeats={() => session.send("/seats")}
+          onSeats={() => session.openSettings()}
           onApprove={props.onApprovePlan}
           onAdjust={() => session.adjust()}
           done={props.done}
@@ -81,8 +82,6 @@ export function ClayChat(props) {
         </KeepShell>
         <SettingsModal
           open={session.settingsOpen}
-          theme={theme}
-          onTheme={setTheme}
           section={session.settingsSection}
           onSection={session.setSettingsSection}
           product={session.seatProduct}
