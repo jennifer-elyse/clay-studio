@@ -1,5 +1,5 @@
 import { ANIMATION_BASE, BLUE_ANIMATION_BASE, animationSrc } from "./animations.js";
-import { BlueClayFace } from "./BlueClayFace.jsx";
+import { BlueClayFigure } from "./BlueClayFigure.jsx";
 import "./ClayBot.css";
 
 /**
@@ -13,10 +13,9 @@ export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE
   const src = animationSrc(clip, theme === "blue" ? BLUE_ANIMATION_BASE : base);
   return (
     <div className={`clay-bot-stage is-${size} is-${theme}`} aria-hidden="true" data-clip={clip}>
-      <div key={src} className="clay-bot-figure">
-        <img className="clay-bot-clip" src={src} alt="" width="315" height="311" />
-        {theme === "blue" ? <BlueClayFace /> : null}
-      </div>
+      {theme === "blue"
+        ? <BlueClayFigure clip={clip} />
+        : <img key={src} className="clay-bot-clip" src={src} alt="" width="315" height="311" />}
     </div>
   );
 }

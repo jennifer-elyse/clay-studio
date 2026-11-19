@@ -15,7 +15,6 @@
   overflow: hidden;
   position: relative;
 }
-
 .clay-bot-stage.is-lg {
   width: var(--clay-bot-stage-lg);
   height: var(--clay-bot-stage-lg);
@@ -23,72 +22,12 @@
   margin: 0 auto 12px;
   border-radius: 32px;
 }
-
-.clay-bot-figure {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-}
-
 .clay-bot-clip {
   width: 108%;
   height: 108%;
   object-fit: contain;
   pointer-events: none;
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .clay-bot-clip {
-    animation: none;
-  }
-}
-
-.clay-bot-stage.is-blue {
-  background: radial-gradient(circle at 43% 35%, var(--clay-paper), var(--clay-sand) 80%);
-  border-color: var(--clay-stroke);
-}
-.clay-bot-stage.is-blue .clay-bot-clip {
-  width: 100%;
-  height: 100%;
-}
-
-/* Blue Gumby visuals are actual animated WebPs, not tinted Classic assets. */
-.clay-bot-stage.is-blue .clay-bot-clip {
-  width: 116%;
-  height: 116%;
-  max-width: none;
-  object-fit: contain;
-  mask-image: radial-gradient(ellipse at center, #000 47%, transparent 74%);
-}
-.clay-bot-stage.is-blue[data-clip="rolling.webp"] .clay-bot-figure,
-.clay-bot-stage.is-blue[data-clip="run.webp"] .clay-bot-figure {
-  animation: clay-blue-roll 1.8s ease-in-out infinite;
-}
-.clay-bot-stage.is-blue[data-clip="plan.webp"] .clay-bot-figure,
-.clay-bot-stage.is-blue[data-clip="think.webp"] .clay-bot-figure {
-  animation: clay-blue-think 2.6s ease-in-out infinite;
-}
-.clay-bot-stage.is-blue[data-clip="help.webp"] .clay-bot-figure,
-.clay-bot-stage.is-blue[data-clip="settings.webp"] .clay-bot-figure {
-  animation: clay-blue-bounce 2s ease-in-out infinite;
-}
-@keyframes clay-blue-roll { 0%,100% { transform: translateX(-5%) rotate(-7deg); } 50% { transform: translateX(5%) rotate(7deg); } }
-@keyframes clay-blue-think { 0%,100% { transform: scale(.98); } 50% { transform: scale(1.075); } }
-@keyframes clay-blue-bounce { 0%,100% { transform: translateY(2%); } 50% { transform: translateY(-5%); } }
-@media (prefers-reduced-motion: reduce) {
-  .clay-bot-stage.is-blue .clay-bot-clip { display: none; }
-  .clay-bot-stage.is-blue .clay-bot-figure { animation: none; }
-  .clay-bot-stage.is-blue::after {
-    content: "";
-    position: absolute;
-    z-index: 0;
-    width: 66%;
-    height: 66%;
-    border-radius: 49% 51% 48% 52%;
-    background: radial-gradient(circle at 34% 28%, #a6d4f3, #4a91d3 43%, #2068aa 80%, #154887);
-    box-shadow: inset -7px -6px 10px #173f7766;
-  }
+  .clay-bot-clip { animation: none; }
 }
