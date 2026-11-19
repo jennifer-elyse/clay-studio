@@ -31,6 +31,9 @@ jobs:
       - name: Install clean dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Install starter-template test dependencies
+        run: npm ci --prefix templates/web-app --no-audit --no-fund
+
       - name: Run repository tests
         run: npm test
 
