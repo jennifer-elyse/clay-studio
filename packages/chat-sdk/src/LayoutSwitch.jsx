@@ -1,3 +1,4 @@
+/** @type {ReadonlyArray<{ id: "chat" | "preview", label: string }>} */
 const OPTIONS = [
   { id: "chat", label: "Chat" },
   { id: "preview", label: "Preview" },

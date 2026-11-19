@@ -88,9 +88,14 @@ export const PreviewLayoutWhenReady = {
   ),
 };
 
+export const PreviewStarting = {
+  render: () => <ClayChat events={finishedEvents} onSend={() => undefined} seat={{ provider: "mock" }} previewStatus="starting" />,
+};
+
 export const ReadyWhileInChatLayout = {
   render: PreviewLayoutWhenReady.render,
   play: async ({ canvasElement }) => {
-    canvasElement.querySelector(".clay-layout-option")?.click();
+    const options = [...canvasElement.querySelectorAll('[aria-label="Layout"] button')];
+    options.find((button) => button.textContent === "Chat")?.click();
   },
 };
