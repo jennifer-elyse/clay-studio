@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import shutil
 import sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter
@@ -19,6 +20,8 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "apps/studio/public/assets/animations/blue"
 ATLAS = ASSETS / "reference-atlas.webp"
+# Exact 12-frame generated metamorphosis, maintained separately from the expression atlas.
+MORPH_SOURCE = ASSETS / "morph-source.webp"
 FRAME_COUNT = 32
 FRAME_MS = 100
 SIDE = 320
@@ -222,13 +225,20 @@ def generate():
     for name in selected:
         if name not in POSES:
             raise ValueError(f"Unknown clip: {name}")
-        frames = list(frames_for(art, name))
         out = ASSETS / f"{name}.webp"
-        frames[0].save(out, "WEBP", save_all=True, append_images=frames[1:],
-                       duration=FRAME_MS, loop=0, quality=83, method=3, exact=True)
+        if POSES[name] == "morph":
+            # Keep the authored, transparent intermediate clay forms EXACTLY.
+            # Do not collapse the animation into a two-image wipe or a shrinking swap.
+            shutil.copyfile(MORPH_SOURCE, out)
+        else:
+            frames = list(frames_for(art, name))
+            frames[0].save(out, "WEBP", save_all=True, append_images=frames[1:],
+                           duration=FRAME_MS, loop=0, quality=83, method=3, exact=True)
         with Image.open(out) as check:
-            assert check.size == (SIDE, SIDE) and check.n_frames >= 24, (name, check.n_frames)
-        print(f"{name}: {out.stat().st_size:,} bytes, {FRAME_COUNT} sampled frames")
+            expected_frames = 12 if POSES[name] == "morph" else 24
+            assert check.size == (SIDE, SIDE) and check.n_frames >= expected_frames, (name, check.n_frames)
+            actual_frames = check.n_frames
+        print(f"{name}: {out.stat().st_size:,} bytes, {actual_frames} frames")
     if os.getenv("CLAY_BLUE_CLIPS"):
         return
     manifest = json.loads((ASSETS / "manifest.json").read_text(encoding="utf-8"))
@@ -236,12 +246,14 @@ def generate():
         "format": "animated WebP", "theme": "blue",
         "command_files": [f"{name}.webp" for name in COMMANDS],
         "ambient_files": [f"{name}.webp" for name in AMBIENT],
-        "source_art": ["reference-atlas.webp"],
+        "source_art": ["reference-atlas.webp", "morph-source.webp"],
+        "morph_frames": 12,
+        "morph_frame_duration_ms": 120,
         "generator": "python3 scripts/render-blue-from-art.py",
         "resolution": "320x320", "sampled_frames_per_clip": FRAME_COUNT,
-        "frame_duration_ms": FRAME_MS, "render_version": "7-1-metamorph-v4",
+        "frame_duration_ms": FRAME_MS, "render_version": "7-1-generated-morph-v5",
         "expressions": ["neutral", "happy", "excited", "curious", "thinking", "focused", "playful", "surprised", "proud", "sleepy"],
-        "note": "Blue Clay transitions into the pastel unicorn through a continuous sculpted material reveal and an orbiting glitter ribbon, without shrinking or ghosting. Low-alpha edges are scrubbed to prevent dark halos.",
+        "note": "The /image and pop-shape clips copy the exact 12-frame animated WebP created from the user-approved generated GIF. All other clips use the reference atlas. Transparent edges are checked in CI.",
     })
     (ASSETS / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 

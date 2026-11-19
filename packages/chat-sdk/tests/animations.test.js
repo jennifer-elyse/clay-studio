@@ -72,13 +72,21 @@ describe("Blue Clay parity and clip selection", () => {
       const path = `${directory}blue/${clip}`;
       expect(animationSrc(clip, BLUE_ANIMATION_BASE)).toBe(`${BLUE_ANIMATION_BASE}/${clip}`);
       expect(existsSync(path)).toBe(true);
-      expect(frameCount(path)).toBeGreaterThanOrEqual(24);
+      expect(frameCount(path)).toBeGreaterThanOrEqual(["image.webp", "pop-shape.webp"].includes(clip) ? 12 : 24);
       const file = readFileSync(path);
       expect(file.byteLength).toBeGreaterThan(100000);
       expect(file[24] + ((file[25] & 63) << 8) + 1).toBeGreaterThanOrEqual(300);
       expect(file[27] + ((file[28] & 63) << 8) + 1).toBeGreaterThanOrEqual(300);
     }
   });
+  test("the two transformation clips contain the exact generated 12-frame asset", () => {
+    const source = readFileSync(`${directory}blue/morph-source.webp`);
+    expect(frameCount(`${directory}blue/morph-source.webp`)).toBe(12);
+    for (const clip of ["image.webp", "pop-shape.webp"]) {
+      expect(readFileSync(`${directory}blue/${clip}`).equals(source)).toBe(true);
+    }
+  });
+
   test("unknown messages choose ambient clips without repeating the previous clip", () => {
     expect(AMBIENT_CLIPS).toContain(clipForCommand(null, { random: () => 0 }));
     expect(clipForCommand(null, { previous: "idle.webp", random: () => 0 })).not.toBe("idle.webp");

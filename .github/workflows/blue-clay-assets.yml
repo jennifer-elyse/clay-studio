@@ -5,6 +5,9 @@ on:
     paths:
       - '.github/workflows/blue-clay-assets.yml'
       - 'scripts/render-blue-from-art.py'
+      - 'scripts/check-blue-alpha.py'
+      - 'apps/studio/public/assets/animations/blue/morph-source.webp'
+      - 'packages/chat-sdk/tests/animations.test.js'
       - 'apps/studio/public/assets/animations/blue/reference-atlas.webp'
       - 'packages/chat-sdk/src/ClayBot.jsx'
       - 'packages/chat-sdk/src/styles/components/_bot.scss'
@@ -26,8 +29,10 @@ jobs:
           cache: npm
       - run: python3 -m pip install Pillow==11.3.0
       - run: npm ci
-      - name: Rebuild Blue Clay WebPs from the approved reference atlas
+      - name: Rebuild Blue Clay WebPs from the atlas and authored 12-frame morph
         run: python3 scripts/render-blue-from-art.py
+      - name: Audit full transparency of Blue Clay animations
+        run: python3 scripts/check-blue-alpha.py
       - name: Validate all 20 command and 7 ambient animations
         run: npm run test -w @cswg/clay-chat -- --runInBand
       - name: Commit generated WebP files if rendering differs
