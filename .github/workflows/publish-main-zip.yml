@@ -1,0 +1,106 @@
+name: Publish Clay Studio ZIP from main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: clay-studio-main-zip
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact main commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use supported Node.js runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '26'
+          cache: npm
+
+      - name: Install clean dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run repository tests
+        run: npm test
+
+      - name: Rebuild UI from main
+        run: npm run build
+
+      - name: Assemble portable Mac/Windows ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release clay-studio-package/clay-studio
+          git archive --format=tar "$GITHUB_SHA" | tar -xf - -C clay-studio-package/clay-studio
+          cp -a apps/studio/dist clay-studio-package/clay-studio/apps/studio/dist
+          if [ -d packages/chat-sdk/dist ]; then
+            cp -a packages/chat-sdk/dist clay-studio-package/clay-studio/packages/chat-sdk/dist
+          fi
+          chmod +x clay-studio-package/clay-studio/Clay\ Studio.command
+          chmod +x clay-studio-package/clay-studio/scripts/bootstrap.sh
+          cat > clay-studio-package/clay-studio/BUILD-INFO.txt <<EOF
+          Clay Studio downloadable package
+          Source branch: main
+          Source commit: $GITHUB_SHA
+          Built from source by GitHub Actions, with a compiled Studio UI.
+          Open Clay Studio.command on macOS or Clay Studio.bat on Windows.
+          On first launch, Node.js/npm and application dependencies may be installed.
+          EOF
+          test -f clay-studio-package/clay-studio/Clay\ Studio.command
+          test -f clay-studio-package/clay-studio/Clay\ Studio.bat
+          test -f clay-studio-package/clay-studio/apps/studio/dist/index.html
+          test -f clay-studio-package/clay-studio/apps/studio/public/assets/animations/blue/image.webp
+          test -f clay-studio-package/clay-studio/apps/studio/public/assets/animations/blue/blink.webp
+          test -f clay-studio-package/clay-studio/package-lock.json
+          (cd clay-studio-package && zip -q -r ../release/clay-studio-main.zip clay-studio)
+          unzip -tqq release/clay-studio-main.zip
+          (cd release && sha256sum clay-studio-main.zip > clay-studio-main.zip.sha256)
+          unzip -Z1 release/clay-studio-main.zip | grep -q '^clay-studio/apps/studio/dist/index.html$'
+          unzip -Z1 release/clay-studio-main.zip | grep -q '^clay-studio/Clay Studio.command$'
+          unzip -Z1 release/clay-studio-main.zip | grep -q '^clay-studio/Clay Studio.bat$'
+          ls -lh release/*
+
+      - name: Store downloadable build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: clay-studio-main-zip
+          path: |
+            release/clay-studio-main.zip
+            release/clay-studio-main.zip.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish publicly downloadable GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA" || {
+            echo "main changed while packaging; a newer run should publish instead."
+            exit 1
+          }
+          TAG="clay-studio-main-$(date -u +%Y%m%d)-${GITHUB_SHA:0:7}"
+          echo "Release tag: $TAG"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/clay-studio-main.zip release/clay-studio-main.zip.sha256 --clobber
+          else
+            gh release create "$TAG" release/clay-studio-main.zip release/clay-studio-main.zip.sha256 \
+              --target "$GITHUB_SHA" \
+              --title "Clay Studio — main (${GITHUB_SHA:0:7})" \
+              --notes "Installable ZIP rebuilt from main at \`$GITHUB_SHA\`. Contains the Mac and Windows launchers, project source, local animation assets, and precompiled Studio UI. The launcher installs missing runtime/dependencies on first open. SHA-256 checksum is attached." \
+              --latest
+          fi
+          gh release view "$TAG" --json url,assets --jq '{url: .url, assets: [.assets[].name]}'
