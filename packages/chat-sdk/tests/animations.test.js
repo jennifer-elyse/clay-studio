@@ -11,7 +11,7 @@ describe("slash command animations", () => {
     expect(Object.keys(COMMAND_CLIPS).sort()).toEqual(ids.sort());
     for (const cmd of COMMANDS) {
       const clip = clipForCommand(cmd.id);
-      expect(clip).toMatch(/\\.webp$/);
+      expect(clip.endsWith(".webp")).toBe(true);
       for (const base of [ANIMATION_BASE, BLUE_ANIMATION_BASE]) {
         const file = `${dir}${base === BLUE_ANIMATION_BASE ? "blue/" : ""}${clip}`;
         expect(existsSync(file)).toBe(true);
