@@ -10,3 +10,5 @@ The production release of a dependency is its npm `latest` tag. `next`, `canary`
 Before you finish work in this repo, run `node scripts/stack-versions.js`. If it prints a warning, repeat that warning in the reply. Do not call a version in the docs current when the script disagrees.
 
 A warning means the installed package, the declared range, or the Vite prebundle is behind `latest`. Restart Vite with `--force` when the warning says Vite is serving an older React.
+
+The running process also checks npm every 12 hours. It applies `npm audit fix` and installs a direct dependency when the patched release is newer. A downgrade is refused.

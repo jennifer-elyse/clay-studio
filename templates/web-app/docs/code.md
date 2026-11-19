@@ -20,7 +20,7 @@ The committee adopts this as Clay 1.0:
 1. Cursor for developers, GitHub Copilot for the rest of IT. One platform per role, seats sized to the work, Claude spend under a team cap.
 2. AI security and data rules. Approved models only. No restricted data or secrets in prompts. Least-privilege agents. People merge.
 3. Spec-driven development. `/plan` is required before implementation. Claude plans. Grok 4.7 High codes.
-4. One architecture for every web application. React 19 client, Express API on Cloud Run behind APIM, PostgreSQL, Google Cloud. JavaScript with JSDoc or TypeScript. Functional, idempotent code.
+4. One architecture for every web application. React 19 client, Express API on Cloud Run behind APIM, PostgreSQL, Google Cloud. JavaScript with JSDoc or TypeScript. Functional, idempotent code. Statuses are XState machines.
 5. Contract-first APIs and events. Zod, TypeSpec, or protobuf first for every API and event. Validated at the boundary. Backward compatible.
 6. Design system and proof. Imported tokens and Code Connect. Storybook, JSDoc, Jest, and Playwright prove each change.
 7. Services built to operate. An owner and tier, SLOs and tracing, resilience defaults, canary releases, and a tested recovery plan.
@@ -99,9 +99,10 @@ Write the spec first. Use the spec to direct the task. Exploration can discover 
 
 ## Stack
 
-- Browser: React 19.3.1 (`react` and `react-dom` `^19.3.1`). One design system. Brand differences are token overrides in `client/src/tokens.css`. The design system feeds those tokens from one design file.
+- Browser: React 19.3.1 (`react` and `react-dom` `^19.3.1`). One design system. Styles use the Sass 7-1 pattern. The entry is `client/src/styles/main.scss`. Brand differences are token overrides in `client/src/styles/abstracts/tokens.css`. The design system feeds those tokens from one design file. Clay Studio's stylesheet stays in the Studio document. This app's sheet is the one the preview iframe loads.
 - API: Express. The client asks for what a screen needs. Independent reads run together with `Promise.all`. Writes are deliberate and idempotent.
-- Data: PostgreSQL, PGlite on localhost, Cloud SQL or AlloyDB when promoted. `server/schema.sql` can run again safely. Status changes are transitions.
+- Data: PostgreSQL, PGlite on localhost, Cloud SQL or AlloyDB when promoted. `server/schema.sql` can run again safely. Status changes are XState transitions in `server/status.js`. `transitionRequest` sends the event to that machine. An illegal jump throws `ILLEGAL_TRANSITION`.
+- Dependencies: the running process checks npm every 12 hours, and on startup when the last check is older than that. The check applies `npm audit fix`, then installs a direct dependency when the patched release is newer. A downgrade is refused.
 - Platform, when promoted: Google Cloud. Every Express API runs on Cloud Run behind APIM. Cloud SQL, private networking.
 - Language: JavaScript with JSDoc in this starter.
 - Agents read the same pages the developer reads. `AGENTS.md` is the short entry point. This file is the constitution.
@@ -131,7 +132,7 @@ A form submits through its `action`. When that submit has a result to render, or
 
 **Idempotency.** The same operation again is safe. A retried request, a replayed message, or a schema script run a second time leaves one result. It does not insert a second row, apply a second change, or move a status twice.
 
-**State machines.** A status changes only along a path declared in `server/status.js`. Each state has a fixed set of next states. Code calls `transitionRequest`. It does not assign an arbitrary status. An illegal jump throws `ILLEGAL_TRANSITION`.
+**State machines.** A status is an XState machine in `server/status.js`. Each state names its next states. `transitionRequest` sends the event to that machine. An illegal jump throws `ILLEGAL_TRANSITION`.
 
 ## What else the code requires
 
@@ -293,7 +294,7 @@ A repository brings its suite up to this bar as it adopts the standard. The bar 
 - Jest locks the behavior.
 - Playwright runs the user flow in a browser. The path through the application is tested, not only the function.
 
-On localhost, until Figma, Code Connect, or Storybook is in the app, tokens still come from `client/src/tokens.css`, and every state is visible on the running screen.
+On localhost, until Figma, Code Connect, or Storybook is in the app, tokens still come from `client/src/styles/abstracts/tokens.css`, partials still follow the 7-1 folders, and every state is visible on the running screen.
 
 ## Definition of done
 
@@ -301,25 +302,25 @@ A change is ready when a reviewer can check every line below. A line that names 
 
 - An approved `/plan` in `docs/{project-name}-plan/` accompanies the change. The plan is the spec this change followed. For a merge, someone other than the author approved it.
 - The contract changed first. Zod validates in and out. Paths are nouns. Methods are verbs. Errors share one shape and a catalog code.
-- Every write takes `Idempotency-Key`. Status changes are legal transitions. `schema.sql` can run again.
-- Tokens are imported into `client/src/tokens.css`. Components use them. A value is not typed by hand in a component. A Figma component with code uses Code Connect.
+- Every write takes `Idempotency-Key`. Status changes are legal XState transitions. `schema.sql` can run again.
+- Tokens are imported into `client/src/styles/abstracts/tokens.css` and loaded through `client/src/styles/main.scss`. Components use them. A value is not typed by hand in a component. A Figma component with code uses Code Connect.
 - A changed component has a Storybook story for its states. Jest covers the unit behavior. Playwright covers the user flow.
 - Docs changed in the same change: vision, design, plan, agent instructions, and a regenerated ERD when data moved. Shared functions have JSDoc.
 - A changed screen still works from the keyboard, uses semantic HTML, and shows a visible focus treatment. Status is a text label, not color alone.
 - Components stay under 50 lines. Functions are pure. Shared data is not mutated. React follows the React section: function components, `ref` as a prop, form `action`, `useActionState` when a submit has a result or pending state, and the `eslint-plugin-react-hooks` recommended rules pass.
 - New endpoints are traced and have SLO alerts once the service is promoted.
 - No secrets or restricted data in code, prompts, logs, or seed data. New packages pass the dependency and license check: the package is real, established, and approved.
-- Open npm security issues are fixed before the change is done. `npm audit fix` runs, and a direct dependency moves to a newer patched release when one exists. A package is not downgraded to clear an advisory. High and critical advisories that still have a newer fix block the build.
+- Open npm security issues are fixed before the change is done. The running app repeats that check every 12 hours: `npm audit fix` runs, a direct dependency moves to a newer patched release when one exists, and a downgrade is refused. High and critical advisories that still have a newer fix block the build.
 
 ## Pipeline
 
 No gate, no merge. These are the checks CI turns the definition of done into. A prototype adopts them as the suite comes up. It does not skip the ones it can already run (plan, ESLint, Prettier, Jest, secret scan).
 
 - **Plan gate.** The PR names an approved plan in `docs/{project-name}-plan/`, approved by someone other than the author. No plan, no merge.
-- **Code standard gate.** ESLint with zero warnings: components under 50 lines, no mutation, `===` only, legal status transitions, pure domain layer, and `eslint-plugin-react-hooks` recommended (Rules of Hooks and the compiler rules). Prettier, and `tsc --checkJs` for JavaScript.
+- **Code standard gate.** ESLint with zero warnings: components under 50 lines, no mutation, `===` only, legal XState status transitions, pure domain layer, and `eslint-plugin-react-hooks` recommended (Rules of Hooks and the compiler rules). Prettier, and `tsc --checkJs` for JavaScript.
 - **Proof gate.** Jest with coverage thresholds, Playwright user flows, a Storybook story for every changed component.
 - **Contracts and data gate.** `oasdiff` and `buf` block breaking contract changes. Migrations run twice. A stale ERD fails the build.
-- **Security gate.** gitleaks, CodeQL, Trivy, `npm audit`, a license allowlist, and a check that every new package is real, established, and approved. Every project Clay builds runs that npm check before the change is called done: safe fixes are applied, a direct dependency is upgraded when the patched release is newer, and a downgrade is refused.
+- **Security gate.** gitleaks, CodeQL, Trivy, `npm audit`, a license allowlist, and a check that every new package is real, established, and approved. Every project Clay builds runs that npm check before the change is called done, and the running process repeats it every 12 hours: safe fixes are applied, a direct dependency is upgraded when the patched release is newer, and a downgrade is refused.
 - **Release gate.** One signed image. Staging, then a 5% and 25% canary watched for errors. Automatic rollback. Approvers and freeze windows.
 
 ## Rollout

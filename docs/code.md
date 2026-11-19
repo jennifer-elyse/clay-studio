@@ -1,19 +1,20 @@
 # Code
 
-Studio is a Clay app. It applies every section of `templates/web-app/docs/code.md`. That file is the Clay 1.0 constitution from the platform deck, in full: seats and spend, what AI may see, spec-driven `/plan`, immutability, idempotency, state machines, contract-first `/v1` APIs, events, operations, docs with the code, proof, the definition of done, the pipeline gates, and the rollout. Generated prototypes use that same file. The short list below is the studio delta, not a second or smaller standard.
+Studio is a Clay app. It applies every section of `templates/web-app/docs/code.md`. That file is the Clay 1.0 constitution from the platform deck, in full: seats and spend, what AI may see, spec-driven `/plan`, immutability, idempotency, XState status machines, contract-first `/v1` APIs, events, operations, docs with the code, proof, the definition of done, the pipeline gates, and the rollout. Generated prototypes use that same file. The short list below is the studio delta, not a second or smaller standard.
 
 ## Stack
 
 - React 19.3.1 client (`react` and `react-dom` `^19.3.1`), Express API, PostgreSQL (PGlite locally; Cloud SQL on promotion). The production release is the npm `latest` tag. `node scripts/stack-versions.js` warns when React, Express, or another direct dependency is behind it. The React section of `templates/web-app/docs/code.md` is the practice: function components, `ref` as a prop, form `action`, `useActionState` when a submit has a result or pending state.
 - JavaScript + JSDoc. Zod at HTTP, WebSocket, and adapter boundaries
 - Pure domain functions. Side effects at the edge (DB, child processes, agent SDKs)
-- Status changes are state-machine transitions
+- Status changes are XState transitions in `server/status.js`. `transitionRequest` sends the event. An illegal jump throws `ILLEGAL_TRANSITION`.
+- The running process checks npm every 12 hours, and on startup when the last check is older than that. The check applies `npm audit fix`, then installs a direct dependency when the patched release is newer. A downgrade is refused.
 - Writes take `Idempotency-Key`. Noun URLs, verbs in methods
 - One error shape: `{ code, message, requestId }`
 
 ## Same rules as a generated app
 
-Studio UI follows `docs/design.md` with the same constraints a generated app follows in `templates/web-app/docs/design.md`. Tokens come from `packages/chat-sdk/src/tokens.css`. Components stay under 50 lines. Functions stay pure. Compare with `===`.
+Studio UI follows `docs/design.md` with the same constraints a generated app follows in `templates/web-app/docs/design.md`. Styles use the 7-1 pattern. Studio chrome loads `packages/chat-sdk/src/styles/main.scss`. The Studio page shell loads `apps/studio/src/styles/main.scss`. A generated app loads `client/src/styles/main.scss` in its own document. The preview iframe shows that app. Components stay under 50 lines. Functions stay pure. Compare with `===`.
 
 ## Studio-specific
 

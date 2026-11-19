@@ -2,7 +2,31 @@
 
 ## Tokens
 
-Imported conceptually from the Clay 1.0 deck. Values live in `packages/chat-sdk/src/tokens.css`. Do not type hex in components.
+Imported conceptually from the Clay 1.0 deck. Values live in `packages/chat-sdk/src/styles/abstracts/_tokens.scss`. Do not type hex in components.
+
+## Styles
+
+Studio and a generated app each use the Sass 7-1 pattern: seven folders and one entry file, `main.scss`.
+
+| Folder | What belongs there |
+| --- | --- |
+| `abstracts` | Tokens, functions, mixins, placeholders |
+| `vendors` | Third-party stylesheets |
+| `base` | Reset, typography, document defaults |
+| `layout` | Shell, header, columns, preview frame |
+| `components` | One partial per component |
+| `pages` | Rules that belong to one screen |
+| `themes` | A brand's token overrides |
+
+A new partial is forwarded from that folder's `_index.scss`. The entry file stays `main.scss`. Vendors load first so a CSS `@import` stays above other rules. Reduced motion loads last.
+
+| Sheet | Document it styles |
+| --- | --- |
+| `packages/chat-sdk/src/styles/main.scss` | Studio chrome, including the preview frame |
+| `apps/studio/src/styles/main.scss` | The Studio page shell (`html`, `body`, `#root`) |
+| `client/src/styles/main.scss` in a generated app | That app's own document |
+
+The live preview is an iframe. Its document loads the generated app's `main.scss`. Studio's sheets paint the Studio page and the frame around that app. Tokens for Studio are CSS custom properties. A generated app keeps its own token list in `client/src/styles/abstracts/tokens.css`.
 
 | Token | Role |
 | --- | --- |

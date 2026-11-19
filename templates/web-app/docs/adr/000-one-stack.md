@@ -6,7 +6,7 @@ Accepted. Clay 1.0.
 
 ## Decision
 
-This app is React 19, Express, and PostgreSQL, with JavaScript and JSDoc. `react` and `react-dom` stay on `^19.3.1` until a newer 19 release moves this starter and Clay Studio together. `node scripts/stack-versions.js` warns when React, Express, or another direct dependency is behind the npm `latest` tag. Contracts are Zod in `server/contracts.js`. The API is versioned under `/v1`. Status changes are transitions. Writes require `Idempotency-Key`.
+This app is React 19, Express, and PostgreSQL, with JavaScript and JSDoc. `react` and `react-dom` stay on `^19.3.1` until a newer 19 release moves this starter and Clay Studio together. `node scripts/stack-versions.js` warns when React, Express, or another direct dependency is behind the npm `latest` tag. Contracts are Zod in `server/contracts.js`. The API is versioned under `/v1`. Status changes are XState transitions in `server/status.js`. The running process checks npm every 12 hours, applies `npm audit fix`, and installs a newer patched release. A downgrade is refused. Writes require `Idempotency-Key`.
 
 Localhost uses PGlite. Promotion adds Cloud Run, APIM, and Cloud SQL in front of the same files. Shared contracts, respond-validated, lint configs, and the ERD generator come from versioned `@cswg` packages. This app upgrades those packages. It does not keep a private fork of them.
 

@@ -1,6 +1,26 @@
 # Design
 
-One visual system, in one design file. The design system feeds the UI tokens. Tokens live in `client/src/tokens.css`. Components use `var(--clay-*)`. Color, type, space, and radius are imported. A hex, a raw pixel radius, or a one-off font typed into a component is a bug.
+One visual system, in one design file. The design system feeds the UI tokens. Tokens live in `client/src/styles/abstracts/tokens.css`. Components use `var(--clay-*)`. Color, type, space, and radius are imported. A hex, a raw pixel radius, or a one-off font typed into a component is a bug.
+
+## Styles
+
+This app uses the Sass 7-1 pattern. The entry file is `client/src/styles/main.scss`.
+
+| Folder | What belongs there |
+| --- | --- |
+| `abstracts` | Tokens, functions, mixins, placeholders |
+| `vendors` | Third-party stylesheets |
+| `base` | Reset, typography, document defaults |
+| `layout` | Page structure |
+| `components` | One partial per component |
+| `pages` | Rules that belong to one screen |
+| `themes` | A brand's token overrides |
+
+A new partial is forwarded from that folder's `_index.scss`. The entry file stays `main.scss`. Vendors load first so a CSS `@import` stays above other rules.
+
+`client/src/styles/main.scss` is this app's stylesheet. Clay Studio paints its own document and the frame around the preview. The previewed document loads this app's `main.scss`.
+
+Brand differences override tokens in `abstracts/tokens.css`.
 
 | Token | Role |
 | --- | --- |
@@ -14,9 +34,9 @@ One visual system, in one design file. The design system feeds the UI tokens. To
 | `--clay-run` | Approved / success action |
 | `--clay-stroke` | Hairline border |
 | `--clay-radius` | Card radius |
+| `--clay-pill` | Pill radius |
 | `--clay-font` | Helvetica Neue, Calibri, sans-serif |
-
-Brand differences override tokens. They do not create a second stylesheet.
+| `--clay-on-fill` | Text on a filled action |
 
 ## Type
 
