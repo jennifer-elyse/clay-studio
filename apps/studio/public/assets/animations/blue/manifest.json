@@ -1,0 +1,36 @@
+{
+  "theme": "blue",
+  "format": "animated WebP",
+  "command_files": [
+    "spec.webp",
+    "plan.webp",
+    "build.webp",
+    "run.webp",
+    "fix.webp",
+    "docs.webp",
+    "help.webp",
+    "clear.webp",
+    "search.webp",
+    "think.webp",
+    "summarize.webp",
+    "write.webp",
+    "code.webp",
+    "image.webp",
+    "upload.webp",
+    "settings.webp",
+    "new.webp",
+    "seats.webp",
+    "stop.webp",
+    "debug.webp"
+  ],
+  "ambient_files": [
+    "idle.webp",
+    "blink.webp",
+    "rolling.webp",
+    "pop-shape.webp",
+    "interested.webp",
+    "judging.webp",
+    "concerned.webp"
+  ],
+  "note": "WebPs are based on existing Clay motion assets; a blue CSS clay sphere and vector unicorn transformation layer over them."
+}

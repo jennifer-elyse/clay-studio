@@ -36,3 +36,29 @@
     animation: none;
   }
 }
+
+.clay-bot-stage.is-blue {
+  background: radial-gradient(circle at 43% 35%, var(--clay-paper), var(--clay-sand) 80%);
+  border-color: var(--clay-stroke);
+}
+.clay-bot-stage.is-blue .clay-bot-clip {
+  width: 100%;
+  height: 100%;
+}
+
+/* The blue theme keeps the WebP running as a soft kinetic layer beneath a real clay sphere. */
+.clay-bot-stage.is-blue .clay-bot-clip { filter: hue-rotate(165deg) saturate(.6); opacity: .13; }
+.clay-blue-mascot { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.clay-blue-ball { width: 73%; height: 73%; display: block; border-radius: 48% 52% 50% 50% / 52% 46% 54% 48%; background: radial-gradient(ellipse at 32% 27%, #a8d5f4 0, #559de0 27%, #2b77c4 58%, #164f98 92%), repeating-radial-gradient(circle at 32% 27%, #fff2 0 2px, transparent 3px 7px); background-blend-mode: soft-light; box-shadow: inset -10px -9px 14px #163e8259, inset 8px 9px 12px #d5eaff52, 0 8px 13px #193e5c26; position: relative; animation: clay-blue-knead 2.3s ease-in-out infinite; }
+.clay-blue-ball::before { content: ""; position: absolute; inset: 9%; border-radius: 50%; opacity: .32; background: repeating-radial-gradient(ellipse at 45% 39%, transparent 0 4px, #275a9926 5px 6px, transparent 7px 11px); filter: blur(1px); transform: rotate(-19deg); }
+.clay-bot-stage[data-clip="rolling.webp"] .clay-blue-ball,
+.clay-bot-stage[data-clip="run.webp"] .clay-blue-ball { animation: clay-blue-roll 1s ease-in-out infinite; }
+.clay-bot-stage[data-clip="think.webp"] .clay-blue-ball,
+.clay-bot-stage[data-clip="plan.webp"] .clay-blue-ball { animation-duration: 3.4s; }
+.clay-blue-unicorn { width: 93%; height: 93%; position: absolute; opacity: 0; filter: drop-shadow(0 4px 2px #2548682b); animation: clay-unicorn-appear 4s ease-in-out infinite; }
+.clay-blue-mascot.is-unicorn .clay-blue-ball { animation: clay-ball-disappear 4s ease-in-out infinite; }
+@keyframes clay-blue-knead { 0%,100% { transform: translateY(1px) scale(1,1); border-radius: 48% 52% 50% 50% / 52% 46% 54% 48%; } 50% { transform: translateY(-2px) scale(1.035,.965); border-radius: 51% 49% 48% 52% / 49% 53% 47% 51%; } }
+@keyframes clay-blue-roll { 0%,100% { transform: translateX(-6%) rotate(-10deg) scale(.97); } 50% { transform: translateX(6%) rotate(12deg) scale(1.03); } }
+@keyframes clay-ball-disappear { 0%,17%,91%,100% { transform: scale(1); opacity: 1; } 40%,70% { transform: scale(.3); opacity: 0; } }
+@keyframes clay-unicorn-appear { 0%,22%,89%,100% { transform: translateY(14%) scale(.35); opacity: 0; } 39%,71% { transform: translateY(0) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .clay-blue-ball, .clay-blue-unicorn { animation: none !important; } .clay-blue-mascot.is-unicorn .clay-blue-ball { opacity: 1; } }

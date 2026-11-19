@@ -7,6 +7,8 @@ import { useDismiss } from "./use-dismiss.js";
 /**
  * @param {object} props
  * @param {boolean} props.open
+ * @param {"classic" | "blue"} [props.theme]
+ * @param {(theme: "classic" | "blue") => void} [props.onTheme]
  * @param {string} props.section
  * @param {(id: string) => void} props.onSection
  * @param {string} [props.product]
@@ -37,7 +39,7 @@ export function SettingsModal(props) {
         <SettingsHeader onClose={props.onClose} />
         <div className="clay-settings-body">
           <SettingsTabs section={props.section} onSection={props.onSection} />
-          <SettingsPanel section={props.section} projectsRoot={props.projectsRoot ?? ""} onClose={props.onClose} seat={seat} onSaveSettings={props.onSaveSettings} />
+          <SettingsPanel section={props.section} theme={props.theme ?? "classic"} onTheme={props.onTheme} projectsRoot={props.projectsRoot ?? ""} onClose={props.onClose} seat={seat} onSaveSettings={props.onSaveSettings} />
         </div>
       </div>
     </div>

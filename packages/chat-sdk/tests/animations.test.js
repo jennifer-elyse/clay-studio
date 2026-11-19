@@ -1,21 +1,40 @@
-import { AMBIENT_CLIPS, COMMAND_CLIPS, clipForCommand } from "../src/animations.js";
+import { readFileSync, existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { COMMANDS } from "@cswg/agent-host/commands";
+import { AMBIENT_CLIPS, ANIMATION_BASE, BLUE_ANIMATION_BASE, COMMAND_CLIPS, clipForCommand } from "../src/animations.js";
 
-describe("clipForCommand", () => {
-  test("maps slash command names to files", () => {
-    expect(clipForCommand("help")).toBe("help.webp");
-    expect(clipForCommand("think")).toBe("think.webp");
+const dir = fileURLToPath(new URL("../../../apps/studio/public/assets/animations/", import.meta.url));
+
+describe("slash command animations", () => {
+  test("all registered slash commands and aliases resolve to WebP assets", () => {
+    const ids = COMMANDS.map((cmd) => cmd.id);
+    expect(Object.keys(COMMAND_CLIPS).sort()).toEqual(ids.sort());
+    for (const cmd of COMMANDS) {
+      const clip = clipForCommand(cmd.id);
+      expect(clip).toMatch(/\\.webp$/);
+      for (const base of [ANIMATION_BASE, BLUE_ANIMATION_BASE]) {
+        const file = `${dir}${base === BLUE_ANIMATION_BASE ? "blue/" : ""}${clip}`;
+        expect(existsSync(file)).toBe(true);
+        const bytes = readFileSync(file);
+        expect(bytes.subarray(0, 4).toString()).toBe("RIFF");
+        expect(bytes.subarray(8, 12).toString()).toBe("WEBP");
+        expect(bytes.includes(Buffer.from("ANIM"))).toBe(true);
+      }
+    }
+  });
+  test("both themes have animated ambient loops", () => {
+    for (const clip of AMBIENT_CLIPS) {
+      expect(existsSync(`${dir}${clip}`)).toBe(true);
+      expect(existsSync(`${dir}blue/${clip}`)).toBe(true);
+    }
+  });
+  test("no ambient fallbacks for slash commands", () => {
+    expect(clipForCommand("plan")).toBe("plan.webp");
     expect(clipForCommand("reset")).toBe("new.webp");
-    expect(clipForCommand("code")).toBe(COMMAND_CLIPS.code);
+    expect(clipForCommand("seat")).toBe("seats.webp");
   });
-
-  test("picks ambient clips at random for unnamed commands", () => {
-    const clip = clipForCommand("plan", { random: () => 0 });
-    expect(AMBIENT_CLIPS).toContain(clip);
-    expect(clip).toBe(AMBIENT_CLIPS[0]);
-  });
-
-  test("avoids repeating the previous ambient clip", () => {
-    const clip = clipForCommand("plan", { previous: "idle.webp", random: () => 0 });
-    expect(clip).not.toBe("idle.webp");
+  test("unknown messages still use ambient clips without a repeat", () => {
+    expect(AMBIENT_CLIPS).toContain(clipForCommand(null, { random: () => 0 }));
+    expect(clipForCommand(null, { previous: "idle.webp", random: () => 0 })).not.toBe("idle.webp");
   });
 });

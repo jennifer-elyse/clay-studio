@@ -7,6 +7,7 @@ import { SettingsButton } from "./SettingsButton.jsx";
 /**
  * @param {object} props
  * @param {string} props.clip
+ * @param {"classic" | "blue"} [props.theme]
  * @param {boolean} props.minimized
  * @param {() => void} props.onToggle
  * @param {{ provider?: string, model?: string, caption?: string } | null} [props.seat]
@@ -25,6 +26,7 @@ import { SettingsButton } from "./SettingsButton.jsx";
  */
 export function ClayHeader({
   clip,
+  theme = "classic",
   minimized,
   onToggle,
   seat,
@@ -54,7 +56,7 @@ export function ClayHeader({
   }
   return (
     <header className="clay-header" id="clay-header">
-      <ClayBot clip={clip} />
+      <ClayBot clip={clip} theme={theme} />
       <div className="clay-wordmark">
         <strong>Clay</strong>
         <span>Mold freely. Ship safely.</span>

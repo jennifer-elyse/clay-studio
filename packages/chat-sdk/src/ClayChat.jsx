@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { readTheme, saveTheme } from "./theme.js";
 import { ChatPane } from "./ChatPane.jsx";
 import { ClayHeader } from "./ClayHeader.jsx";
 import { planNeedsProject } from "./project-gate.js";
@@ -11,6 +12,8 @@ import "./tokens.css";
 import "./ClayChat.css";
 /** @param {import("./use-clay-session.js").ClayChatProps} props */
 export function ClayChat(props) {
+  const [theme, setTheme] = useState(readTheme);
+  useEffect(() => saveTheme(theme), [theme]);
   const [projectDraft, setProjectDraft] = useState({ name: "", folder: "", open: false });
   const [projectNotice, setProjectNotice] = useState("");
   const [projectOpenSignal, setProjectOpenSignal] = useState(0);
@@ -32,10 +35,11 @@ export function ClayChat(props) {
     },
   });
   return (
-    <div className="clay-root">
+    <div className={`clay-root is-${theme}`}>
       <div className="clay-shell">
         <ClayHeader
           clip={session.clip}
+          theme={theme}
           minimized={session.minimized}
           seat={props.seat}
           seatSettings={props.seatSettings}
@@ -77,6 +81,8 @@ export function ClayChat(props) {
         </KeepShell>
         <SettingsModal
           open={session.settingsOpen}
+          theme={theme}
+          onTheme={setTheme}
           section={session.settingsSection}
           onSection={session.setSettingsSection}
           product={session.seatProduct}

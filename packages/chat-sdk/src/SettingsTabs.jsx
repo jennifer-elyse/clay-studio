@@ -1,6 +1,7 @@
 const TABS = [
   { id: "seat", label: "Seat" },
   { id: "projects", label: "Projects folder" },
+  { id: "theme", label: "Theme" },
 ];
 
 /**
