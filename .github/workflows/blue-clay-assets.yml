@@ -1,7 +1,7 @@
 name: Verify Blue Clay illustrated animations
 on:
   push:
-    branches: [feat-theme]
+    branches: [7-1]
     paths:
       - '.github/workflows/blue-clay-assets.yml'
       - 'scripts/render-blue-from-art.py'
@@ -36,5 +36,5 @@ jobs:
           git add apps/studio/public/assets/animations/blue/*.webp apps/studio/public/assets/animations/blue/manifest.json
           if ! git diff --cached --quiet; then
             git commit -m 'assets(blue-clay): update generated animated WebPs'
-            git push origin HEAD:feat-theme
+            git push origin HEAD:7-1
           fi

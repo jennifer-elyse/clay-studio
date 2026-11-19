@@ -72,8 +72,9 @@ describe("Blue Clay parity and clip selection", () => {
       const path = `${directory}blue/${clip}`;
       expect(animationSrc(clip, BLUE_ANIMATION_BASE)).toBe(`${BLUE_ANIMATION_BASE}/${clip}`);
       expect(existsSync(path)).toBe(true);
-      expect(frameCount(path)).toBeGreaterThanOrEqual(12);
+      expect(frameCount(path)).toBeGreaterThanOrEqual(24);
       const file = readFileSync(path);
+      expect(file.byteLength).toBeGreaterThan(100000);
       expect(file[24] + ((file[25] & 63) << 8) + 1).toBeGreaterThanOrEqual(300);
       expect(file[27] + ((file[28] & 63) << 8) + 1).toBeGreaterThanOrEqual(300);
     }
