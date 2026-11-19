@@ -33,5 +33,5 @@
     "judging.webp",
     "concerned.webp"
   ],
-  "note": "Command-specific animation filenames exist for all commands. Non-image clips share a common blue-ball WebP motion source; /image has a distinct unicorn morph. CSS adds command-dependent gestures."
+  "note": "All 20 slash commands have distinct animated WebP files and motion timings. Their stop-motion source is a blue clay ball; /image has a separate white-unicorn and rainbow-spiral-horn morph. Ambient clips are reusable."
 }

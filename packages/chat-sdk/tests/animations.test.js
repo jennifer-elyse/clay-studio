@@ -22,6 +22,10 @@ describe("slash command animations", () => {
       }
     }
   });
+  test("blue slash commands each have a distinct animated WebP", () => {
+    const bytes = COMMANDS.map((cmd) => readFileSync(`${dir}blue/${clipForCommand(cmd.id)}`).toString("base64"));
+    expect(new Set(bytes).size).toBe(COMMANDS.length);
+  });
   test("both themes have animated ambient loops", () => {
     for (const clip of AMBIENT_CLIPS) {
       expect(existsSync(`${dir}${clip}`)).toBe(true);
