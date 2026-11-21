@@ -59,10 +59,16 @@ def registered_maps(frame: Image.Image, is_morph: bool = False) -> Image.Image:
     if not is_morph and np.any(dominant):
         # Strip the photograph's dark outer matte without removing facial details.
         # The filled silhouette keeps whites, pupils and mouth opaque.
-        silhouette = ndi.binary_fill_holes(body)
-        silhouette = ndi.gaussian_filter(
-            ndi.binary_dilation(silhouette, iterations=1).astype(np.float32), sigma=.8
+        # Remove thin connected dark crown artifacts from the original sprite.
+        # The body mask still includes sculpted blue details; the silhouette
+        # receives a disk opening only to remove outlying matte protrusions.
+        yy, xx = np.ogrid[-6:7, -6:7]
+        disc = (xx * xx + yy * yy) <= 36
+        silhouette = ndi.binary_fill_holes(
+            ndi.binary_opening(dominant, structure=disc)
         )
+        silhouette = ndi.gaussian_filter(silhouette.astype(np.float32), sigma=2.4) >= .48
+        silhouette = ndi.gaussian_filter(silhouette.astype(np.float32), sigma=.8)
         original[:, :, 3] = np.uint8(np.minimum(alpha, silhouette * 255))
 
     # The brightest channel is a neutral reflectance reference; averaging RGB
@@ -85,6 +91,7 @@ def registered_maps(frame: Image.Image, is_morph: bool = False) -> Image.Image:
         np.clip((brightest - smooth - 9) / 85, 0, 1) * (255 * SPECULAR_PEAK)
     ))
     mask = np.uint8(np.round(coverage * 255))
+    specular_gray = np.where(mask > 2, specular_gray, 0).astype(np.uint8)
 
     def panel(value):
         pixels = np.empty((SIDE, SIDE, 4), dtype=np.uint8)

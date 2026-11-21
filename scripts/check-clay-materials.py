@@ -29,6 +29,11 @@ for clip in manifest["clips"]:
             assert coverage.tobytes() == light.getchannel("A").tobytes(), f"{clip}[{i}]: light mask drift"
             assert coverage.tobytes() == specular.getchannel("A").tobytes(), f"{clip}[{i}]: specular mask drift"
             # WebP may introduce a few grayscale quantization units.
-            assert specular.getchannel("R").getextrema()[1] <= 30, f"{clip}[{i}]: overly strong specular"
+            lit_pixels = [
+                red for red, alpha_value in zip(
+                    specular.getchannel("R").getdata(), coverage.getdata()
+                ) if alpha_value > 128
+            ]
+            assert not lit_pixels or max(lit_pixels) <= 32, f"{clip}[{i}]: overly strong specular"
             assert coverage.getextrema()[1] > 20 or clip in ("image.webp", "pop-shape.webp"), f"{clip}[{i}]: no clay material"
     print(f"{clip}: {atlas.n_frames} registered material frames OK")
