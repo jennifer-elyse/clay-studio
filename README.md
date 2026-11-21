@@ -55,3 +55,7 @@ npx playwright install
 npm run test:e2e
 npm run storybook
 ```
+
+## Specification-driven development
+
+See [Spec Kit adoption and workflows](docs/spec-kit-adoption.md). The project constitution is in `.specify/memory/constitution.md` and the first bounded visual quality spec is in `specs/001-clay-material-qa/`. Existing Clay app behavior and user-facing commands are unchanged.
