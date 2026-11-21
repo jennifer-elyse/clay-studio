@@ -61,11 +61,16 @@ jobs:
             git commit -m 'assets(clay-material): regenerate registered animated maps'
             git fetch origin main
             test "$(git rev-parse origin/main)" = "$(git rev-parse HEAD^)"
-            git push origin HEAD:main
+            git push origin HEAD:refs/heads/ci/clay-material-maps
+            echo "NEEDS_MERGE=true" >> "$GITHUB_ENV"
+            echo "Material assets pushed to ci/clay-material-maps for PR review."
+          else
+            echo "BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+            echo "NEEDS_MERGE=false" >> "$GITHUB_ENV"
           fi
-          echo "BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Assemble portable Mac/Windows ZIP
+        if: env.NEEDS_MERGE != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -102,6 +107,7 @@ jobs:
           ls -lh release/*
 
       - name: Store downloadable build artifact
+        if: env.NEEDS_MERGE != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: clay-studio-main-zip
@@ -112,6 +118,7 @@ jobs:
           retention-days: 90
 
       - name: Publish publicly downloadable GitHub Release
+        if: env.NEEDS_MERGE != 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
