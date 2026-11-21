@@ -41,9 +41,11 @@ describe("seat models", () => {
   test("each command lands on the phase that matches its cost", () => {
     expect(phaseFor("plan")).toBe("plan");
     expect(phaseFor("spec")).toBe("plan");
+    expect(phaseFor("constitution")).toBe("plan");
+    expect(phaseFor("analyze")).toBe("plan");
     expect(phaseFor("build")).toBe("build");
+    expect(phaseFor("converge")).toBe("build");
     expect(phaseFor("think")).toBe("fast");
-    expect(phaseFor("fix")).toBe("fast");
     expect(phaseFor("chat")).toBe("fast");
   });
 

@@ -12,4 +12,4 @@ description: Add a contract-first Express endpoint. Zod first, noun URLs under /
 5. POST, PUT, PATCH, and DELETE require `Idempotency-Key`. Store the key with the result so a retry returns the first response. Missing key is 400. A retried write reuses the same key.
 6. Status fields change only through `transitionRequest` on the XState machine in `server/status.js`.
 7. Keep the handler thin. Route, then validate, then pure domain logic, then data access. The database stays at the edge.
-8. Update `docs/erd.md` when data changed, and `docs/code.md` when the API rules changed. A new or breaking API is reviewed in the `/plan` before this work starts.
+8. Update `docs/erd.md` when data changed, and `docs/code.md` when the API rules changed. A new or breaking API is reviewed in the `/speckit.plan` before this work starts.

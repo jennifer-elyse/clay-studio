@@ -13,4 +13,4 @@ This app follows `docs/code.md`.
 - `node scripts/stack-versions.js` warns when a direct production dependency is behind the npm `latest` tag. Repeat that warning. The running process checks npm every 12 hours, applies `npm audit fix`, and installs a newer patched release. A downgrade is refused.
 - Pure functions. Do not mutate shared data. Compare with `===`. A component stays at or under 50 lines.
 - No customer, payment, HR, or secret data in prompts, logs, or seed data.
-- `/plan` before implementation. Docs change in the same change as the behavior.
+- `/speckit.plan` before implementation. Docs change in the same change as the behavior.

@@ -149,6 +149,27 @@
   stroke-linejoin: round;
 }
 
+.clay-pill.is-constitution,
+.clay-pill.is-checklist,
+.clay-pill.is-tasks {
+  border-color: var(--clay-sky);
+  color: var(--clay-plan);
+  background: color-mix(in srgb, var(--clay-sky) 22%, var(--clay-paper));
+}
+
+.clay-pill.is-clarify,
+.clay-pill.is-analyze {
+  border-color: var(--clay-sky);
+  color: var(--clay-plan);
+  background: color-mix(in srgb, var(--clay-sky) 18%, var(--clay-paper));
+}
+
+.clay-pill.is-converge {
+  border-color: var(--clay-fix);
+  color: var(--clay-fix);
+  background: color-mix(in srgb, var(--clay-fix) 16%, var(--clay-paper));
+}
+
 .clay-pill.is-spec {
   border-color: var(--clay-sky);
   color: var(--clay-ink);

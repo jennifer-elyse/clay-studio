@@ -8,10 +8,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "apps/studio/public/assets/animations/blue"
 MATERIAL = SOURCE / "material"
 manifest = json.loads((MATERIAL / "manifest.json").read_text())
+blue = json.loads((SOURCE / "manifest.json").read_text())
+expected = sorted(set(blue["command_files"] + blue["ambient_files"]))
 assert manifest["white_point"] == 240
 assert manifest["max_specular_fraction"] <= .08
 assert manifest["maps_are_registered"]
-assert len(manifest["clips"]) == 27, "Missing registered slash or ambient material maps"
+assert manifest["clips"] == expected, "Material manifest clips drifted from the Blue Clay sources"
 
 for clip in manifest["clips"]:
     with Image.open(SOURCE / clip) as raw, Image.open(MATERIAL / clip) as atlas:

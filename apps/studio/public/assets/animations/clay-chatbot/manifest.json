@@ -33,95 +33,40 @@
     }
   },
   "slash_commands": {
-    "/spec": {
-      "file": "spec.webp",
-      "intent": "Write what the change must do before a plan"
-    },
-    "/plan": {
-      "file": "plan.webp",
-      "intent": "Write a spec before anything is built"
-    },
-    "/build": {
-      "file": "build.webp",
-      "intent": "Implement the approved plan"
-    },
-    "/run": {
-      "file": "run.webp",
-      "intent": "Start the local preview"
-    },
-    "/fix": {
-      "file": "fix.webp",
-      "intent": "Tell the agent what looks wrong"
-    },
-    "/docs": {
-      "file": "docs.webp",
-      "intent": "Open vision, design, and the ERD"
-    },
-    "/help": {
-      "file": "help.webp",
-      "intent": "List every Clay command"
-    },
-    "/clear": {
-      "file": "clear.webp",
-      "intent": "Wipe the chat, keep the agent"
-    },
-    "/search": {
-      "file": "search.webp",
-      "intent": "Find something in the app and docs"
-    },
-    "/think": {
-      "file": "think.webp",
-      "intent": "Reason first, then answer"
-    },
-    "/summarize": {
-      "file": "summarize.webp",
-      "intent": "Compress this thread to free context"
-    },
-    "/write": {
-      "file": "write.webp",
-      "intent": "Draft docs or copy, not application code"
-    },
-    "/code": {
-      "file": "code.webp",
-      "intent": "Open this project in the IDE with the change ready to review"
-    },
-    "/image": {
-      "file": "image.webp",
-      "intent": "Sketch a screen or illustration in words"
-    },
-    "/upload": {
-      "file": "upload.webp",
-      "intent": "Add files to this project"
-    },
-    "/settings": {
-      "file": "settings.webp",
-      "intent": "Show seat, model, and workspace"
-    },
-    "/reset": {
-      "file": "new.webp",
-      "intent": "Start a fresh agent"
-    },
-    "/seats": {
-      "file": "seats.webp",
-      "intent": "Choose Cursor, Codex, or Copilot"
-    },
-    "/seat": {
-      "file": "seats.webp",
-      "intent": "Choose Cursor, Codex, or Copilot",
-      "alias_of": "/seats"
-    },
-    "/stop": {
-      "file": "stop.webp",
-      "intent": "Cancel the run in flight"
-    },
-    "/debug": {
-      "file": "debug.webp",
-      "intent": "Show the process log"
-    }
+    "/speckit.constitution": { "file": "constitution.webp", "intent": "Set the principles later steps are judged against" },
+    "/speckit-constitution": { "file": "constitution.webp", "intent": "Set the principles later steps are judged against", "alias_of": "/speckit.constitution" },
+    "/speckit.specify": { "file": "spec.webp", "intent": "Write what the change must do, not how" },
+    "/speckit-specify": { "file": "spec.webp", "intent": "Write what the change must do, not how", "alias_of": "/speckit.specify" },
+    "/speckit.clarify": { "file": "clarify.webp", "intent": "Resolve ambiguity before planning" },
+    "/speckit-clarify": { "file": "clarify.webp", "intent": "Resolve ambiguity before planning", "alias_of": "/speckit.clarify" },
+    "/speckit.plan": { "file": "plan.webp", "intent": "Write the technical plan from the spec" },
+    "/speckit-plan": { "file": "plan.webp", "intent": "Write the technical plan from the spec", "alias_of": "/speckit.plan" },
+    "/speckit.checklist": { "file": "checklist.webp", "intent": "Check that the spec is complete and clear" },
+    "/speckit-checklist": { "file": "checklist.webp", "intent": "Check that the spec is complete and clear", "alias_of": "/speckit.checklist" },
+    "/speckit.tasks": { "file": "tasks.webp", "intent": "Break the plan into ordered tasks" },
+    "/speckit-tasks": { "file": "tasks.webp", "intent": "Break the plan into ordered tasks", "alias_of": "/speckit.tasks" },
+    "/speckit.analyze": { "file": "analyze.webp", "intent": "Check the spec, plan, and tasks for gaps" },
+    "/speckit-analyze": { "file": "analyze.webp", "intent": "Check the spec, plan, and tasks for gaps", "alias_of": "/speckit.analyze" },
+    "/speckit.implement": { "file": "build.webp", "intent": "Execute the tasks in dependency order" },
+    "/speckit-implement": { "file": "build.webp", "intent": "Execute the tasks in dependency order", "alias_of": "/speckit.implement" },
+    "/speckit.converge": { "file": "converge.webp", "intent": "After implement, append any missing tasks" },
+    "/speckit-converge": { "file": "converge.webp", "intent": "After implement, append any missing tasks", "alias_of": "/speckit.converge" },
+    "/help": { "file": "help.webp", "intent": "List every command" },
+    "/summarize": { "file": "summarize.webp", "intent": "Compress this thread to free context" },
+    "/upload": { "file": "upload.webp", "intent": "Add files to this project" },
+    "/seats": { "file": "seats.webp", "intent": "Choose Cursor, Codex, or Copilot" },
+    "/seat": { "file": "seats.webp", "intent": "Choose Cursor, Codex, or Copilot", "alias_of": "/seats" },
+    "/think": { "file": "think.webp", "intent": "Reason first, inside the same command" },
+    "/run": { "file": "run.webp", "intent": "Start the local preview" },
+    "/clear": { "file": "clear.webp", "intent": "Wipe the chat, keep the agent" },
+    "/settings": { "file": "settings.webp", "intent": "Show seat, model, and workspace" },
+    "/reset": { "file": "new.webp", "intent": "Start a fresh agent" },
+    "/stop": { "file": "stop.webp", "intent": "Cancel the run in flight" },
+    "/debug": { "file": "debug.webp", "intent": "Show the process log" }
   },
   "coverage": {
     "registered_commands": 20,
-    "slash_spellings": 21
+    "slash_spellings": 30
   },
   "note": "Every registered command and alias has a working animated WebP. Some clips share original motion frames but have distinct command file paths."
 }

@@ -39,8 +39,8 @@ const PLAN_WAIT_MS = 3 * 60 * 1000;
  * @returns {number | undefined}
  */
 export function copilotWaitMs(command) {
-  if (command === "build") return BUILD_WAIT_MS;
-  if (command === "plan" || command === "spec") return PLAN_WAIT_MS;
+  if (phaseFor(command) === "build") return BUILD_WAIT_MS;
+  if (phaseFor(command) === "plan") return PLAN_WAIT_MS;
   return undefined;
 }
 

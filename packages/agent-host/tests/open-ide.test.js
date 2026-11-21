@@ -49,26 +49,18 @@ describe("/code opens the IDE", () => {
     expect(promptText(launches[1].args[0])).toContain("rename a label");
   });
 
-  test("the host leaves the prompt in the IDE", async () => {
+  test("typing /code does not open the IDE", async () => {
     const appsDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-apps-"));
     process.env.CLAY_SESSION_PATH = path.join(appsDir, "session.json");
     process.env.CLAY_PROFILE_DIR = path.join(appsDir, "profile");
     await copyTemplate({ slug: "demo", appsDir, templateDir });
-    /** @type {{ command: string, args: string[] }[]} */
-    const launches = [];
     const host = await createHost({
       slug: "demo",
       seat: "mock",
       appsDir,
       templateDir,
-      launchIde: (command, args) => launches.push({ command, args }),
-      waitIde: async () => undefined,
     });
     const events = await collect(host.send("/code rename a label"));
-    expect(events.some((event) => event.type === "user_text" && event.text === "/code rename a label")).toBe(true);
-    expect(events.some((event) => event.text?.includes("Opened in the IDE"))).toBe(true);
-    expect(events.some((event) => event.text?.includes("Use the IDE for:"))).toBe(false);
-    expect(launches[0].args).toContain(host.appDir);
-    expect(promptText(launches[1].args.at(-1) ?? "")).toContain("rename a label");
+    expect(events.some((event) => event.text?.includes("Opened in the IDE"))).toBe(false);
   });
 });

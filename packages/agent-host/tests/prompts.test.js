@@ -15,18 +15,21 @@ describe("Clay 1.0 prompts", () => {
     expect(plan).toContain("docs/vision.md");
     expect(plan).toContain("docs/erd.md");
     expect(plan).toContain("docs/code.md");
+    expect(plan).toContain("technical plan");
+    expect(plan).not.toContain("spec of record");
     expect(plan).toContain("Do not implement code yet");
     expect(plan).toContain("docs/app-plan/");
     expect(plan).toContain("Clay asks the person to approve it");
     expect(plan).toContain("definition of done");
     expect(plan).not.toContain("docs/design.md, docs/vision.md, and docs/erd.md");
-    expect(build).toContain("Implement ONLY the approved plan");
+    expect(build).toContain("Execute the tasks in tasks.md");
+    expect(build).toContain("Do not change a checklist marker");
     expect(build).toContain("Do not downgrade a package");
     expect(build).toContain("docs/app-plan/001/plan.md");
     expect(build).not.toContain("Read docs/vision.md");
     const spec = specPrompt({ appDir: "/tmp/app", rest: "intake form", specPath: "docs/app-plan/001-intake/spec.md", seat: "codex" });
     expect(spec).toContain("Codex already loaded AGENTS.md");
-    expect(spec).toContain("behavioral spec");
+    expect(spec).toContain("what and why");
     expect(spec).toContain("AC-1");
     expect(spec).toContain("docs/app-plan/001-intake/spec.md");
     expect(spec).toContain("Do not implement code");
@@ -34,15 +37,15 @@ describe("Clay 1.0 prompts", () => {
   });
 
   test("a short turn does not open the constitution", () => {
-    const fix = promptFor("fix", { rest: "the button does nothing", seat: "copilot" });
-    expect(fix).toContain("Copilot already loaded AGENTS.md");
-    expect(fix).toContain("approved /plan");
-    expect(fix).not.toContain("docs/vision.md");
-    expect(fix).not.toContain("docs/code.md");
+    const analyzed = promptFor("analyze", { rest: "the button does nothing", seat: "copilot" });
+    expect(analyzed).toContain("Copilot already loaded AGENTS.md");
+    expect(analyzed).toContain("Do not edit files");
+    expect(analyzed).not.toContain("docs/vision.md");
+    expect(analyzed).not.toContain("docs/code.md");
     const code = promptFor("code", { rest: "rename a label", seat: "cursor", appDir: "/tmp/app" });
     expect(code).toContain("Use the IDE");
     expect(code).toContain("Workspace: /tmp/app");
-    expect(code).toContain("approved /plan");
+    expect(code).toContain("approved /speckit.plan");
     expect(code).toContain("docs/code.md");
     expect(code).not.toContain("docs/vision.md");
     const think = promptFor("think", { rest: "the intake form", seat: "cursor" });

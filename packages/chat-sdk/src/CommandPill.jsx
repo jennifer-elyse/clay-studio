@@ -3,7 +3,7 @@ import { pillLock } from "./pill-state.js";
 
 /**
  * @param {object} props
- * @param {{ id: string, slash: string, label: string, summary: string, needsInput?: boolean }} props.command
+ * @param {{ id: string, slash: string, label: string, summary: string, needsInput?: boolean, brain?: boolean }} props.command
  * @param {boolean} [props.busy]
  * @param {boolean} [props.armed]
  * @param {{ plan?: boolean, build?: boolean }} [props.done]
@@ -17,7 +17,7 @@ export function CommandPill({ command, busy = false, armed = false, done, onPick
   const waiting = !lock && busy && command.id !== "stop";
   const title = lock || (waiting ? "Wait until this run finishes." : command.summary);
   const off = Boolean(lock) || waiting;
-  const thinks = command.id === "plan" || command.id === "fix";
+  const thinks = command.brain === true;
 
   function run() {
     if (command.id === "seat") {

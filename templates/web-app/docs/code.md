@@ -19,7 +19,7 @@ The committee adopts this as Clay 1.0:
 
 1. Cursor for developers, GitHub Copilot for the rest of IT. One platform per role, seats sized to the work, Claude spend under a team cap.
 2. AI security and data rules. Approved models only. No restricted data or secrets in prompts. Least-privilege agents. People merge.
-3. Spec-driven development. `/plan` is required before implementation. Claude plans. Grok 4.7 High codes.
+3. Spec-driven development. `/speckit.specify` comes before `/speckit.plan`. A person approves the plan before `/speckit.implement`. Claude plans. Grok 4.7 High codes.
 4. One architecture for every web application. React 19 client, Express API on Cloud Run behind APIM, PostgreSQL, Google Cloud. JavaScript with JSDoc or TypeScript. Functional, idempotent code. Statuses are XState machines.
 5. Contract-first APIs and events. Zod, TypeSpec, or protobuf first for every API and event. Validated at the boundary. Backward compatible.
 6. Design system and proof. Imported tokens and Code Connect. Storybook, JSDoc, Jest, and Playwright prove each change.
@@ -44,9 +44,9 @@ One tool per role. Cursor is the application-development seat. GitHub Copilot is
 | Role | Platform and seat | Per seat / month | 10 seats, annual | What it is for |
 | --- | --- | --- | --- | --- |
 | Developers — maintenance | Cursor Plus | $8 | $960 | Fixes and small changes. Composer only, no Claude. Plus is not sold on Teams. |
-| Developers — everyday | Cursor Premium | $30 | $3,600 | Daily build. `/plan` with Claude, Grok 4.7 High for the code, Cloud Agents, Bugbot. |
+| Developers — everyday | Cursor Premium | $30 | $3,600 | Daily build. `/speckit.plan` with Claude, Grok 4.7 High for the code, Cloud Agents, Bugbot. |
 | Developers — war room | Cursor Super | $100 | $12,000 | Sprint intensity. 15× the Plus weekly pool. |
-| Rest of IT | GitHub Copilot Business | $19 | $2,280 | Completions, chat, and PR review. Not the `/plan` → Grok workflow. |
+| Rest of IT | GitHub Copilot Business | $19 | $2,280 | Completions, chat, and PR review. Not the `/speckit.plan` → Grok workflow. |
 
 The bill follows the work. Grok and Composer draw from the weekly pool first. Claude is billed per token. Prices are API list price:
 
@@ -60,7 +60,7 @@ The bill follows the work. Grok and Composer draw from the weekly pool first. Cl
 
 Grok 4.7 and Composer 2.5 draw from the weekly pool first. Ordinary coding does not create a second invoice, and the pool refreshes every week. Claude planning has no included allowance. It is paid from prepaid credit at list price plus the $0.25 Teams rate, under a team spending cap.
 
-Clay spends the attached seat on the cheapest model that can do the step. `/plan` and `/spec` write the spec of record. `/build` implements it. Every other turn, including `/think`, `/fix`, and chat, uses the seat's cheap model. Cursor and Copilot ask the account for its model list and take the first listed model in that step's family. A name saved in Settings is sent as typed. An empty list keeps the built-in name. The Codex SDK does not return a catalog, so Codex keeps the names in the table. A prompt does not paste this file. The product already loaded `AGENTS.md`. The prompt names only the docs that step needs.
+Clay spends the attached seat on the cheapest model that can do the step. `/speckit.specify` writes the feature spec. `/speckit.plan` writes the technical plan from that spec. `/speckit.analyze` only reads. `/speckit.implement` executes the tasks. `/speckit.converge` only appends leftover tasks. Every other turn, including `/think` inside a command and chat, uses the seat's cheap model. Cursor and Copilot ask the account for its model list and take the first listed model in that step's family. A name saved in Settings is sent as typed. An empty list keeps the built-in name. The Codex SDK does not return a catalog, so Codex keeps the names in the table. A prompt does not paste this file. The product already loaded `AGENTS.md`. The prompt names only the docs that step needs.
 
 | Seat | Plan and spec | Build | Every other turn |
 | --- | --- | --- | --- |
@@ -68,7 +68,7 @@ Clay spends the attached seat on the cheapest model that can do the step. `/plan
 | Copilot | First listed Sol, Sonnet, Opus, or Fable, at medium effort | First listed Sol, Sonnet, Opus, or Fable, at medium effort | First listed Luna, Haiku, mini, or Flash, at low effort |
 | Codex | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 at medium effort, in a fresh thread | GPT-5.4 mini at low effort. The chat thread is reused |
 
-One agent stays with the project and is disposed when the project or the seat changes. Cursor resumes that agent, summarizes before a plan or a build when the thread already has turns, and summarizes again after, so the next turn sees the summary. Preview tools are sent only for build, fix, and code. Copilot starts a new session instead of reloading the saved transcript. Codex and Copilot drop the thread after a plan or a build, and after four short turns. The brain's reasoning is the opening of that same turn, not a second copy of the context. Cursor loads project rules only. Clay may open at most 5 subtasks. A subtask must not start an agent. If the app or Clay crashes, stop. Do not start another model call, summary, or retry.
+One agent stays with the project and is disposed when the project or the seat changes. Cursor resumes that agent, summarizes before a plan or a build when the thread already has turns, and summarizes again after, so the next turn sees the summary. Preview tools are sent only for `/speckit.implement`. Copilot starts a new session instead of reloading the saved transcript. Codex and Copilot drop the thread after a plan or a build, and after four short turns. The brain's `/think` is the opening of that same command, not a second turn. Cursor loads project rules only. Clay may open at most 5 subtasks. A subtask must not start an agent. If the app or Clay crashes, stop. Do not start another model call, summary, or retry.
 
 ### What AI may see and do
 
@@ -81,7 +81,7 @@ One agent stays with the project and is disposed when the project or the seat ch
 
 ## Spec-driven development
 
-Every change starts with `/plan`. The plan is the spec of record. Nothing is implemented until a person approves it.
+A change starts with `/speckit.specify`. That file is the feature spec. `/speckit.plan` is the technical plan written from it. Nothing is implemented until a person approves the plan.
 
 1. Ask for a plan before files change. Cursor uses Claude. Claude reads the repository and writes the approach in Markdown. A person approves it. Then the coding starts.
 2. After the plan is accepted, Grok 4.7 High writes the implementation, inside the weekly allowance.
@@ -92,7 +92,7 @@ Write the spec first. Use the spec to direct the task. Exploration can discover 
 | | Vibe coding | Spec-driven development |
 | --- | --- | --- |
 | Core | Exploratory, natural-language prompts based on loose ideas. | Structured methodology using detailed, reviewable specifications. |
-| Workflow | Ad-hoc, fast iterations. Relies on AI intuition and developer feedback. | Specify and plan (`/plan`) → Approve → Implement → Review. |
+| Workflow | Ad-hoc, fast iterations. Relies on AI intuition and developer feedback. | `/speckit.specify` → `/speckit.plan` → `/speckit.tasks` → approve → `/speckit.implement` → `/speckit.converge`. Clarify, checklist, and analyze are optional. |
 | Strength | Rapid prototyping and low-friction experimentation. | Less context drift. Decisions stay explicit. The architecture stays consistent. |
 | Weakness | Fragmented code, technical debt, and unverified assumptions. | Upfront effort. Can feel rigid for a small experiment. |
 | Human role | Iterative prompter, explorer, and debugger. | Orchestrator, system architect, approver, and validator. |
@@ -198,7 +198,7 @@ New revisions take a slice of traffic first. Rollback is the previous revision. 
 ### API governance
 
 - Every API and event is registered in APIM with its owner, contract, version, and consumers. An unregistered API gets no route.
-- A new API, or a breaking change, gets a contract review from the platform team as part of the `/plan`, before implementation starts.
+- A new API, or a breaking change, gets a contract review from the platform team as part of the `/speckit.plan`, before implementation starts.
 - A deprecated version sends `Deprecation` and `Sunset` headers, gets at least six months' notice, and is removed only when APIM shows no traffic.
 - APIM keys identify every consumer, so an owner can see who a change affects and tell them before it ships.
 
@@ -270,18 +270,18 @@ If a doc is not in the repository, the agent cannot read it and the reviewer can
 | --- | --- | --- | --- |
 | `AGENTS.md` | Open standard, Agentic AI Foundation | Automatically, every session, in Cursor and Copilot | Commands, the hard rules, and which doc to read. Kept short. A nested `AGENTS.md` adds local rules. |
 | `.agents/skills/<name>/SKILL.md` | Open standard, Agent Skills | On demand, when the task matches the description | A repeatable procedure, such as adding an endpoint or regenerating the ERD. A developer can name a skill to force it. |
-| `docs/vision.md` | Clay | At `/plan`, before any approach is written | Why the app exists, who it serves, and what it will not do. |
+| `docs/vision.md` | Clay | At `/speckit.specify`, before the technical plan | Why the app exists, who it serves, and what it will not do. |
 | `docs/design.md` | Clay | When a change touches the UI | Tokens, component states, and accessibility. |
 | `docs/code.md` | Clay (Spec Kit: constitution) | When code is written or reviewed | This file. |
 | `docs/erd.md` | Clay, generated | When a change touches data | The current data model, so the plan starts from the real schema. |
-| `docs/{project-name}-plan/NNN-name/plan.md` | Clay (Spec Kit: spec, plan, tasks) | Written at `/plan`; the person approves it before `/build` | The approved spec of record for one change. |
+| `docs/{project-name}-plan/NNN-name/plan.md` | Clay (Spec Kit: plan) | Written at `/speckit.plan` from the feature spec; the person approves it before `/speckit.implement` | The technical plan for one change. The feature spec is `spec.md` from `/speckit.specify`. The task list is `tasks.md` from `/speckit.tasks`. |
 | `docs/adr/` | Clay | When an architecture choice needs a written reason | Why the architecture is the way it is, including a time-boxed exception. |
 
-Cursor and Copilot load `AGENTS.md` every session, so every line costs context on every request. The agent sees only each skill's name and description until the task matches, then it loads that `SKILL.md`. Twenty skills cost almost nothing until one is needed. `AGENTS.md` routes the rest: before `/plan`, read `docs/vision.md` and `docs/erd.md`; before UI work, `docs/design.md`; before code, this file. A developer can `@`-attach any doc. Reviewers check against the same files.
+Cursor and Copilot load `AGENTS.md` every session, so every line costs context on every request. The agent sees only each skill's name and description until the task matches, then it loads that `SKILL.md`. Twenty skills cost almost nothing until one is needed. `AGENTS.md` routes the rest: before `/speckit.plan`, read `docs/vision.md` and `docs/erd.md`; before UI work, `docs/design.md`; before code, this file. A developer can `@`-attach any doc. Reviewers check against the same files.
 
 A change to behavior, schema, or a contract updates `docs/vision.md`, `docs/design.md`, `docs/code.md`, `docs/erd.md`, `docs/adr/`, or the plan in the same PR. No follow-up tickets. ERDs, API references, and JSDoc output are built from the source, not typed by hand. CI fails when a generated doc is stale, a link is broken, or a schema change ships without its ERD. Each capability's `README.md` names an owner and a last-reviewed date. A stale doc is a bug.
 
-`docs/erd.md` is the Mermaid picture of `server/schema.sql`. After migrations run in CI, a script reads the schema and writes that file. GitHub renders it in the pull request. Nobody edits it by hand into a shape the schema does not have. CI regenerates the ERD and compares it with the committed file. A migration without its updated ERD fails the check. One ERD per capability. This capability documents the tables it owns and marks data others reach only through its API. Claude reads the ERD when it writes the `/plan`.
+`docs/erd.md` is the Mermaid picture of `server/schema.sql`. After migrations run in CI, a script reads the schema and writes that file. GitHub renders it in the pull request. Nobody edits it by hand into a shape the schema does not have. CI regenerates the ERD and compares it with the committed file. A migration without its updated ERD fails the check. One ERD per capability. This capability documents the tables it owns and marks data others reach only through its API. Claude reads the ERD when it writes the `/speckit.plan`.
 
 ## Proof
 
@@ -300,7 +300,7 @@ On localhost, until Figma, Code Connect, or Storybook is in the app, tokens stil
 
 A change is ready when a reviewer can check every line below. A line that names a system this prototype does not run yet is met by leaving the contract and the file layout, not by inventing that system.
 
-- An approved `/plan` in `docs/{project-name}-plan/` accompanies the change. The plan is the spec this change followed. For a merge, someone other than the author approved it.
+- An approved `/speckit.plan` in `docs/{project-name}-plan/` accompanies the change. The plan is the spec this change followed. For a merge, someone other than the author approved it.
 - The contract changed first. Zod validates in and out. Paths are nouns. Methods are verbs. Errors share one shape and a catalog code.
 - Every write takes `Idempotency-Key`. Status changes are legal XState transitions. `schema.sql` can run again.
 - Tokens are imported into `client/src/styles/abstracts/tokens.css` and loaded through `client/src/styles/main.scss`. Components use them. A value is not typed by hand in a component. A Figma component with code uses Code Connect.
@@ -352,7 +352,7 @@ Each one blocks the pilot. The recommendation is a starting point, not a decisio
 
 | Decision | Options | Recommendation | Needed by |
 | --- | --- | --- | --- |
-| Who approves a `/plan` | Tech lead; any second developer; by change size | A peer for small changes; the tech lead above an agreed size | Dec 2026 |
+| Who approves a `/speckit.plan` | Tech lead; any second developer; by change size | A peer for small changes; the tech lead above an agreed size | Dec 2026 |
 | Claude spending cap | A monthly team cap; a per-seat cap | A monthly team cap with an alert at 80%. Amount set from pilot usage | Dec 2026 |
 | Platform owner and team | Named people | One owner and two maintainers, named before the pilot starts | Dec 2026 |
 | Maintenance seats | Plus bought individually; Premium; Copilot Business | Premium on the team plan. Plus is not sold for Teams and cannot use Claude | Dec 2026 |

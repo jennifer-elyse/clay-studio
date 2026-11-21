@@ -3,8 +3,7 @@ import { commandNeedsTools, compactAfter, compactBefore, FAST_TURN_LIMIT } from 
 describe("agent context", () => {
   test("preview tools ride only on turns that change the running app", () => {
     expect(commandNeedsTools("build")).toBe(true);
-    expect(commandNeedsTools("fix")).toBe(true);
-    expect(commandNeedsTools("code")).toBe(false);
+    expect(commandNeedsTools("converge")).toBe(false);
     expect(commandNeedsTools("plan")).toBe(false);
     expect(commandNeedsTools("chat")).toBe(false);
     expect(commandNeedsTools("spec")).toBe(false);

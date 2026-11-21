@@ -1,8 +1,7 @@
 import { makeEvent, runStartFields } from "./events.js";
-import { modelFor } from "./models.js";
+import { modelFor, phaseFor } from "./models.js";
 import {
   assertBuildAllowed,
-  listPlans,
   nextPlanSlug,
   setPlanStatus,
   writePlan,
@@ -48,16 +47,16 @@ export function createMockAdapter(ctx) {
       yield makeEvent("seat", {
         seat: {
           provider: "mock",
-          model: modelFor(command === "plan" || command === "spec" ? "plan" : "build", "mock"),
+          model: modelFor(phaseFor(command), "mock"),
           caption: "Mock seat — sign in with Cursor or Copilot to use your account.",
         },
       });
 
-      if (options.thinkFirst && (command === "plan" || command === "fix")) {
+      if (options.thinkFirst) {
         const text =
           command === "plan"
-            ? `If I were planning “${rest}”, I'd keep the Clay starter and write a /plan first.`
-            : `If I were fixing “${rest}”, I'd change only the broken control.`;
+            ? `If I were planning “${rest}”, I'd keep the Clay starter and write a /speckit.plan first.`
+            : `Reasoning first for ${command}${rest ? `: ${rest}` : ""}.`;
         yield makeEvent("assistant_text", { text });
       }
 
@@ -90,7 +89,7 @@ export function createMockAdapter(ctx) {
         const spec = await writeSpec({ appDir: ctx.appDir, slug, title, body });
         const relative = spec.path.replace(`${ctx.appDir}/`, "");
         yield makeEvent("assistant_text", {
-          text: `Draft spec is ready at ${relative}. /plan can turn it into an approach.`,
+          text: `Draft spec is ready at ${relative}. /speckit.plan can turn it into an approach.`,
         });
       } else if (command === "plan") {
         yield makeEvent("step", { step: { label: "Reading your vision", status: "running" } });
@@ -148,26 +147,33 @@ export function createMockAdapter(ctx) {
         }
         yield makeEvent("preview", { preview: { status: "ready", url: opened.url } });
         yield makeEvent("assistant_text", { text: `It's running at ${opened.url}` });
-      } else if (command === "docs") {
-        const plans = await listPlans(ctx.appDir);
-        const lines = plans.map((plan) => `- ${plan.status}: ${plan.title}`).join("\n") || "- No plans yet.";
-        yield makeEvent("assistant_text", {
-          text: `Vision, design, and the ERD live in docs/. Plans:\n${lines}`,
-        });
-      } else if (command === "fix") {
-        yield makeEvent("step", { step: { label: "Looking at the preview", status: "running" } });
-        await delay(40);
-        yield makeEvent("step", { step: { label: "Looking at the preview", status: "done" } });
+      } else if (command === "constitution") {
         yield makeEvent("assistant_text", {
           text: rest
-            ? `Noted: “${rest}”. In a live seat I'd patch the UI. Mock seat records the request.`
-            : "Tell me which screen looks wrong.",
+            ? `Constitution noted: ${rest}. Later steps are judged against it.`
+            : "Tell me the principles this app should follow.",
         });
-      } else if (command === "search") {
+      } else if (command === "clarify") {
         yield makeEvent("assistant_text", {
           text: rest
-            ? `Mock search for “${rest}”: docs/vision.md, docs/erd.md, server/index.js.`
-            : "What should I search for?",
+            ? `One question on ${rest}: who can change this, and what happens when they cannot?`
+            : "Which part of the spec should we clarify?",
+        });
+      } else if (command === "checklist") {
+        yield makeEvent("assistant_text", {
+          text: "Checklist: the spec names who acts, what changes, and what is out of scope.",
+        });
+      } else if (command === "tasks") {
+        yield makeEvent("assistant_text", {
+          text: "Tasks: setup, then the first user story, then polish. Nothing is implemented yet.",
+        });
+      } else if (command === "analyze") {
+        yield makeEvent("assistant_text", {
+          text: "Analyze: the spec, plan, and tasks agree. No files were changed.",
+        });
+      } else if (command === "converge") {
+        yield makeEvent("assistant_text", {
+          text: "Converged. The implementation satisfies the spec, plan, and tasks.",
         });
       } else if (command === "think") {
         yield makeEvent("step", { step: { label: "Thinking it through", status: "running" } });
@@ -175,32 +181,14 @@ export function createMockAdapter(ctx) {
         yield makeEvent("step", { step: { label: "Thinking it through", status: "done" } });
         yield makeEvent("assistant_text", {
           text: rest
-            ? `If I were planning “${rest}”, I'd keep the Clay starter and write a /plan first.`
-            : "Ask me to think about a workflow, then we can /plan it.",
-        });
-      } else if (command === "write") {
-        yield makeEvent("assistant_text", {
-          text: rest
-            ? `I'd draft that into docs/ (not code): ${rest}`
-            : "What copy or doc should we write?",
-        });
-      } else if (command === "code") {
-        yield makeEvent("assistant_text", {
-          text: rest
-            ? `Use the IDE for: ${rest}. New features still need an approved /plan.`
-            : "What should we change in the code?",
-        });
-      } else if (command === "image") {
-        yield makeEvent("assistant_text", {
-          text: rest
-            ? `Picture: a warm clay-studio screen showing “${rest}” with the mascot in the corner. Synthetic only.`
-            : "What should the picture show?",
+            ? `If I were planning “${rest}”, I'd keep the Clay starter and write a /speckit.plan first.`
+            : "Ask me to think about a workflow, then we can /speckit.plan it.",
         });
       } else {
         yield makeEvent("assistant_text", {
           text: rest
-            ? `I can Plan, Build, or Run that. You said: “${rest}”.`
-            : "What should we mold? Try Plan.",
+            ? `Specify, plan, or implement that. You said: “${rest}”.`
+            : "What should we mold? Try Specify.",
         });
       }
 

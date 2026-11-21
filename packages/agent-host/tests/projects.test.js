@@ -49,11 +49,11 @@ describe("named projects", () => {
     const { appsDir, host } = await bareHost();
     expect(host.snapshot().project).toBeNull();
 
-    const blocked = await collect(host.send("/plan cooler requests"));
+    const blocked = await collect(host.send("/speckit.plan cooler requests"));
     expect(blocked.some((event) => event.type === "error" && event.text?.includes("Name a project"))).toBe(true);
     expect(blocked.some((event) => event.type === "plan")).toBe(false);
 
-    const named = await collect(host.send({ prompt: "/plan cooler requests", projectName: "Cooler requests" }));
+    const named = await collect(host.send({ prompt: "/speckit.plan cooler requests", projectName: "Cooler requests" }));
     expect(named.some((event) => event.type === "plan")).toBe(true);
     const snap = host.snapshot();
     expect(snap.project?.name).toBe("Cooler requests");
@@ -78,7 +78,7 @@ describe("named projects", () => {
     await expect(fs.access(path.join(appsDir, "tracker"))).rejects.toThrow();
     await expect(fs.access(path.join(appsDir, "store-requests", "AGENTS.md"))).resolves.toBeUndefined();
 
-    const planned = await collect(host.send("/plan extra pallet"));
+    const planned = await collect(host.send("/speckit.plan extra pallet"));
     expect(planned.some((event) => event.type === "plan")).toBe(true);
     expect(planned.some((event) => event.type === "error")).toBe(false);
   });

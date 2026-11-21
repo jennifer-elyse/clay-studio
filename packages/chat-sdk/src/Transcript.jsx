@@ -22,7 +22,7 @@ export function Transcript({ items, steps = [], busy = false, clip = "idle.webp"
         <div className="clay-empty">
           <ClayBot clip={clip} theme={theme} clayColor={clayColor} size="lg" />
           <h1>What should we mold?</h1>
-          <p>Describe an internal app. We will write a plan first.</p>
+          <p>Describe an internal app. Specify what it must do before a plan.</p>
         </div>
       </div>
     );

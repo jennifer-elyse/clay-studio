@@ -1,6 +1,6 @@
 import path from "node:path";
 import { z } from "zod";
-import { formatHelp, parseSlash } from "./commands.js";
+import { formatHelp, needsProject, parseSlash, withThink } from "./commands.js";
 import { createCodexAdapter } from "./codex-adapter.js";
 import { createCopilotAdapter } from "./copilot-adapter.js";
 import { createCursorAdapter } from "./cursor-adapter.js";
@@ -19,7 +19,6 @@ import {
   relocateProject,
   saveProjectRegistry,
 } from "./projects.js";
-import { openCodeInIde } from "./open-ide.js";
 import { ProjectFilesInput, saveProjectFiles, uploadMessage } from "./project-uploads.js";
 import { loadSession, saveSession } from "./session-store.js";
 import {
@@ -72,8 +71,6 @@ export function detectSeat() {
  * @param {string} [input.appsDir]
  * @param {string} [input.templateDir]
  * @param {string} [input.gitHubToken]
- * @param {(command: string, args: string[]) => void} [input.launchIde]
- * @param {(ms: number) => Promise<void>} [input.waitIde]
  */
 export async function createHost(input = {}) {
   const savedSettings = await loadSettings();
@@ -331,7 +328,8 @@ export async function createHost(input = {}) {
      */
     async *send(raw) {
       const parsed = SendInputSchema.parse(typeof raw === "string" ? { prompt: raw } : raw);
-      const slash = parseSlash(parsed.prompt);
+      const shown = parsed.thinkFirst ? withThink(parsed.prompt) : parsed.prompt;
+      const slash = parseSlash(shown);
       const command = parsed.command ?? slash.command?.id ?? "chat";
       const rest = parsed.rest ?? slash.rest;
       if (command === "stop") {
@@ -368,24 +366,6 @@ export async function createHost(input = {}) {
         yield makeEvent("clear", {});
         return;
       }
-      if (command === "code") {
-        yield makeEvent("user_text", { text: parsed.prompt });
-        if (!ctx.appDir) {
-          yield makeEvent("error", { text: "Name a project before opening the IDE.", status: "project" });
-          return;
-        }
-        const opened = await openCodeInIde(
-          { appDir: ctx.appDir, rest, platform: process.platform },
-          input.launchIde,
-          input.waitIde,
-        );
-        if (!opened.ok) {
-          yield makeEvent("error", { text: opened.message });
-          return;
-        }
-        yield makeEvent("assistant_text", { text: "Opened in the IDE. Review the prompt there, then send it." });
-        return;
-      }
       if (command === "upload") {
         await this.uploadFiles([]);
         return;
@@ -400,7 +380,7 @@ export async function createHost(input = {}) {
             snap.project ? `Project: ${snap.project.name} (${snap.project.folder})` : "Project: name one before planning",
             `Workspace: ${snap.appDir || "(none yet)"}`,
             snap.preview?.url ? `Preview: ${snap.preview.url}` : "Preview: not running",
-            "Pills: /plan /build /run /spec /help /settings. Restricted data stays out of prompts.",
+            "Pills: /speckit.specify /speckit.plan /speckit.implement /help /seats. Restricted data stays out of prompts.",
           ].join("\n"),
         });
         return;
@@ -415,11 +395,11 @@ export async function createHost(input = {}) {
         yield makeEvent("error", { text: "One run at a time. Stop the current run, or wait." });
         return;
       }
-      if (command === "plan" && !active) {
+      if (needsProject(command) && !active) {
         const given = (parsed.projectName ?? "").trim();
         if (!given) {
           yield makeEvent("user_text", { text: parsed.prompt });
-          yield makeEvent("error", { text: "Name a project before planning.", status: "project" });
+          yield makeEvent("error", { text: "Name a project before this step.", status: "project" });
           return;
         }
         try {
@@ -437,10 +417,9 @@ export async function createHost(input = {}) {
       let failed = false;
       try {
         if (parsed.replaceId) await adapter.reset();
-        const thinkFirst = parsed.thinkFirst === true && (command === "plan" || command === "fix");
-        if (thinkFirst) yield makeEvent("user_text", { text: rest ? `/think ${rest}` : "/think" });
-        yield makeEvent("user_text", { text: parsed.prompt });
-        for await (const event of adapter.send(parsed.prompt, { command, rest, thinkFirst })) {
+        const thinkFirst = slash.think || parsed.thinkFirst === true;
+        yield makeEvent("user_text", { text: shown.trim() });
+        for await (const event of adapter.send(shown.trim(), { command, rest, thinkFirst })) {
           yield event;
           if (event.type === "error") {
             failed = true;

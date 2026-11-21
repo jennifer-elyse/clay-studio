@@ -1,16 +1,17 @@
-export { COMMANDS, filterCommands, parseSlash } from "@cswg/agent-host/commands";
+export { COMMANDS, filterCommands, needsProject, parseSlash, withThink } from "@cswg/agent-host/commands";
 
 export const PILL_IDS = [
-  "plan",
-  "build",
-  "run",
+  "constitution",
   "spec",
-  "fix",
-  "search",
+  "clarify",
+  "plan",
+  "checklist",
+  "tasks",
+  "analyze",
+  "build",
+  "converge",
+  "run",
   "summarize",
-  "write",
-  "code",
-  "image",
   "upload",
   "debug",
 ];

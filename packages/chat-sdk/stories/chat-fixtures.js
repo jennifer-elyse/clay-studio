@@ -7,13 +7,13 @@ const trackerPlan = {
 };
 
 export const streamingEvents = [
-  { type: "user_text", id: "u1", text: "/plan a tracker" },
+  { type: "user_text", id: "u1", text: "/speckit.plan a tracker" },
   { type: "step", id: "s1", step: { label: "Reading your vision", status: "running" } },
   { type: "plan", id: "p1", plan: trackerPlan },
 ];
 
 export const finishedEvents = [
-  { type: "user_text", id: "u1", text: "/plan a tracker" },
+  { type: "user_text", id: "u1", text: "/speckit.plan a tracker" },
   { type: "run_started", id: "s" },
   { type: "step", id: "s1", step: { label: "Reading your vision", status: "done" } },
   { type: "plan", id: "p1", plan: trackerPlan },

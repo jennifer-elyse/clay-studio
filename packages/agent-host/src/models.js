@@ -85,15 +85,17 @@ export function hasSeatOverride(seat, phase, overrides = {}) {
 }
 
 /**
- * Plan and spec are the spec of record. Build implements that spec.
- * Every other command is a short turn and uses the seat's cheap model.
+ * Specify through analyze use the work model. Implement and converge use the build model.
+ * Every other command is a short turn.
  *
  * @param {string} command
  * @returns {"plan" | "build" | "fast"}
  */
 export function phaseFor(command) {
-  if (command === "plan" || command === "spec") return "plan";
-  if (command === "build") return "build";
+  if (command === "plan" || command === "spec" || command === "constitution" || command === "clarify" || command === "checklist" || command === "tasks" || command === "analyze") {
+    return "plan";
+  }
+  if (command === "build" || command === "converge") return "build";
   return "fast";
 }
 

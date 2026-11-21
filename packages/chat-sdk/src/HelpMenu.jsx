@@ -7,12 +7,12 @@ export function HelpMenu({ onSend, busy = false }) {
   const [open, setOpen] = useState(false);
   const root = useRef(null);
   const menuId = useId();
-  const items = ["help", "docs", "settings"].map((id) => COMMANDS.find((command) => command.id === id)).filter((command) => command);
+  const items = ["help", "seat"].map((id) => COMMANDS.find((command) => command.id === id)).filter((command) => command);
   useDismiss(open, root, () => setOpen(false));
 
   return (
     <div className="clay-help" ref={root}>
-      <button type="button" className="clay-pill clay-help-button" aria-expanded={open} aria-controls={menuId} aria-label="Help, docs, and settings" onClick={() => setOpen((value) => !value)}>
+      <button type="button" className="clay-pill clay-help-button" aria-expanded={open} aria-controls={menuId} aria-label="Help and seats" onClick={() => setOpen((value) => !value)}>
         ?
       </button>
       {open ? (

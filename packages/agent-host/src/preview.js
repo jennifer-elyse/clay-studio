@@ -470,7 +470,7 @@ export function previewTools(getAppDir) {
       },
     },
     clay_check: {
-      description: "List approved plans and whether /build is allowed.",
+      description: "List approved plans and whether /speckit.implement is allowed.",
       inputSchema: { type: "object", properties: {} },
       async execute() {
         const { listPlans, latestApprovedPlan } = await import("./plan-gate.js");

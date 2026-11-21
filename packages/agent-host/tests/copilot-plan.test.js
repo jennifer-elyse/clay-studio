@@ -35,6 +35,14 @@ describe("copilot plan tools", () => {
     expect(copilotPermissionDecision({ kind: "read" }, "plan", "route-board-plan")).toEqual({ kind: "approve-once" });
   });
 
+  test("analyze only reads, converge only appends tasks, and the constitution is one project file", () => {
+    expect(copilotPermissionDecision({ kind: "write", fileName: "docs/app-plan/001/spec.md" }, "analyze", "app-plan").kind).toBe("reject");
+    expect(copilotPermissionDecision({ kind: "write", fileName: "client/src/App.jsx" }, "converge", "app-plan").kind).toBe("reject");
+    expect(copilotPermissionDecision({ kind: "write", fileName: "docs/app-plan/001/tasks.md" }, "converge", "app-plan")).toEqual({ kind: "approve-once" });
+    expect(copilotPermissionDecision({ kind: "write", fileName: "docs/constitution.md" }, "constitution", "app-plan")).toEqual({ kind: "approve-once" });
+    expect(copilotPermissionDecision({ kind: "write", fileName: "docs/app-plan/001/constitution.md" }, "constitution", "app-plan").kind).toBe("reject");
+  });
+
   test("the write request carries the plan", () => {
     const text = planTextFromWrite({
       kind: "write",

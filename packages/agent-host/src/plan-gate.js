@@ -195,7 +195,7 @@ export class PlanGateError extends Error {
 export async function assertBuildAllowed(appDir) {
   const approved = await latestApprovedPlan(appDir);
   if (!approved) {
-    throw new PlanGateError("Approve a /plan before building. Nothing is implemented until a person says so.");
+    throw new PlanGateError("Approve the /speckit.plan before /speckit.implement. Nothing is implemented until a person says so.");
   }
   return approved;
 }

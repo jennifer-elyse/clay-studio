@@ -1,4 +1,4 @@
-export { COMMANDS, filterCommands, formatHelp, parseSlash } from "./commands.js";
+export { COMMANDS, filterCommands, formatHelp, needsProject, parseSlash, withThink, writesArtifacts } from "./commands.js";
 export { createHost, detectSeat, SendInputSchema } from "./host.js";
 export { createCodexAdapter } from "./codex-adapter.js";
 export { createCursorAdapter } from "./cursor-adapter.js";

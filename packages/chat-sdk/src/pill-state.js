@@ -1,11 +1,9 @@
 /**
- * Why Plan or Build stays off for this project. Empty means the button can be used.
- * @param {string} commandId
- * @param {{ plan?: boolean, build?: boolean }} [done]
+ * Spec Kit steps stay available. Analyze can send you back to plan, and converge can send you back to implement.
+ * @param {string} _commandId
+ * @param {{ plan?: boolean, build?: boolean }} [_done]
  * @returns {string}
  */
-export function pillLock(commandId, done = {}) {
-  if (commandId === "plan" && done.plan) return "This project already has an approved plan.";
-  if (commandId === "build" && done.build) return "This project is already built.";
+export function pillLock(_commandId, _done = {}) {
   return "";
 }

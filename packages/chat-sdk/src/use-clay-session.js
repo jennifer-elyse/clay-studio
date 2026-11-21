@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { clipForCommand } from "./animations.js";
-import { parseSlash } from "./commands.js";
+import { needsProject, parseSlash, withThink } from "./commands.js";
 import { applyEvent, runStateFrom, stepsForRun } from "./map-events.js";
 import { harnessModelChoice } from "./seat-model-form.js";
 
@@ -108,26 +108,27 @@ export function useClaySession(props) {
       return;
     }
     const replacing = replaceId || editingId;
-    if (parsed.command?.id === "plan") {
+    const prompt = parsed.think || thinkFirst ? withThink(text).trim() : text;
+    if (parsed.command && needsProject(parsed.command.id)) {
       const ready = props.preparePlan?.() ?? { ok: true };
       if (!ready.ok) return false;
-      playClip(text);
+      playClip(prompt);
       /** @type {{ prompt: string, thinkFirst?: boolean, projectName?: string, projectFolder?: string, replaceId?: string }} */
-      const body = { prompt: text };
-      if (thinkFirst) body.thinkFirst = true;
+      const body = { prompt };
+      if (parsed.think || thinkFirst) body.thinkFirst = true;
       if (ready.projectName) {
         body.projectName = ready.projectName;
         if (ready.projectFolder) body.projectFolder = ready.projectFolder;
       }
       if (replacing) body.replaceId = replacing;
-      props.onSend(body.thinkFirst || body.projectName || body.replaceId ? body : text);
+      props.onSend(body.thinkFirst || body.projectName || body.replaceId ? body : prompt);
       setThinkFirst(false);
       setEditingId("");
       return;
     }
-    playClip(text);
-    const thinks = thinkFirst && parsed.command?.id === "fix";
-    props.onSend(withReplace(thinks ? { prompt: text, thinkFirst: true } : text, replacing));
+    playClip(prompt);
+    const thinks = parseSlash(prompt).think;
+    props.onSend(withReplace(thinks ? { prompt, thinkFirst: true } : prompt, replacing));
     setThinkFirst(false);
     setEditingId("");
   }
@@ -170,8 +171,7 @@ export function useClaySession(props) {
    */
   function updateDraft(value) {
     setDraft(value);
-    const id = parseSlash(value).command?.id;
-    if (id !== "plan" && id !== "fix") setThinkFirst(false);
+    setThinkFirst(parseSlash(value).think);
   }
 
   /**
@@ -187,13 +187,14 @@ export function useClaySession(props) {
    * @param {string} slash
    */
   function think(slash) {
+    const next = withThink(slash);
     setThinkFirst(true);
-    setDraft(slash);
+    setDraft(next.endsWith(" ") ? next : `${next} `);
     playClip("/think");
   }
 
   function adjust() {
-    pick("/plan ");
+    pick("/speckit.plan ");
     props.onAdjustPlan?.();
   }
 

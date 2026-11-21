@@ -3,12 +3,12 @@ export const FAST_TURN_LIMIT = 4;
 
 /**
  * Preview tools are a schema on every turn that carries them.
- * Plan, spec, and chat do not need them.
+ * Spec Kit artifact steps and chat do not need them.
  *
  * @param {string} command
  */
 export function commandNeedsTools(command) {
-  return command === "build" || command === "fix";
+  return command === "build";
 }
 
 /**

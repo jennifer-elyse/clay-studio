@@ -9,9 +9,9 @@ export function blueMotionForClip(clip) {
   if (["image", "pop-shape"].includes(name)) return "morph";
   if (["rolling", "run"].includes(name)) return "roll";
   if (["plan", "think", "spec", "summarize"].includes(name)) return "think";
-  if (["build", "code", "write", "fix", "debug", "docs"].includes(name)) return "focus";
+  if (["build", "constitution", "checklist", "tasks", "converge", "debug", "docs"].includes(name)) return "focus";
   if (["help", "settings", "new", "seats"].includes(name)) return "bounce";
-  if (["interested", "search", "upload"].includes(name)) return "interested";
+  if (["interested", "clarify", "analyze", "upload", "search"].includes(name)) return "interested";
   if (["judging", "concerned"].includes(name)) return name;
   if (["clear", "stop"].includes(name)) return "settle";
   return "idle";

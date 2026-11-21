@@ -27,7 +27,8 @@ FRAME_MS = 100
 SIDE = 320
 
 COMMANDS = [
-    "spec", "plan", "build", "run", "fix", "docs", "help", "clear", "search",
+    "constitution", "spec", "clarify", "plan", "checklist", "tasks", "analyze",
+    "build", "converge", "run", "fix", "docs", "help", "clear", "search",
     "think", "summarize", "write", "code", "image", "upload", "settings",
     "new", "seats", "stop", "debug",
 ]
@@ -36,6 +37,8 @@ AMBIENT = ["idle", "blink", "rolling", "pop-shape", "interested", "judging", "co
 # Match each slash-command's intent to one of the ten real expressions.
 POSES = {
     "spec": "curious", "plan": "thinking", "build": "focused", "run": "excited",
+    "constitution": "thinking", "clarify": "curious", "checklist": "happy",
+    "tasks": "focused", "analyze": "curious", "converge": "focused",
     "fix": "focused", "docs": "thinking", "help": "happy", "clear": "neutral",
     "search": "curious", "think": "thinking", "summarize": "thinking", "write": "happy",
     "code": "focused", "image": "morph", "upload": "excited", "settings": "neutral",

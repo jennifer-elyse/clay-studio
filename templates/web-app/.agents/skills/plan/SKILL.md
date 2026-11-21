@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Write a Clay 1.0 /plan spec of record under docs/{project-name}-plan before any implementation. Use when the person asks to plan, spec, or design a change.
+description: Write the technical /speckit.plan from the feature spec under docs/{project-name}-plan before any implementation. Use when the person asks to plan or design a change.
 ---
 
 # Plan

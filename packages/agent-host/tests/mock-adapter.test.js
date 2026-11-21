@@ -21,10 +21,10 @@ describe("mock host", () => {
     await copyTemplate({ slug: "demo", appsDir, templateDir });
     const host = await createHost({ slug: "demo", seat: "mock", appsDir, templateDir });
 
-    const blocked = await collect(host.send("/build"));
+    const blocked = await collect(host.send("/speckit.implement"));
     expect(blocked.some((e) => e.type === "error")).toBe(true);
 
-    const planned = await collect(host.send("/plan request tracker"));
+    const planned = await collect(host.send("/speckit.plan request tracker"));
     const planEvent = planned.find((e) => e.type === "plan");
     expect(planEvent?.plan?.status).toBe("draft");
     expect(planEvent?.plan?.path).toContain(`${path.sep}demo-plan${path.sep}`);
@@ -32,7 +32,7 @@ describe("mock host", () => {
     expect(host.snapshot().done).toEqual({ plan: false, build: false });
     await host.approvePlan(planEvent.plan.path);
     expect(host.snapshot().done).toEqual({ plan: true, build: false });
-    const built = await collect(host.send("/build"));
+    const built = await collect(host.send("/speckit.implement"));
     expect(built.some((e) => e.type === "assistant_text")).toBe(true);
     expect(built.some((e) => e.type === "error")).toBe(false);
     expect(host.snapshot().done).toEqual({ plan: true, build: true });
@@ -54,9 +54,13 @@ describe("mock host", () => {
     process.env.CLAY_PROFILE_DIR = path.join(appsDir, "profile");
     const host = await createHost({ slug: "cmds", seat: "mock", appsDir, templateDir });
     const help = await collect(host.send("/help"));
-    expect(help.some((e) => e.text?.includes("/spec"))).toBe(true);
-    expect(help.some((e) => e.text?.includes("/plan"))).toBe(true);
-    const spec = await collect(host.send("/spec intake form"));
+    expect(help.some((e) => e.text?.includes("/speckit.specify"))).toBe(true);
+    expect(help.some((e) => e.text?.includes("/speckit.plan"))).toBe(true);
+    expect(help.some((e) => e.text?.includes("/help"))).toBe(true);
+    expect(help.some((e) => e.text?.includes("/summarize"))).toBe(true);
+    expect(help.some((e) => e.text?.includes("/upload"))).toBe(true);
+    expect(help.some((e) => e.text?.includes("/seats"))).toBe(true);
+    const spec = await collect(host.send("/speckit.specify intake form"));
     const said = spec.find((event) => event.text?.includes("spec.md"));
     const match = said?.text?.match(/docs\/\S+?spec\.md/);
     expect(match?.[0]).toMatch(/spec\.md$/);
@@ -72,28 +76,24 @@ describe("mock host", () => {
     expect(reset.some((e) => e.type === "assistant_text" && e.text?.includes("Fresh agent"))).toBe(true);
   });
 
-  test("a brain runs think before plan or fix", async () => {
+  test("a brain includes /think in the same command", async () => {
     const appsDir = await fs.mkdtemp(path.join(os.tmpdir(), "clay-apps-"));
     process.env.CLAY_SESSION_PATH = path.join(appsDir, "session.json");
     process.env.CLAY_PROFILE_DIR = path.join(appsDir, "profile");
     const host = await createHost({ slug: "think-first", seat: "mock", appsDir, templateDir });
-    const plain = await collect(host.send("/plan intake form"));
+    const plain = await collect(host.send("/speckit.plan intake form"));
     const plainSaid = plain.filter((event) => event.type === "user_text").map((event) => event.text);
-    expect(plainSaid).toEqual(["/plan intake form"]);
+    expect(plainSaid).toEqual(["/speckit.plan intake form"]);
 
-    const planned = await collect(host.send({ prompt: "/plan intake form", thinkFirst: true }));
+    const planned = await collect(host.send({ prompt: "/speckit.plan intake form", thinkFirst: true }));
     const said = planned.filter((event) => event.type === "user_text").map((event) => event.text);
-    expect(said).toEqual(["/think intake form", "/plan intake form"]);
+    expect(said).toEqual(["/speckit.plan /think intake form"]);
     expect(planned.some((event) => event.text?.includes("If I were planning"))).toBe(true);
     expect(planned.some((event) => event.type === "plan")).toBe(true);
 
-    const fixedPlain = await collect(host.send("/fix the button"));
-    const fixedPlainSaid = fixedPlain.filter((event) => event.type === "user_text").map((event) => event.text);
-    expect(fixedPlainSaid).toEqual(["/fix the button"]);
-
-    const fixed = await collect(host.send({ prompt: "/fix the button", thinkFirst: true }));
-    const fixedSaid = fixed.filter((event) => event.type === "user_text").map((event) => event.text);
-    expect(fixedSaid).toEqual(["/think the button", "/fix the button"]);
+    const typed = await collect(host.send("/speckit.implement /think the board"));
+    const typedSaid = typed.filter((event) => event.type === "user_text").map((event) => event.text);
+    expect(typedSaid).toEqual(["/speckit.implement /think the board"]);
   });
 
   test("cancel stops a plan and resend starts a fresh turn", async () => {
@@ -103,7 +103,7 @@ describe("mock host", () => {
     const host = await createHost({ slug: "turns", seat: "mock", appsDir, templateDir });
     const started = host.snapshot().agentId;
 
-    const iter = host.send("/plan request tracker");
+    const iter = host.send("/speckit.plan request tracker");
     const seen = [];
     for (;;) {
       const next = await iter.next();

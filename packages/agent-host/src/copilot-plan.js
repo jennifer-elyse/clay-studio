@@ -1,3 +1,5 @@
+import { writesArtifacts } from "./commands.js";
+
 const PLACEHOLDER = /<\/?invoke_tool_placeholder\b[^>]*>/gi;
 
 /**
@@ -61,8 +63,25 @@ export function copilotPermissionDecision(request, command, planFolder) {
   }
   if (request.managedApprovalRequired === true) return { kind: "no-result" };
   if (request.kind === "read") return { kind: "approve-once" };
+  if (command === "analyze") {
+    return { kind: "reject", feedback: "Analyze only reads. Do not change files." };
+  }
+  if (command === "constitution") {
+    const name = String(request.fileName ?? "").replaceAll("\\", "/");
+    if (request.kind === "write" && (name === "docs/constitution.md" || name.endsWith("/docs/constitution.md"))) {
+      return { kind: "approve-once" };
+    }
+    return { kind: "reject", feedback: "Write the constitution at docs/constitution.md." };
+  }
+  if (command === "converge") {
+    const name = String(request.fileName ?? "").replaceAll("\\", "/");
+    if (request.kind === "write" && name.endsWith("tasks.md") && isPlanPath(name, planFolder)) {
+      return { kind: "approve-once" };
+    }
+    return { kind: "reject", feedback: "Converge may only append tasks.md." };
+  }
   if (request.kind === "write") {
-    if (command === "plan" || command === "spec") {
+    if (writesArtifacts(command)) {
       const name = String(request.fileName ?? "");
       if (!isPlanPath(name, planFolder)) {
         return { kind: "reject", feedback: `Write the plan under docs/${planFolder}/.` };
@@ -70,7 +89,7 @@ export function copilotPermissionDecision(request, command, planFolder) {
     }
     return { kind: "approve-once" };
   }
-  if (command === "plan" || command === "spec") {
+  if (writesArtifacts(command)) {
     if (isPlanDirectoryCommand(request, planFolder)) return { kind: "approve-once" };
     return { kind: "reject", feedback: `Create docs/${planFolder}/ and write the plan there.` };
   }

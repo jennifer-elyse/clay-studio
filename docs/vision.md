@@ -8,7 +8,7 @@ Business partners and IT operators at C&S / SpartanNash who need a working proto
 
 ## Outcome
 
-A person describes a workflow in chat. Studio writes a Clay-shaped app (React + Express + Postgres), runs it on localhost, and keeps `/plan` as the spec of record so a developer can later promote it onto Cloud Run and APIM.
+A person describes a workflow in chat. Studio writes a Clay-shaped app (React + Express + Postgres), runs it on localhost, and keeps the `/speckit.specify` feature spec as the record of what the app must do so a developer can later promote it onto Cloud Run and APIM.
 
 ## What it will not do
 
