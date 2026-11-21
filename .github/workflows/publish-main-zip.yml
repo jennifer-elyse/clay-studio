@@ -48,8 +48,11 @@ jobs:
             COUNT=$(find "$MAP_DIR" -maxdepth 1 -type f -name '*.webp' | wc -l | tr -d ' ')
           fi
           if [ ! -f "$MAP_DIR/manifest.json" ] || [ "$COUNT" -ne 27 ] ||
-            git diff --name-only HEAD^ HEAD | grep -Eq '^(scripts/generate-clay-materials.py|apps/studio/public/assets/animations/blue/[^/]+\.webp)
-
+            git diff --name-only HEAD^ HEAD | grep -Eq '^(scripts/generate-clay-materials[.]py|apps/studio/public/assets/animations/blue/[^/]+[.]webp)$'; then
+            python3 scripts/generate-clay-materials.py
+          else
+            echo "Reusing 27 committed, previously verified Clay material atlases"
+          fi
       - name: Verify material map registration, alpha and highlight limits
         run: python3 scripts/check-clay-materials.py
 
