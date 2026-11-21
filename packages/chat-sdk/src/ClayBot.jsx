@@ -15,7 +15,7 @@ import "./styles/main.scss";
 export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE, theme = "classic", clayColor = DEFAULT_CLAY_COLOR }) {
   const [failedAsset, setFailedAsset] = useState("");
   const src = animationSrc(clip, theme === "blue" ? BLUE_ANIMATION_BASE : base);
-  const assetSrc = theme === "blue" ? `${src}?v=7-1-clay-color-v1` : src;
+  const assetSrc = theme === "blue" ? `${src}?v=clay-materials-v2` : src;
   return (
     <div className={`clay-bot-stage is-${size} is-${theme}`} aria-hidden="true" data-clip={clip}>
       {theme === "blue" ? (
@@ -26,8 +26,9 @@ export function ClayBot({ clip = "idle.webp", size = "md", base = ANIMATION_BASE
               : <ClayCanvas clip={clip} color={clayColor} onError={() => setFailedAsset(assetSrc)} />}
           </div>
           <div className={`clay-blue-reduced${["image.webp", "pop-shape.webp"].includes(clip) ? " is-unicorn" : " is-ball"}`}>
-            <img src={animationSrc("reference-atlas.webp", BLUE_ANIMATION_BASE)}
-              alt="" width="640" height="640" />
+            {["image.webp", "pop-shape.webp"].includes(clip)
+              ? <img src={animationSrc("reference-atlas.webp", BLUE_ANIMATION_BASE)} alt="" width="640" height="640" />
+              : <ClayCanvas clip={clip} color={clayColor} paused onError={() => setFailedAsset(assetSrc)} />}
           </div>
         </>
       ) : <img key={src} className="clay-bot-clip" src={src} alt="" width="315" height="311" />}

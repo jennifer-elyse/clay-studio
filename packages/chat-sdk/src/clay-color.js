@@ -1,4 +1,4 @@
-/** Clay body's optional color, independent of the classic/blue theme. */
+/** Clay body pigment is separate from eye, mouth and unicorn illustration. */
 export const CLAY_COLOR_KEY = "clay-studio-clay-color";
 export const DEFAULT_CLAY_COLOR = "#2D7FF0";
 export const CLAY_COLOR_PRESETS = Object.freeze([
@@ -7,6 +7,10 @@ export const CLAY_COLOR_PRESETS = Object.freeze([
   { name: "Lavender", value: "#A78BFA" },
   { name: "Cherry Magenta", value: "#D84C92" },
 ]);
+
+export const CLAY_WHITE_POINT = 240;
+export const CLAY_MAX_SPECULAR = .08;
+export const CLAY_MATERIAL_VERSION = "clay-materials-v2";
 
 export function validClayColor(value) {
   return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
@@ -29,32 +33,36 @@ export function saveClayColor(value, storage = globalThis.localStorage) {
   }
 }
 
-/** Recolor only saturated blue clay; leave neutral eyes, mouth and unicorn intact.
- * Work on straight/unpremultiplied canvas RGBA. Never overwrite the alpha.
+/** Composite registered neutral diffuse, grayscale light, bounded specular and
+ * body mask over the untouched illustrated eyes, mouth and unicorn.
+ * All parameters are ImageData or RGBA byte arrays of equal pixel count.
+ * Alpha comes exclusively from original; never from the material maps.
  */
-export function recolorClayPixels(pixels, color) {
-  if (!validClayColor(color) || color.toUpperCase() === DEFAULT_CLAY_COLOR) return pixels;
-  const target = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
-  const targetLuma = .2126 * target[0] + .7152 * target[1] + .0722 * target[2];
-  for (let i = 0; i < pixels.length; i += 4) {
-    const [r, g, b, a] = [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]];
-    if (a < 12) {
-      pixels[i] = pixels[i + 1] = pixels[i + 2] = pixels[i + 3] = 0;
+export function composeClayMaterial(original, diffuse, light, specular, color) {
+  const out = original.data ?? original;
+  const d = diffuse.data ?? diffuse;
+  const l = light.data ?? light;
+  const s = specular.data ?? specular;
+  if (!validClayColor(color) || color.toUpperCase() === DEFAULT_CLAY_COLOR) return out;
+  if (d.length !== out.length || l.length !== out.length || s.length !== out.length) {
+    throw new Error("Clay material maps must have identical pixel dimensions");
+  }
+  const tint = [1, 3, 5].map(i => parseInt(color.slice(i, i + 2), 16));
+  for (let i = 0; i < out.length; i += 4) {
+    if (out[i + 3] < 12) {
+      out[i] = out[i + 1] = out[i + 2] = out[i + 3] = 0;
       continue;
     }
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    const saturation = max ? (max - min) / max : 0;
-    // Material key: the original clay's cobalt/royal blue, excluding white sclera,
-    // black pupils, pink tongues and pastel unicorn material.
-    const blue = max >= 56 && b > r * 1.32 && b > g * 1.09 && g >= r * .83 && saturation > .24;
-    if (!blue) continue;
-    const sourceLuma = .2126 * r + .7152 * g + .0722 * b;
-    // Preserve local surface relief; avoid clipped flat highlights.
-    const level = Math.max(.22, Math.min(1.35, sourceLuma / 120));
-    const contrast = targetLuma < 70 ? 1.10 : 1;
+    const coverage = d[i + 3] / 255;
+    if (coverage <= 0) continue;
+    const neutralDiffuse = Math.max(.60, Math.min(1.10, d[i] / CLAY_WHITE_POINT));
+    const lightMultiplier = Math.max(.52, Math.min(1.10, l[i] / CLAY_WHITE_POINT));
+    const highlight = Math.min(CLAY_MAX_SPECULAR, s[i] / 255);
     for (let c = 0; c < 3; c++) {
-      pixels[i + c] = Math.min(255, Math.round(target[c] * level * contrast));
+      const shaded = Math.min(255, tint[c] * neutralDiffuse * lightMultiplier);
+      const lit = shaded + (255 - shaded) * highlight;
+      out[i + c] = Math.round(out[i + c] * (1 - coverage) + lit * coverage);
     }
   }
-  return pixels;
+  return out;
 }
