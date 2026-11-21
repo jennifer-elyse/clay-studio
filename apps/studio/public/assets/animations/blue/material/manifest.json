@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "resolution": [
+    640,
+    640
+  ],
+  "source_frame": [
+    320,
+    320
+  ],
+  "layout": {
+    "original": [
+      0,
+      0
+    ],
+    "diffuse_and_mask": [
+      320,
+      0
+    ],
+    "light": [
+      0,
+      320
+    ],
+    "specular": [
+      320,
+      320
+    ]
+  },
+  "white_point": 240,
+  "max_specular_fraction": 0.08,
+  "material_source": "estimated from approved illustrated photography, not measured PBR",
+  "maps_are_registered": true,
+  "clips": [
+    "blink.webp",
+    "build.webp",
+    "clear.webp",
+    "code.webp",
+    "concerned.webp",
+    "debug.webp",
+    "docs.webp",
+    "fix.webp",
+    "help.webp",
+    "idle.webp",
+    "image.webp",
+    "interested.webp",
+    "judging.webp",
+    "new.webp",
+    "plan.webp",
+    "pop-shape.webp",
+    "rolling.webp",
+    "run.webp",
+    "search.webp",
+    "seats.webp",
+    "settings.webp",
+    "spec.webp",
+    "stop.webp",
+    "summarize.webp",
+    "think.webp",
+    "upload.webp",
+    "write.webp"
+  ],
+  "generator": "python3 scripts/generate-clay-materials.py"
+}
