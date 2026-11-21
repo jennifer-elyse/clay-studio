@@ -41,7 +41,7 @@ As a user, reduced-motion display uses an appropriate still with the same select
 - **SC-005:** The application builds and package tests pass without changing endpoint contracts or clip names.
 
 ## Exclusions
-No redesign of Clay's identity, no replacement of the approved source atlas, no reauthoring of slash commands, no new 3D engine, and no modification of the current \"classic\" theme.
+No redesign of Clay's identity, no replacement of the approved source atlas, no reauthoring of slash commands, no new 3D engine, and no modification of the current `classic` theme.
 
 ## Evidence and verification
 The existing tests validate numerical alpha, frame registration, and highlight bounds, but do not prove every animation is visually clean. The missing visual regression review harness is the main work proposed by this spec.
